@@ -5,7 +5,6 @@ use App\Http\Controllers\AccountTicketController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dpa;
-use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\Student;
@@ -28,7 +27,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/beranda', [PageController::class, 'home'])->name('beranda');
     Route::get('/kata-sandi', [PasswordController::class, 'show'])->name('sandi.edit');
     Route::post('/kata-sandi', [PasswordController::class, 'update'])->name('sandi.update');
-    Route::post('/panduan-selesai', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
 
     // Mahasiswa: UC-02 sampai UC-07 + Cek Berkala Langsung & Input Cepat
     Route::middleware('role:mahasiswa')->prefix('mahasiswa')->name('mhs.')->group(function () {
