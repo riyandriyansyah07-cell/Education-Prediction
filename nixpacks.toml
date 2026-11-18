@@ -1,0 +1,22 @@
+[phases.setup]
+nixPkgs = [
+    "php84",
+    "php84Extensions.pdo",
+    "php84Extensions.pdo_pgsql",
+    "php84Extensions.pgsql",
+    "php84Extensions.mbstring",
+    "php84Extensions.xml",
+    "php84Extensions.curl",
+    "php84Extensions.zip",
+    "php84Packages.composer",
+    "nodejs_20",
+    "python3",
+    "python3Packages.pip"
+]
+
+[phases.install]
+cmds = [
+    "composer install --no-dev --optimize-autoloader",
+    "npm install && npm run build",
+    "pip install -r ml-service/requirements.txt --break-system-packages"
+]
