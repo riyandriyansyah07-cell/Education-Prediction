@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicRecord;
 use App\Models\Consent;
 use App\Models\DpaNotification;
+use App\Models\EnrichmentRecord;
 use App\Models\GuidanceNote;
 use App\Models\RiskResult;
 use App\Models\RiskSnapshot;
@@ -13,9 +14,11 @@ use App\Models\StudentSetting;
 use App\Models\User;
 use App\Services\AccessLogger;
 use App\Services\RiskService;
+use App\Support\EnrichmentCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class GuidanceController extends Controller
@@ -151,7 +154,7 @@ class GuidanceController extends Controller
         ]);
     }
 
-    /** Detail faktor, proyeksi mata kuliah, penilaian DPA, dan catatan bimbingan satu mahasiswa. */
+    /** Detail faktor, proyeksi mata kuliah, progres SKS pengayaan, penilaian DPA, dan catatan bimbingan satu mahasiswa. */
     public function show(Request $request, User $student): View
     {
         $dpa = $request->user();
@@ -169,6 +172,17 @@ class GuidanceController extends Controller
         $notes = GuidanceNote::where('student_ref', $ref)->orderByDesc('guidance_date')->orderByDesc('id')->get();
         $snapshots = RiskSnapshot::where('student_ref', $ref)->orderByDesc('checked_at')->limit(6)->get();
 
+        $enrichmentRecords = Schema::hasTable('enrichment_records')
+            ? EnrichmentRecord::where('student_ref', $ref)
+                ->orderByRaw("CASE status WHEN 'dikonversi' THEN 0 WHEN 'siap_rekognisi' THEN 1 ELSE 2 END")
+                ->orderBy('course_name')
+                ->get()
+            : collect();
+        $enrichment = EnrichmentCatalog::evaluateProgress(
+            $enrichmentRecords,
+            (int) ($latest?->semester ?? max(1, (int) ($enrichmentRecords->max('activity_semester') ?? 1)))
+        );
+
         AccessLogger::record($dpa, $ref, 'detail_faktor');
 
         return view('dpa.show', [
@@ -179,6 +193,8 @@ class GuidanceController extends Controller
             'courses' => $courses,
             'notes' => $notes,
             'snapshots' => $snapshots,
+            'enrichment' => $enrichment,
+            'enrichmentRecords' => $enrichmentRecords,
         ]);
     }
 

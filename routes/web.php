@@ -32,7 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/kata-sandi', [PasswordController::class, 'show'])->name('sandi.edit');
     Route::post('/kata-sandi', [PasswordController::class, 'update'])->name('sandi.update');
 
-    // Mahasiswa: UC-02 sampai UC-07 + Cek Berkala Langsung & Input Cepat
+    // Mahasiswa: UC-02 sampai UC-07 + Cek Berkala Langsung, Input Cepat, & Pelacak 20 SKS Pengayaan
     Route::middleware('role:mahasiswa')->prefix('mahasiswa')->name('mhs.')->group(function () {
         Route::get('/ringkasan', [Student\SummaryController::class, 'show'])->name('ringkasan');
         Route::post('/ringkasan/hitung', [Student\SummaryController::class, 'recalculate'])->name('hitung');
@@ -43,6 +43,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/impor', [Student\ImportController::class, 'store'])->name('impor.store');
         Route::post('/impor/konversi-pdf', [Student\ImportController::class, 'convertPdfToExcel'])->name('impor.konversi');
         Route::get('/impor/templat', [Student\ImportController::class, 'template'])->name('templat');
+
+        Route::get('/pengayaan', [Student\EnrichmentController::class, 'index'])->name('pengayaan');
+        Route::post('/pengayaan', [Student\EnrichmentController::class, 'store'])->name('pengayaan.store');
+        Route::patch('/pengayaan/{record}/status', [Student\EnrichmentController::class, 'updateStatus'])
+            ->whereNumber('record')
+            ->name('pengayaan.status');
+        Route::delete('/pengayaan/{record}', [Student\EnrichmentController::class, 'destroy'])
+            ->whereNumber('record')
+            ->name('pengayaan.destroy');
 
         Route::get('/privasi', [Student\PrivacyController::class, 'show'])->name('privasi');
         Route::post('/privasi/izin', [Student\PrivacyController::class, 'consent'])->name('privasi.izin');

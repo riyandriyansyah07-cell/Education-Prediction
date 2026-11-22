@@ -7,16 +7,19 @@ use App\Models\AcademicCalendar;
 use App\Models\AcademicRecord;
 use App\Models\Consent;
 use App\Models\DpaNotification;
+use App\Models\EnrichmentRecord;
 use App\Models\ImportBatch;
 use App\Models\Reminder;
 use App\Models\RiskResult;
 use App\Models\RiskSnapshot;
 use App\Models\StudentSetting;
 use App\Models\User;
+use App\Support\EnrichmentCatalog;
 use App\Support\RiskModel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class RiskService
@@ -105,6 +108,17 @@ class RiskService
 
             $previous = $courses;
             $allPriorSemesters[] = $courses;
+        }
+
+        // Sisipkan ringkasan numerik progres 20 SKS MK Pengayaan FTII (tanpa PII) untuk konteks saran Gemini
+        if (isset($features[$lastSemesterKey]) && Schema::hasTable('enrichment_records')) {
+            $enrichmentRecords = EnrichmentRecord::where('student_ref', $ref)->get();
+            $enrichmentProgress = EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) $lastSemesterKey);
+            $features[$lastSemesterKey]['enrichment_converted_sks'] = $enrichmentProgress['converted_sks'];
+            $features[$lastSemesterKey]['enrichment_ready_sks'] = $enrichmentProgress['ready_sks'];
+            $features[$lastSemesterKey]['enrichment_in_progress_sks'] = $enrichmentProgress['in_progress_sks'];
+            $features[$lastSemesterKey]['enrichment_remaining_sks'] = $enrichmentProgress['remaining_converted'];
+            $features[$lastSemesterKey]['enrichment_semester'] = $enrichmentProgress['current_semester'];
         }
 
         // Kirim juga ringkasan proyeksi per mata kuliah ke RiskEngine agar Gemini dapat mengevaluasinya

@@ -9,6 +9,7 @@
             ['mhs.riwayat', 'Riwayat semester', 'clock-counter-clockwise'],
             ['mhs.privasi', 'Privasi dan izin', 'shield-check'],
             ['mhs.catatan', 'Catatan akses', 'eye'],
+            ['mhs.pengayaan', 'SKS Pengayaan', 'graduation-cap'],
         ],
         'dpa' => [
             ['dpa.bimbingan', 'Mahasiswa bimbingan', 'users'],

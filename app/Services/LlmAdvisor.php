@@ -154,6 +154,14 @@ class LlmAdvisor
                     'risiko_mk' => $c['course_risk_level'] ?? 'rendah',
                 ], array_slice($courseProjections, 0, 12)),
             ],
+            'sks_pengayaan_ftii' => [
+                'semester_mahasiswa' => (int) ($f['enrichment_semester'] ?? 1),
+                'target_wajib_sks' => 20,
+                'terkonversi_krs_sks' => (int) ($f['enrichment_converted_sks'] ?? 0),
+                'bukti_siap_rekognisi_sks' => (int) ($f['enrichment_ready_sks'] ?? 0),
+                'sedang_dicicil_sks' => (int) ($f['enrichment_in_progress_sks'] ?? 0),
+                'sisa_wajib_sks' => (int) ($f['enrichment_remaining_sks'] ?? 20),
+            ],
         ];
 
         $jsonInput = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -170,6 +178,7 @@ Pedoman Penilaian UHAMKA:
    - "tinggi": skor >= 5.00
 4. Kunci faktor yang valid untuk array factors: "attendance", "min_attendance", "low_attendance_courses", "attendance_delta", "ips", "ipk", "ips_delta", "failed_ratio", "repeat_courses", "credits_delta", "dpa_assessment".
 5. Field "encouragement" berisi 1-2 kalimat penyemangat singkat bahasa Indonesia yang hangat, objektif, dan tidak menghakimi sesuai tingkat risiko (apresiasi jika rendah, dorongan fokus jika sedang, tenang dan mengajak diskusi ke DPA jika tinggi). Jika apakah_proyeksi_berjalan bernilai false (UAS/KHS sudah selesai), jangan menyebut "hingga UAS" — arahkan ke evaluasi hasil semester ini dan persiapan semester berikutnya.
+6. Mahasiswa FTII UHAMKA wajib menuntaskan 20 SKS Mata Kuliah Pengayaan di luar kelas (bisa dicicil sejak semester 1, mulai dikonversi ke KRS sejak semester 5). Jika semester_mahasiswa >= 5 dan (terkonversi_krs_sks + bukti_siap_rekognisi_sks) masih jauh di bawah 20 SKS, sertakan 1 butir saran konkret untuk mengejar atau mengonversi SKS Pengayaan agar tidak menghambat kelulusan.
 
 Data Akademik Anonim Mahasiswa:
 {$jsonInput}

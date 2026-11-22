@@ -7,6 +7,8 @@
     $courses = $courses ?? collect();
     $notes = $notes ?? collect();
     $snapshots = $snapshots ?? collect();
+    $enrichmentRecords = $enrichmentRecords ?? collect();
+    $enrichment = $enrichment ?? \App\Support\EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) ($latest?->semester ?? 1));
 @endphp
 
 @section('content')
@@ -58,6 +60,45 @@
                     </div>
                 </section>
             @endif
+
+            <section class="risk-{{ $enrichment['risk_level'] }} border-t border-line pt-8" aria-labelledby="pengayaan-dpa">
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 id="pengayaan-dpa" class="text-xl">Progres SKS Pengayaan (Target 20 SKS)</h2>
+                    <span class="mono text-sm font-medium">{{ $enrichment['converted_sks'] }} / {{ $enrichment['target_sks'] }} SKS terkonversi</span>
+                </div>
+                <p class="mt-2 text-sm text-ink-2">{{ $enrichment['status_message'] }}</p>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-3 text-xs">
+                    <div class="rounded-lg border border-line bg-surface p-3">
+                        <p class="text-ink-3">Terkonversi KRS</p>
+                        <p class="mono mt-1 text-lg font-medium">{{ $enrichment['converted_sks'] }} SKS</p>
+                    </div>
+                    <div class="rounded-lg border border-line bg-surface p-3">
+                        <p class="text-ink-3">Bukti Siap Rekognisi</p>
+                        <p class="mono mt-1 text-lg font-medium">{{ $enrichment['ready_sks'] }} SKS</p>
+                    </div>
+                    <div class="rounded-lg border border-line bg-surface p-3">
+                        <p class="text-ink-3">Sedang Dicicil</p>
+                        <p class="mono mt-1 text-lg font-medium">{{ $enrichment['in_progress_sks'] }} SKS</p>
+                    </div>
+                </div>
+
+                @if ($enrichmentRecords->isNotEmpty())
+                    <ul class="mt-4 divide-y divide-line rounded-lg border border-line bg-surface px-4 text-xs">
+                        @foreach ($enrichmentRecords as $er)
+                            <li class="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                                <span>
+                                    <strong class="font-medium">{{ $er->course_name }}</strong> ({{ $er->credits }} SKS)
+                                    <span class="text-ink-3">&middot; {{ $er->activity_type }}</span>
+                                </span>
+                                <span class="text-ink-2">
+                                    {{ $er->statusLabel() }}@if ($er->status === 'dikonversi') &middot; Sem {{ $er->conversion_semester }} ({{ $er->grade }})@endif
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </section>
 
             <section class="border-t border-line pt-8" aria-labelledby="catatan-bimbingan">
                 <h2 id="catatan-bimbingan" class="text-2xl">Catatan Bimbingan &amp; Tindak Lanjut</h2>
