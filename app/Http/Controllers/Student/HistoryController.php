@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicRecord;
+use App\Models\DpaNotification;
 use App\Models\RiskResult;
+use App\Models\RiskSnapshot;
 use App\Services\RiskService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +33,8 @@ class HistoryController extends Controller
         $ref = $request->user()->student_ref;
         AcademicRecord::where('student_ref', $ref)->where('semester', $semester)->delete();
         RiskResult::where('student_ref', $ref)->where('semester', $semester)->delete();
+        DpaNotification::where('student_ref', $ref)->where('semester', $semester)->delete();
+        RiskSnapshot::where('student_ref', $ref)->where('semester', $semester)->delete();
 
         $risk->refresh($ref);
 

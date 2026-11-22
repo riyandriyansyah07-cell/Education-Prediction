@@ -100,6 +100,12 @@ class GuidanceController extends Controller
             StudentSetting::STATUS_SELESAI => $rows->where('follow_up_status', StudentSetting::STATUS_SELESAI)->count(),
         ];
 
+        $highRiskRefs = $rows
+            ->where('level', 'tinggi')
+            ->map(fn ($r) => $r['student']->student_ref)
+            ->values()
+            ->all();
+
         $filter = $request->query('tingkat');
         if (in_array($filter, ['tinggi', 'sedang', 'rendah', 'belum'], true)) {
             $rows = $rows->where('level', $filter);
@@ -119,9 +125,9 @@ class GuidanceController extends Controller
         // Perbaikan teknis Revisi 3: Satu log per kunjungan daftar bimbingan, bukan per baris mahasiswa
         AccessLogger::record($dpa, null, 'daftar_bimbingan');
 
-        $notifications = $visibleRefs !== []
+        $notifications = $highRiskRefs !== []
             ? DpaNotification::where('dpa_id', $dpa->id)
-                ->whereIn('student_ref', $visibleRefs)
+                ->whereIn('student_ref', $highRiskRefs)
                 ->latest('id')
                 ->limit(5)
                 ->get()
