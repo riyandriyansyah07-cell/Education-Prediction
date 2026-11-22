@@ -349,6 +349,11 @@ final class RiskModel
             ($wDpa * ($dpaNorm ?? 0.0))
         ) / $weightSum;
 
+        // Guardrail aturan akademik UHAMKA: kehadiran di bawah 75% tidak boleh masuk kategori Rendah
+        if ($lowAttCount > 0 || $minAttendance < self::MIN_ATTENDANCE_LIMIT) {
+            $totalScore = max($totalScore, 3.0);
+        }
+
         // 5. Distribusi ke tiap faktor agar jumlah poin faktor sama dengan skor total (aditif)
         $rawParts = [
             'attendance' => max(0.0, (85.0 - $attendance) * 0.12) + ($minAttendance < 75.0 ? 0.8 : 0.0),
