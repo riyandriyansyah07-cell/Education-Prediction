@@ -10,6 +10,7 @@ use App\Models\AcademicRecord;
  * - Rumus nilai sementara (N) dengan pembagian ulang bobot komponen yang aktif
  * - Rumus nilai UAS minimal (U_min) untuk target C (56) dan B (68)
  * - Penggabungan skor mahasiswa (0-10): Semester berjalan 70%, Riwayat 20%, Input DPA 10%
+ * - Tambahan faktor progres wajib 20 SKS MK Pengayaan khusus semester 5 ke atas
  */
 final class RiskModel
 {
@@ -288,8 +289,8 @@ final class RiskModel
 
     /**
      * Hitung kontribusi poin tiap faktor menuju skor 0-10.
-     * Menggabungkan bagian Semester Berjalan (70%), Riwayat (20%), dan Input DPA (10%)
-     * dengan pembagian ulang bobot otomatis bila Input DPA kosong atau masih di awal semester.
+     * Menggabungkan bagian Semester Berjalan (70%), Riwayat (20%), Input DPA (10%),
+     * serta faktor keterlambatan SKS Pengayaan (khusus semester 5+).
      */
     public static function parts(array $f): array
     {
@@ -303,6 +304,7 @@ final class RiskModel
         $failedRatio = (float) ($f['failed_ratio'] ?? 0.0);
         $repeatCourses = (int) ($f['repeat_courses'] ?? ($failedRatio >= 0.25 ? 2 : ($failedRatio > 0 ? 1 : 0)));
         $creditsDelta = (int) ($f['credits_delta'] ?? 0);
+        $enrichmentPenalty = max(0.0, min(1.5, (float) ($f['enrichment_risk_points'] ?? 0.0)));
 
         // 1. Poin Semester Berjalan (0.0 s.d. 1.0)
         if (isset($f['current_semester_points']) && is_numeric($f['current_semester_points'])) {
@@ -349,6 +351,11 @@ final class RiskModel
             ($wDpa * ($dpaNorm ?? 0.0))
         ) / $weightSum;
 
+        // Tambahkan penalti keterlambatan 20 SKS MK Pengayaan (hanya aktif mulai semester 5+)
+        if ($enrichmentPenalty > 0.0) {
+            $totalScore = min(self::MAX_SCORE, $totalScore + $enrichmentPenalty);
+        }
+
         // Guardrail aturan akademik UHAMKA: kehadiran di bawah 75% tidak boleh masuk kategori Rendah
         if ($lowAttCount > 0 || $minAttendance < self::MIN_ATTENDANCE_LIMIT) {
             $totalScore = max($totalScore, 3.0);
@@ -368,6 +375,9 @@ final class RiskModel
         ];
         if ($dpaNorm !== null && $dpaNorm > 0) {
             $rawParts['dpa_assessment'] = $dpaNorm * 1.5;
+        }
+        if ($enrichmentPenalty > 0.0) {
+            $rawParts['enrichment_sks'] = $enrichmentPenalty;
         }
 
         $rawSum = array_sum($rawParts);
@@ -436,6 +446,7 @@ final class RiskModel
             'repeat_courses' => 'Mata kuliah mengulang atau bernilai D/E',
             'credits_delta' => 'Perubahan beban SKS',
             'dpa_assessment' => 'Pemantauan keaktifan & tugas akhir (DPA)',
+            'enrichment_sks' => 'Progres wajib 20 SKS MK Pengayaan',
         ];
 
         $att = (float) ($f['attendance'] ?? 0.0);
@@ -448,6 +459,9 @@ final class RiskModel
         $failedRatio = (float) ($f['failed_ratio'] ?? 0.0);
         $repeatCourses = (int) ($f['repeat_courses'] ?? 0);
         $creditsDelta = (int) ($f['credits_delta'] ?? 0);
+        $enrConverted = (int) ($f['enrichment_converted_sks'] ?? 0);
+        $enrReady = (int) ($f['enrichment_ready_sks'] ?? 0);
+        $enrSem = (int) ($f['enrichment_semester'] ?? 1);
 
         $details = [
             'attendance' => $att < 85.0
@@ -481,6 +495,7 @@ final class RiskModel
                 ? "Beban studi naik {$creditsDelta} SKS dibandingkan semester sebelumnya."
                 : "Perubahan beban studi sebesar {$creditsDelta} SKS.",
             'dpa_assessment' => 'Catatan bimbingan DPA menunjukkan perlunya perhatian pada keaktifan atau progres tugas akhir.',
+            'enrichment_sks' => "Di semester {$enrSem}, progres MK Pengayaan baru {$enrConverted} SKS terkonversi KRS dan {$enrReady} SKS bukti siap rekognisi dari target wajib 20 SKS.",
         ];
 
         $positive = array_filter(
@@ -527,6 +542,7 @@ final class RiskModel
             'repeat_courses' => 'Rencanakan pengulangan mata kuliah bernilai D/E secara bertahap tanpa membebani semester berjalan secara berlebihan.',
             'credits_delta' => 'Karena beban SKS semester ini meningkat, buat jadwal pengerjaan tugas dua mingguan agar tidak menumpuk menjelang UAS.',
             'dpa_assessment' => 'Jadwalkan pertemuan tindak lanjut dengan DPA untuk memperbarui progres keaktifan kuliah dan bimbingan tugas akhir.',
+            'enrichment_sks' => 'Buka menu SKS Pengayaan dan segera konsultasikan bukti kegiatanmu ke Dosen Pengampu agar target wajib 20 SKS tuntas dikonversi ke KRS.',
         ];
 
         $out = [];

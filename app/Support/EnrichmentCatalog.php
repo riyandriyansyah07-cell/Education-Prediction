@@ -7,13 +7,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Katalog resmi 22 Mata Kuliah Pengayaan FTII UHAMKA (Panduan 2025)
- * beserta logika evaluasi progres target wajib 20 SKS.
- *
- * Aturan utama:
- * - Target wajib lulus: 20 SKS MK Pengayaan.
- * - Kegiatan dapat dicicil sejak semester 1 (Rekognisi Pengalaman Lampau, Bab 3.4).
- * - Konversi ke KRS mulai dilakukan pada semester 5 ke atas.
- * - 19 MK berbasis rekognisi kegiatan (tanpa absen/UTS/UAS); 3 MK berbasis kelas/coaching.
+ * beserta logika pencocokan nama KHS, evaluasi progres target wajib 20 SKS,
+ * dan perhitungan penalti risiko khusus semester 5 ke atas.
  */
 final class EnrichmentCatalog
 {
@@ -246,6 +241,72 @@ final class EnrichmentCatalog
         }
 
         return null;
+    }
+
+    /**
+     * Cocokkan nama mata kuliah dari KHS/impor dengan katalog resmi 22 MK Pengayaan FTII UHAMKA.
+     *
+     * @return array<string,mixed>|null
+     */
+    public static function matchCourseName(string $courseName): ?array
+    {
+        $normalized = self::normalizeName($courseName);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $aliases = [
+            'penelitian 1' => 'penelitian',
+            'publikasi 1' => 'publikasi-nasional',
+            'empati dan kecedasan sosial' => 'empati-kecerdasan-sosial',
+        ];
+        if (isset($aliases[$normalized])) {
+            return self::find($aliases[$normalized]);
+        }
+
+        foreach (self::all() as $item) {
+            if (self::normalizeName($item['name']) === $normalized) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    private static function normalizeName(string $raw): string
+    {
+        $s = mb_strtolower(trim($raw));
+        $s = str_replace(['&', '-', '_', '/', '(', ')', '.'], ' ', $s);
+        $s = (string) preg_replace('/\bdan\b/u', 'dan', $s);
+        $s = (string) preg_replace('/\s+/u', ' ', $s);
+
+        return trim($s);
+    }
+
+    /**
+     * Hitung kontribusi poin risiko (0.0 s.d. 1.5) dari keterlambatan progres 20 SKS Pengayaan.
+     * Khusus berlaku mulai semester 5 ke atas agar mahasiswa semester 1-4 tidak kena penalti palsu.
+     *
+     * @param  array<string,mixed>  $progress
+     */
+    public static function riskPenalty(array $progress): float
+    {
+        $semester = (int) ($progress['current_semester'] ?? 1);
+        $converted = (int) ($progress['converted_sks'] ?? 0);
+        $effective = (int) ($progress['effective_sks'] ?? 0);
+
+        if ($semester < self::MIN_CONVERSION_SEMESTER || $converted >= self::TARGET_SKS) {
+            return 0.0;
+        }
+
+        if ($semester <= 6) {
+            $expected = $semester === 5 ? 10 : 14;
+
+            return $effective < $expected ? 0.6 : 0.0;
+        }
+
+        // Semester 7 ke atas (fase kritis kelulusan)
+        return $effective >= self::TARGET_SKS ? 0.8 : 1.5;
     }
 
     /**

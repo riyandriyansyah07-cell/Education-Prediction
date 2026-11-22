@@ -15,6 +15,7 @@ use App\Models\RiskSnapshot;
 use App\Models\StudentSetting;
 use App\Models\User;
 use App\Support\EnrichmentCatalog;
+use App\Support\Grades;
 use App\Support\RiskModel;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +34,8 @@ class RiskService
 
     /**
      * Hitung ulang risiko semua semester milik satu mahasiswa, perbarui proyeksi per mata kuliah,
-     * simpan jejak risk_snapshots, buat pemberitahuan DPA bila naik ke Tinggi, dan kembalikan hasil terbaru.
+     * sinkronkan otomatis MK Pengayaan dari KHS resmi ke enrichment_records, simpan jejak risk_snapshots,
+     * buat pemberitahuan DPA bila naik ke Tinggi, dan kembalikan hasil terbaru.
      */
     public function refresh(string $ref, bool $force = false, ?string $phaseOverride = null): ?RiskResult
     {
@@ -45,6 +47,7 @@ class RiskService
         $batch = ImportBatch::where('student_ref', $ref)->latest('id')->first();
         $asOf = ($batch?->created_at ?? now())->toDateString();
         $settings = StudentSetting::firstOrCreate(['student_ref' => $ref]);
+        $hasEnrichmentTable = Schema::hasTable('enrichment_records');
 
         $features = [];
         $courseProjectionsBySem = [];
@@ -57,6 +60,42 @@ class RiskService
             $semProjections = [];
 
             foreach ($records as $r) {
+                $isOfficialKhs = (bool) ($r->is_official_khs ?? ($r->grade_point !== null && $r->uts_score === null && $r->assignment_score === null && $r->uas_score === null));
+                $enrichmentMatch = EnrichmentCatalog::matchCourseName((string) $r->course_name);
+
+                // Pengecualian aturan kehadiran 75% untuk 19 MK Pengayaan non-kelas (Bab 1.4 Panduan 2025)
+                $effectiveAttendance = (float) $r->attendance;
+                if ($enrichmentMatch && ! $enrichmentMatch['is_class_based'] && $effectiveAttendance < RiskModel::MIN_ATTENDANCE_LIMIT) {
+                    $effectiveAttendance = 100.0;
+                }
+
+                // Auto-sinkronisasi MK Pengayaan yang sudah bernilai di KHS resmi ke tabel enrichment_records
+                if ($enrichmentMatch && $isOfficialKhs && $r->grade_point !== null && $hasEnrichmentTable) {
+                    $letter = Grades::pointToLetter((float) $r->grade_point);
+                    $existingEnr = EnrichmentRecord::where('student_ref', $ref)
+                        ->where('course_code', $enrichmentMatch['code'])
+                        ->first();
+
+                    EnrichmentRecord::updateOrCreate(
+                        [
+                            'student_ref' => $ref,
+                            'course_code' => $enrichmentMatch['code'],
+                        ],
+                        [
+                            'course_name' => $enrichmentMatch['name'],
+                            'credits' => $enrichmentMatch['credits'],
+                            'competency' => $enrichmentMatch['competency'],
+                            'lecturer' => $enrichmentMatch['lecturer'],
+                            'activity_type' => $existingEnr?->activity_type ?: 'Terkonversi otomatis dari KHS',
+                            'activity_semester' => $existingEnr?->activity_semester ?? (int) $semester,
+                            'conversion_semester' => (int) $semester,
+                            'status' => EnrichmentRecord::STATUS_DIKONVERSI,
+                            'grade' => in_array($letter, ['A', 'B', 'E'], true) ? $letter : 'B',
+                            'evidence_notes' => $existingEnr?->evidence_notes ?: "Tersinkron otomatis dari KHS semester {$semester}.",
+                        ]
+                    );
+                }
+
                 $courseData = [
                     'id' => $r->id,
                     'course_code' => $r->course_code,
@@ -64,12 +103,12 @@ class RiskService
                     'credits' => (int) $r->credits,
                     'grade_point' => $r->grade_point !== null ? (float) $r->grade_point : null,
                     'grade_input' => $r->grade_input,
-                    'attendance' => (float) $r->attendance,
+                    'attendance' => $effectiveAttendance,
                     'uts_score' => $r->uts_score !== null ? (float) $r->uts_score : null,
                     'assignment_score' => $r->assignment_score !== null ? (float) $r->assignment_score : null,
                     'uas_score' => $r->uas_score !== null ? (float) $r->uas_score : null,
                     'assignment_source' => $r->assignment_source,
-                    'is_official_khs' => (bool) ($r->is_official_khs ?? ($r->grade_point !== null && $r->uts_score === null && $r->assignment_score === null && $r->uas_score === null)),
+                    'is_official_khs' => $isOfficialKhs,
                     'dpa_confirmed_tasks' => (bool) $settings->dpa_confirmed_tasks,
                 ];
 
@@ -110,8 +149,8 @@ class RiskService
             $allPriorSemesters[] = $courses;
         }
 
-        // Sisipkan ringkasan numerik progres 20 SKS MK Pengayaan FTII (tanpa PII) untuk konteks saran Gemini
-        if (isset($features[$lastSemesterKey]) && Schema::hasTable('enrichment_records')) {
+        // Sisipkan ringkasan numerik progres 20 SKS MK Pengayaan FTII & bobot risikonya (mulai Sem 5+)
+        if (isset($features[$lastSemesterKey]) && $hasEnrichmentTable) {
             $enrichmentRecords = EnrichmentRecord::where('student_ref', $ref)->get();
             $enrichmentProgress = EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) $lastSemesterKey);
             $features[$lastSemesterKey]['enrichment_converted_sks'] = $enrichmentProgress['converted_sks'];
@@ -119,6 +158,7 @@ class RiskService
             $features[$lastSemesterKey]['enrichment_in_progress_sks'] = $enrichmentProgress['in_progress_sks'];
             $features[$lastSemesterKey]['enrichment_remaining_sks'] = $enrichmentProgress['remaining_converted'];
             $features[$lastSemesterKey]['enrichment_semester'] = $enrichmentProgress['current_semester'];
+            $features[$lastSemesterKey]['enrichment_risk_points'] = EnrichmentCatalog::riskPenalty($enrichmentProgress);
         }
 
         // Kirim juga ringkasan proyeksi per mata kuliah ke RiskEngine agar Gemini dapat mengevaluasinya
