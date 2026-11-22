@@ -41,7 +41,9 @@
                 <span class="mono text-3xl font-medium">{{ \App\Support\Fmt::num($score, 1) }}</span><span class="text-ink-3"> dari 10</span>
             </p>
         </div>
-        <p class="mt-4 max-w-[60ch] text-ink-2">{{ $copy[$level] }}</p>
+        <p class="mt-4 max-w-[60ch] text-ink-2">
+            {{ $audience === 'student' ? ($result->features['encouragement'] ?? $copy[$level]) : $copy[$level] }}
+        </p>
 
         @if ($result->projection_gap_flagged)
             <p class="mt-3 rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-ink">

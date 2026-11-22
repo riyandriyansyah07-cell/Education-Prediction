@@ -157,6 +157,9 @@ class RiskService
                 $llmGenerated = false;
             }
 
+            $semesterFeatures['encouragement'] = $assessment['encouragement']
+                ?? LlmAdvisor::defaultEncouragement($assessment['level']);
+
             $latest = RiskResult::updateOrCreate(
                 ['student_ref' => $ref, 'semester' => $semester],
                 [

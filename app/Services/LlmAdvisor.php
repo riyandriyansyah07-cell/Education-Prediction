@@ -11,8 +11,8 @@ use Throwable;
 /**
  * Layanan AI Utama (Gemini / DeepSeek):
  * 1. assessRisk(): Bertindak sebagai AI utama penentu parameter risiko (skor 0-10, level risiko,
- *    faktor penyebab beserta poin kontribusinya, dan saran tindak lanjut) menggunakan Structured JSON Output
- *    dengan temperature 0.0 serta guardrail aturan akademik UHAMKA.
+ *    kalimat penyemangat adaptif, faktor penyebab beserta poin kontribusinya, dan saran tindak lanjut)
+ *    menggunakan Structured JSON Output dengan temperature 0.0 serta guardrail aturan akademik UHAMKA.
  * 2. advise(): Menyusun saran tindak lanjut saja apabila perhitungan skor dilakukan oleh ml-service/aturan.
  *
  * Keamanan & Privasi: Tidak pernah mengirim NIM, nama mahasiswa, maupun nama mata kuliah ke API eksternal.
@@ -27,6 +27,7 @@ class LlmAdvisor
      * @return array{
      *   score:float,
      *   level:string,
+     *   encouragement:string,
      *   factors:list<array{key:string,label:string,detail:string,points:float,share:float}>,
      *   suggestions:list<string>,
      *   llm_generated:bool
@@ -107,6 +108,16 @@ class LlmAdvisor
         return $fallback;
     }
 
+    /** Kalimat penyemangat cadangan yang adaptif sesuai tingkat risiko (dipakai bila LLM tidak aktif/kosong). */
+    public static function defaultEncouragement(string $level): string
+    {
+        return match ($level) {
+            'rendah' => 'Kerja bagus! Ritme belajarmu sudah di jalur yang aman — pertahankan konsistensi kehadiran dan tugas hingga UAS.',
+            'sedang' => 'Kamu masih punya banyak ruang untuk mengejar target nilai. Fokus pada 1–2 mata kuliah prioritas mulai minggu ini, pasti terkejar.',
+            default => 'Jangan panik — peringatan dini ini justru hadir agar kamu masih sempat memperbaiki keadaan. Coba atur jadwal ngobrol dengan DPA untuk menyusun langkah prioritas.',
+        };
+    }
+
     private function buildAssessmentPrompt(array $f, array $courseProjections): string
     {
         $payload = [
@@ -150,6 +161,7 @@ Pedoman Penilaian UHAMKA:
    - "sedang": skor 2.50 sampai 4.99
    - "tinggi": skor >= 5.00
 4. Kunci faktor yang valid untuk array factors: "attendance", "min_attendance", "low_attendance_courses", "attendance_delta", "ips", "ipk", "ips_delta", "failed_ratio", "repeat_courses", "credits_delta", "dpa_assessment".
+5. Field "encouragement" berisi 1-2 kalimat penyemangat singkat bahasa Indonesia yang hangat, objektif, dan tidak menghakimi sesuai tingkat risiko (apresiasi jika rendah, dorongan fokus jika sedang, tenang dan mengajak diskusi ke DPA jika tinggi).
 
 Data Akademik Anonim Mahasiswa:
 {$jsonInput}
@@ -158,6 +170,7 @@ Kembalikan HANYA objek JSON valid (tanpa teks pembuka/penutup) dengan struktur p
 {
   "score": 0.0,
   "level": "rendah | sedang | tinggi",
+  "encouragement": "1-2 kalimat penyemangat adaptif sesuai tingkat risiko",
   "factors": [
     {
       "key": "salah_satu_kunci_di_atas",
@@ -246,9 +259,15 @@ PROMPT;
             $suggestions = RiskModel::suggestions($level, $factors);
         }
 
+        $encouragement = trim(str_replace(['**', '__'], '', (string) ($raw['encouragement'] ?? '')));
+        if (mb_strlen($encouragement) < 15) {
+            $encouragement = self::defaultEncouragement($level);
+        }
+
         return [
             'score' => $score,
             'level' => $level,
+            'encouragement' => $encouragement,
             'factors' => array_slice($factors, 0, 5),
             'suggestions' => array_slice(array_values(array_unique($suggestions)), 0, 4),
             'llm_generated' => true,
@@ -271,7 +290,7 @@ PROMPT;
                 'generationConfig' => [
                     'temperature' => 0.0,
                     'responseMimeType' => 'application/json',
-                    'maxOutputTokens' => 900,
+                    'maxOutputTokens' => 1000,
                 ],
             ])
             ->throw();
@@ -297,7 +316,7 @@ PROMPT;
                 ],
                 'temperature' => 0.0,
                 'response_format' => ['type' => 'json_object'],
-                'max_tokens' => 900,
+                'max_tokens' => 1000,
             ])
             ->throw();
 

@@ -12,8 +12,8 @@ use Throwable;
  *
  * Mendukung tiga mode melalui RISK_ENGINE di .env:
  * - "gemini" (AI Utama Rekomendasi): Gemini/LLM menilai 10 variabel inti & proyeksi semester terbaru
- *   untuk menentukan skor, level, faktor, dan saran via Structured JSON Output; otomatis jatuh ke
- *   model aturan PHP (RiskModel) bila API Key kosong atau timeout.
+ *   untuk menentukan skor, level, faktor, kalimat penyemangat, dan saran via Structured JSON Output;
+ *   otomatis jatuh ke model aturan PHP (RiskModel) bila API Key kosong atau timeout.
  * - "http": Memanggil layanan model Python (Random Forest / XGBoost + SHAP).
  * - "rule": Menggunakan model aturan berbobot di PHP.
  */
@@ -36,6 +36,7 @@ class RiskEngine
      *   level:string,
      *   factors:array,
      *   suggestions?:list<string>,
+     *   encouragement?:string|null,
      *   llm_generated?:bool,
      *   model_version_id:int|null,
      *   explanation_unavailable?:bool
@@ -63,6 +64,7 @@ class RiskEngine
                     'level' => $geminiResult['level'],
                     'factors' => $geminiResult['factors'],
                     'suggestions' => $geminiResult['suggestions'],
+                    'encouragement' => $geminiResult['encouragement'] ?? null,
                     'llm_generated' => true,
                     'model_version_id' => $results[$lastIdx]['model_version_id'],
                     'explanation_unavailable' => false,
