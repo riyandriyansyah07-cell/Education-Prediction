@@ -50,8 +50,10 @@ class AccountTicketController extends Controller
             'username.regex' => 'NIM atau ID pegawai hanya boleh berisi huruf, angka, titik, dan strip.',
         ]);
 
+        $username = trim($data['username']);
+
         // Cegah duplikasi tiket menunggu untuk username yang sama
-        $existingPending = AccountTicket::where('username', $data['username'])
+        $existingPending = AccountTicket::where('username', $username)
             ->where('status', AccountTicket::STATUS_PENDING)
             ->first();
 
@@ -66,7 +68,10 @@ class AccountTicketController extends Controller
             'ticket_code' => $ticketCode,
             'request_type' => $data['request_type'],
             'name' => trim($data['name']),
-            'username' => trim($data['username']),
+            'username' => $username,
+            'program_studi' => $data['request_type'] === AccountTicket::TYPE_STUDENT
+                ? ($data['program_studi'] ?? null)
+                : null,
             'email' => ($data['email'] ?? null) ?: null,
             'notes' => ($data['notes'] ?? null) ?: null,
             'status' => AccountTicket::STATUS_PENDING,

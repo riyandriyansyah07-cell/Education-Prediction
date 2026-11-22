@@ -18,8 +18,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/masuk', [AuthController::class, 'store'])->name('login.store');
 
     // E-Ticket Pengajuan Akun Baru / Reset Sandi ke Sekretariat
-    Route::get('/ajukan-akun', [AccountTicketController::class, 'showForm'])->name('tiket.form');
-    Route::post('/ajukan-akun', [AccountTicketController::class, 'submit'])->name('tiket.submit');
+    Route::get('/ajukan-akun', [AccountTicketController::class, 'showForm'])
+        ->middleware('throttle:30,1')
+        ->name('tiket.form');
+    Route::post('/ajukan-akun', [AccountTicketController::class, 'submit'])
+        ->middleware('throttle:5,10')
+        ->name('tiket.submit');
 });
 
 Route::middleware('auth')->group(function () {

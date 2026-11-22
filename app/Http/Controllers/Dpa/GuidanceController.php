@@ -41,17 +41,28 @@ class GuidanceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $visible = $students->values();
+        $grantedRefs = Consent::where('dpa_id', $dpa->id)
+            ->where('granted', true)
+            ->pluck('student_ref')
+            ->all();
+
+        $visible = $students
+            ->filter(fn (User $s) => in_array($s->student_ref, $grantedRefs, true))
+            ->values();
         $visibleRefs = $visible->pluck('student_ref')->all();
 
-        $allResults = RiskResult::whereIn('student_ref', $visibleRefs)
-            ->orderByDesc('semester')
-            ->get()
-            ->groupBy('student_ref');
+        $allResults = $visibleRefs !== []
+            ? RiskResult::whereIn('student_ref', $visibleRefs)
+                ->orderByDesc('semester')
+                ->get()
+                ->groupBy('student_ref')
+            : collect();
 
-        $settingsByRef = StudentSetting::whereIn('student_ref', $visibleRefs)
-            ->get()
-            ->keyBy('student_ref');
+        $settingsByRef = $visibleRefs !== []
+            ? StudentSetting::whereIn('student_ref', $visibleRefs)
+                ->get()
+                ->keyBy('student_ref')
+            : collect();
 
         $rows = $visible->map(function (User $s) use ($allResults, $settingsByRef) {
             $semResults = $allResults->get($s->student_ref, collect());
@@ -108,11 +119,13 @@ class GuidanceController extends Controller
         // Perbaikan teknis Revisi 3: Satu log per kunjungan daftar bimbingan, bukan per baris mahasiswa
         AccessLogger::record($dpa, null, 'daftar_bimbingan');
 
-        $notifications = DpaNotification::where('dpa_id', $dpa->id)
-            ->whereIn('student_ref', $visibleRefs)
-            ->latest('id')
-            ->limit(5)
-            ->get();
+        $notifications = $visibleRefs !== []
+            ? DpaNotification::where('dpa_id', $dpa->id)
+                ->whereIn('student_ref', $visibleRefs)
+                ->latest('id')
+                ->limit(5)
+                ->get()
+            : collect();
 
         $unreadNotifIds = $notifications->whereNull('read_at')->pluck('id')->all();
         if ($unreadNotifIds !== []) {
@@ -276,6 +289,16 @@ class GuidanceController extends Controller
 
     private function authorizeStudent(User $dpa, User $student): void
     {
-        abort_unless($student->role === User::ROLE_STUDENT && $student->dpa_id === $dpa->id, 403);
+        abort_unless(
+            $student->role === User::ROLE_STUDENT && $student->dpa_id === $dpa->id,
+            403
+        );
+
+        $hasConsent = Consent::where('student_ref', $student->student_ref)
+            ->where('dpa_id', $dpa->id)
+            ->where('granted', true)
+            ->exists();
+
+        abort_unless($hasConsent, 403);
     }
 }
