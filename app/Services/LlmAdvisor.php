@@ -108,13 +108,21 @@ class LlmAdvisor
         return $fallback;
     }
 
-    /** Kalimat penyemangat cadangan yang adaptif sesuai tingkat risiko (dipakai bila LLM tidak aktif/kosong). */
-    public static function defaultEncouragement(string $level): string
+    /** Kalimat penyemangat cadangan yang adaptif sesuai tingkat risiko dan fase semester. */
+    public static function defaultEncouragement(string $level, bool $isProjection = true): string
     {
+        if (! $isProjection) {
+            return match ($level) {
+                'rendah' => 'Kerja bagus! Hasil semester ini berada di jalur yang sangat aman — pertahankan ritme belajarmu untuk semester berikutnya.',
+                'sedang' => 'Hasil semester ini masih cukup baik, tetapi ada beberapa mata kuliah yang layak dievaluasi agar performa semester depan lebih mantap.',
+                default => 'Jangan berkecil hati — hasil semester ini bisa jadi titik balik untuk bangkit. Diskusikan rencana perbaikan nilai dan strategi SKS semester depan bersama DPA.',
+            };
+        }
+
         return match ($level) {
             'rendah' => 'Kerja bagus! Ritme belajarmu sudah di jalur yang aman — pertahankan konsistensi kehadiran dan tugas hingga UAS.',
-            'sedang' => 'Kamu masih punya banyak ruang untuk mengejar target nilai. Fokus pada 1–2 mata kuliah prioritas mulai minggu ini, pasti terkejar.',
-            default => 'Jangan panik — peringatan dini ini justru hadir agar kamu masih sempat memperbaiki keadaan. Coba atur jadwal ngobrol dengan DPA untuk menyusun langkah prioritas.',
+            'sedang' => 'Kamu masih punya banyak ruang untuk mengejar target nilai. Fokus pada 1–2 mata kuliah prioritas sebelum UAS, pasti terkejar.',
+            default => 'Jangan panik — peringatan dini ini hadir agar kamu masih sempat memperbaiki keadaan sebelum UAS. Coba atur jadwal ngobrol dengan DPA untuk menyusun langkah prioritas.',
         };
     }
 
@@ -161,7 +169,7 @@ Pedoman Penilaian UHAMKA:
    - "sedang": skor 2.50 sampai 4.99
    - "tinggi": skor >= 5.00
 4. Kunci faktor yang valid untuk array factors: "attendance", "min_attendance", "low_attendance_courses", "attendance_delta", "ips", "ipk", "ips_delta", "failed_ratio", "repeat_courses", "credits_delta", "dpa_assessment".
-5. Field "encouragement" berisi 1-2 kalimat penyemangat singkat bahasa Indonesia yang hangat, objektif, dan tidak menghakimi sesuai tingkat risiko (apresiasi jika rendah, dorongan fokus jika sedang, tenang dan mengajak diskusi ke DPA jika tinggi).
+5. Field "encouragement" berisi 1-2 kalimat penyemangat singkat bahasa Indonesia yang hangat, objektif, dan tidak menghakimi sesuai tingkat risiko (apresiasi jika rendah, dorongan fokus jika sedang, tenang dan mengajak diskusi ke DPA jika tinggi). Jika apakah_proyeksi_berjalan bernilai false (UAS/KHS sudah selesai), jangan menyebut "hingga UAS" — arahkan ke evaluasi hasil semester ini dan persiapan semester berikutnya.
 
 Data Akademik Anonim Mahasiswa:
 {$jsonInput}
@@ -170,7 +178,7 @@ Kembalikan HANYA objek JSON valid (tanpa teks pembuka/penutup) dengan struktur p
 {
   "score": 0.0,
   "level": "rendah | sedang | tinggi",
-  "encouragement": "1-2 kalimat penyemangat adaptif sesuai tingkat risiko",
+  "encouragement": "1-2 kalimat penyemangat adaptif sesuai tingkat risiko dan fase semester",
   "factors": [
     {
       "key": "salah_satu_kunci_di_atas",
@@ -261,7 +269,7 @@ PROMPT;
 
         $encouragement = trim(str_replace(['**', '__'], '', (string) ($raw['encouragement'] ?? '')));
         if (mb_strlen($encouragement) < 15) {
-            $encouragement = self::defaultEncouragement($level);
+            $encouragement = self::defaultEncouragement($level, (bool) ($features['is_projection'] ?? false));
         }
 
         return [
