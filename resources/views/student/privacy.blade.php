@@ -6,7 +6,7 @@
 <h1 class="rise text-3xl sm:text-4xl">Privasi dan izin</h1>
 <p class="rise mt-2 max-w-[60ch] text-ink-2" style="--i: 1">Kamu yang memutuskan siapa yang melihat hasil risikomu. Setiap akses tercatat dan bisa kamu baca di Catatan akses.</p>
 
-<div class="mt-8"><x-flow :current="'privasi'" :done="$consent ? ['privasi'] : []" /></div>
+<div class="mt-8"><x-flow :current="'privasi'" :done="$consent?->granted ? ['privasi'] : []" /></div>
 
 <div class="mt-12 grid gap-14 lg:grid-cols-12">
     <section class="lg:col-span-7" aria-labelledby="izin-dpa">
@@ -24,18 +24,32 @@
                     Kamu belum memberi izin. DPA tidak bisa melihat apa pun tentang hasilmu.
                 @endif
             </p>
-            <div class="mt-5 rounded-md border border-ok/40 bg-ok/10 px-4 py-3 text-sm text-ink">
-                Akses pemantauan DPA aktif secara otomatis. Setiap kali DPA membuka datamu, aktivitasnya tercatat di <a href="{{ route('mhs.catatan') }}" class="font-medium text-accent hover:underline">Catatan akses</a>.
-            </div>
+
+            <form method="POST" action="{{ route('mhs.privasi.izin') }}" class="mt-5">
+                @csrf
+                @if ($consent?->granted)
+                    <input type="hidden" name="granted" value="0">
+                    <button type="submit" class="btn btn-quiet">Cabut izin DPA</button>
+                @else
+                    <input type="hidden" name="granted" value="1">
+                    <button type="submit" class="btn btn-primary">Berikan izin ke DPA</button>
+                @endif
+            </form>
+
+            @if ($consent?->granted)
+                <div class="mt-5 rounded-md border border-ok/40 bg-ok/10 px-4 py-3 text-sm text-ink">
+                    Izin aktif. Setiap kali DPA membuka datamu, aktivitasnya tercatat di <a href="{{ route('mhs.catatan') }}" class="font-medium text-accent hover:underline">Catatan akses</a>.
+                </div>
+            @endif
 
             <dl class="mt-8 grid gap-6 sm:grid-cols-2">
                 <div>
                     <dt class="font-medium">Yang bisa dilihat DPA</dt>
-                    <dd class="mt-1 text-sm text-ink-2">Nama dan NIM, tingkat risiko, skor, dan faktor utama per semester.</dd>
+                    <dd class="mt-1 text-sm text-ink-2">Nama dan NIM, tingkat risiko, skor, progres 20 SKS pengayaan, dan faktor utama per semester.</dd>
                 </div>
                 <div>
                     <dt class="font-medium">Yang tidak pernah terlihat</dt>
-                    <dd class="mt-1 text-sm text-ink-2">Nilai per mata kuliah, absensi per mata kuliah, dan berkas yang kamu unggah.</dd>
+                    <dd class="mt-1 text-sm text-ink-2">Berkas asli yang kamu unggah. Kamu juga bisa mencabut izin kapan saja.</dd>
                 </div>
             </dl>
         @endif
