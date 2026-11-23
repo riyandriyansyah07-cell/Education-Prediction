@@ -3,11 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicRecord;
+use App\Models\Consent;
+use App\Models\DpaNotification;
+use App\Models\EnrichmentRecord;
+use App\Models\GuidanceNote;
+use App\Models\ImportBatch;
+use App\Models\Reminder;
+use App\Models\RiskResult;
+use App\Models\RiskSnapshot;
+use App\Models\StudentSetting;
 use App\Models\User;
 use App\Services\Pseudonym;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
@@ -131,6 +143,49 @@ class AccountController extends Controller
         $user->save();
 
         return redirect()->route('admin.akun')->with('status', 'Akun '.$user->username.' diperbarui.');
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->id === $request->user()->id) {
+            return back()->withErrors(['delete' => 'Kamu tidak bisa menghapus akunmu sendiri.']);
+        }
+
+        if ($user->role === User::ROLE_ADMIN) {
+            $activeAdmins = User::where('role', User::ROLE_ADMIN)->where('is_active', true)->count();
+            if ($activeAdmins <= 1) {
+                return back()->withErrors(['delete' => 'Tidak bisa menghapus satu-satunya admin aktif.']);
+            }
+        }
+
+        $label = "{$user->name} ({$user->username})";
+
+        DB::transaction(function () use ($user) {
+            if ($user->student_ref) {
+                $ref = $user->student_ref;
+                AcademicRecord::where('student_ref', $ref)->delete();
+                RiskSnapshot::where('student_ref', $ref)->delete();
+                DpaNotification::where('student_ref', $ref)->delete();
+                Reminder::where('student_ref', $ref)->delete();
+                RiskResult::where('student_ref', $ref)->delete();
+                ImportBatch::where('student_ref', $ref)->delete();
+                Consent::where('student_ref', $ref)->delete();
+                GuidanceNote::where('student_ref', $ref)->delete();
+                StudentSetting::where('student_ref', $ref)->delete();
+
+                if (Schema::hasTable('enrichment_records')) {
+                    EnrichmentRecord::where('student_ref', $ref)->delete();
+                }
+            }
+
+            if (Schema::hasTable('sessions')) {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+
+            $user->delete();
+        });
+
+        return redirect()->route('admin.akun')->with('status', "Akun {$label} beserta seluruh data terkait berhasil dihapus.");
     }
 
     private function dpas(?int $includeId = null)

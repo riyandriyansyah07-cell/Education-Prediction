@@ -11,6 +11,10 @@
     <a href="{{ route('admin.akun.baru') }}" class="btn btn-primary"><x-icon name="plus" /> Tambah akun</a>
 </div>
 
+@error('delete')
+    <div class="mt-6 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm" style="color:var(--bad);" role="alert">{{ $message }}</div>
+@enderror
+
 <form method="GET" class="mt-8 flex flex-wrap items-end gap-3">
     <div class="w-full max-w-xs">
         <label for="q" class="label">Cari nama atau NIM</label>
@@ -39,7 +43,18 @@
                     <td>{{ $u->roleLabel() }}</td>
                     <td class="text-ink-2">{{ $u->dpa?->name ?? '-' }}</td>
                     <td>{{ $u->is_active ? 'Aktif' : 'Nonaktif' }}</td>
-                    <td class="text-right"><a href="{{ route('admin.akun.ubah', $u) }}" class="btn btn-quiet btn-sm"><x-icon name="pencil-simple" /> Ubah</a></td>
+                    <td class="text-right">
+                        <div style="display:inline-flex; align-items:center; gap:0.5rem;">
+                            <a href="{{ route('admin.akun.ubah', $u) }}" class="btn btn-quiet btn-sm"><x-icon name="pencil-simple" /> Ubah</a>
+                            @if ($u->id !== auth()->id())
+                                <form method="POST" action="{{ route('admin.akun.hapus', $u) }}" onsubmit="return confirm('Hapus akun {{ addslashes($u->name) }} ({{ addslashes($u->username) }}) secara permanen? Seluruh data akademik dan riwayat risiko akun ini juga akan dihapus.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-quiet btn-sm" style="color:var(--bad);">Hapus</button>
+                                </form>
+                            @endif
+                        </div>
+                    </td>
                 </tr>
             @empty
                 <tr><td colspan="6" class="py-8 text-ink-2">Tidak ada akun yang cocok.</td></tr>

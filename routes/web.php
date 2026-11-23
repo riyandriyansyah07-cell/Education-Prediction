@@ -89,6 +89,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/akun/{user}', [Admin\AccountController::class, 'update'])
             ->whereNumber('user')
             ->name('akun.update');
+        Route::delete('/akun/{user}', [Admin\AccountController::class, 'destroy'])
+            ->whereNumber('user')
+            ->name('akun.hapus');
 
         Route::get('/tiket-akun', [AccountTicketController::class, 'adminIndex'])->name('tiket');
         Route::post('/tiket-akun/{ticket}/setujui', [AccountTicketController::class, 'approve'])->whereNumber('ticket')->name('tiket.setujui');
