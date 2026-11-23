@@ -21,30 +21,29 @@
     @media (min-width: 768px) { .px-links { display: flex; } }
 
     .px-hero { padding-top: 2.25rem; padding-bottom: 2.5rem; }
-    @media (min-width: 768px) { .px-hero { padding-top: 4.5rem; padding-bottom: 3.5rem; } }
+    @media (min-width: 768px) { .px-hero { padding-top: 4rem; padding-bottom: 3rem; } }
     .px-win-scale { display: none; }
     @media (min-width: 640px) { .px-win-scale { display: inline; } }
     .px-ticket-btn { display: none; }
     @media (min-width: 640px) { .px-ticket-btn { display: inline-flex; } }
     .px-h1 {
-        font-size: clamp(2.25rem, 5vw, 3.75rem);
+        font-size: clamp(2.2rem, 5vw, 3.6rem);
         font-weight: 600;
-        line-height: 1.06;
+        line-height: 1.08;
         letter-spacing: -0.035em;
         color: var(--ink);
         max-width: 18ch;
     }
     .px-sub {
-        margin-top: 1.25rem;
-        font-size: 1.05rem;
-        line-height: 1.65;
+        margin-top: 1rem;
+        font-size: 1rem;
+        line-height: 1.6;
         color: var(--ink-2);
-        max-width: 52ch;
+        max-width: 48ch;
     }
 
-    /* Window Frame for Product Preview */
     .px-window {
-        margin-top: 3rem;
+        margin-top: 2.5rem;
         background: var(--surface);
         border: 1px solid var(--line-strong);
         border-radius: 14px;
@@ -65,7 +64,6 @@
         padding: 0.2rem 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
-    /* Asymmetric Bento Grid */
     .px-bento {
         display: grid;
         grid-template-columns: 1fr;
@@ -92,7 +90,6 @@
         transform: translateY(-2px);
     }
 
-    /* Interactive Role Switcher */
     .px-tabs {
         display: inline-flex; padding: 3px; border-radius: 10px;
         background: var(--sunken); border: 1px solid var(--line);
@@ -108,14 +105,13 @@
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
     }
 
-    /* Privacy Pipeline Visual */
     .px-pipe {
         display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-        margin-top: 1.25rem;
+        margin-top: 1rem;
         font-family: var(--font-mono); font-size: 0.78rem;
     }
     .px-node {
-        padding: 0.4rem 0.65rem; border-radius: 7px;
+        padding: 0.38rem 0.65rem; border-radius: 7px;
         background: var(--sunken); border: 1px solid var(--line-strong); color: var(--ink);
     }
     .px-node-accent {
@@ -137,17 +133,17 @@
 
         <div style="display:flex;align-items:center;gap:0.75rem;">
             <nav class="px-links" aria-label="Navigasi utama">
-                <a href="#bento">Arsitektur</a>
-                <a href="#peran">Alur Peran</a>
+                <a href="#bento">Fitur</a>
+                <a href="#peran">Peran</a>
                 <a href="{{ route('metodologi') }}">Metodologi</a>
             </nav>
             <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap">
                 <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
             </button>
             @auth
-                <a href="{{ route('beranda') }}" class="btn btn-primary btn-sm">Buka Beranda</a>
+                <a href="{{ route('beranda') }}" class="btn btn-primary btn-sm">Beranda</a>
             @else
-                <a href="{{ route('tiket.form') }}" class="btn btn-quiet btn-sm px-ticket-btn">Ajukan E-Ticket</a>
+                <a href="{{ route('tiket.form') }}" class="btn btn-quiet btn-sm px-ticket-btn">E-Ticket</a>
                 <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Masuk</a>
             @endauth
         </div>
@@ -155,31 +151,29 @@
 </header>
 
 <main>
-    {{-- Asymmetric Editorial Hero + Framed Product Window --}}
     <section class="px-wrap px-hero">
         <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:2rem;">
             <div>
                 <p class="mono" style="font-size:0.78rem;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">
-                    FTII UHAMKA • Sistem Peringatan Dini Akademik
+                    FTII UHAMKA • Peringatan Dini Akademik
                 </p>
-                <h1 class="rise px-h1" style="margin-top:0.85rem;">
-                    Ketahui risiko nilaimu sebelum semester berakhir.
+                <h1 class="rise px-h1" style="margin-top:0.75rem;">
+                    Ketahui risiko nilaimu lebih awal.
                 </h1>
                 <p class="rise px-sub" style="--i: 1">
-                    Hitung proyeksi nilai sementara (N), target UAS minimal (U<sub>min</sub>), dan dapatkan arahan perbaikan berbasis AI yang dikunci aturan akademik UHAMKA.
+                    Pantau proyeksi nilai, target UAS minimal, progres 20 SKS pengayaan &amp; wajib PKM, serta saran belajar berbasis AI.
                 </p>
             </div>
             <div class="rise" style="--i: 2;display:flex;flex-wrap:wrap;gap:0.75rem;">
                 @auth
                     <a href="{{ route('beranda') }}" class="btn btn-primary h-11 px-5">Buka Beranda</a>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-primary h-11 px-5">Masuk ke Aplikasi</a>
-                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet h-11 px-5">Ajukan Akun (E-Ticket)</a>
+                    <a href="{{ route('login') }}" class="btn btn-primary h-11 px-5">Masuk</a>
+                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet h-11 px-5">Ajukan Akun</a>
                 @endauth
             </div>
         </div>
 
-        {{-- Product Window Preview --}}
         <div class="rise px-window" style="--i: 3">
             <div class="px-winbar">
                 <div class="px-dots"><span></span><span></span><span></span></div>
@@ -192,40 +186,37 @@
         </div>
     </section>
 
-    {{-- Bento Architecture Section --}}
-    <section id="bento" class="px-wrap" style="padding-bottom:4.5rem;">
+    <section id="bento" class="px-wrap" style="padding-bottom:4rem;">
         <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;">
-            <h2 style="font-size:1.65rem;font-weight:600;letter-spacing:-0.025em;">Dirancang untuk transparansi &amp; akurasi akademik</h2>
-            <a href="{{ route('metodologi') }}" class="mono" style="font-size:0.82rem;color:var(--accent);text-decoration:none;">Lihat rumus lengkap →</a>
+            <h2 style="font-size:1.55rem;font-weight:600;letter-spacing:-0.025em;">Transparan, aman, dan sesuai aturan FTII</h2>
+            <a href="{{ route('metodologi') }}" class="mono" style="font-size:0.82rem;color:var(--accent);text-decoration:none;">Lihat rumus →</a>
         </div>
 
         <div class="px-bento">
-            {{-- Bento 1: Privacy Pipeline --}}
             <div class="px-tile px-col-7">
                 <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Privacy-by-Design</p>
-                <h3 style="margin-top:0.5rem;font-size:1.2rem;font-weight:600;">Identitas NIM tidak pernah dikirim ke AI</h3>
-                <p style="margin-top:0.5rem;font-size:0.92rem;color:var(--ink-2);line-height:1.6;">
-                    Sebelum analisis dijalankan, NIM dipseudonimisasi dengan HMAC-SHA256. Gemini hanya menerima vektor angka anonim untuk menyusun rekomendasi belajar.
+                <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Zero-PII ke layanan AI</h3>
+                <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.55;">
+                    NIM disamarkan dengan HMAC-SHA256. AI hanya memproses angka statistik anonim.
                 </p>
                 <div class="px-pipe">
-                    <span class="px-node">NIM 2303045009</span>
+                    <span class="px-node">NIM</span>
                     <span style="color:var(--ink-3);">→</span>
                     <span class="px-node px-node-accent">HMAC-SHA256</span>
                     <span style="color:var(--ink-3);">→</span>
-                    <span class="px-node">10 Variabel Numerik</span>
+                    <span class="px-node">10 Variabel</span>
                     <span style="color:var(--ink-3);">→</span>
                     <span class="px-node px-node-accent">Gemini + Guardrail</span>
                 </div>
             </div>
 
-            {{-- Bento 2: UHAMKA Guardrail --}}
             <div class="px-tile px-col-5">
-                <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Aturan Baku Kampus</p>
-                <h3 style="margin-top:0.5rem;font-size:1.2rem;font-weight:600;">Skala Nilai &amp; Batas Hadir 75%</h3>
-                <p style="margin-top:0.5rem;font-size:0.92rem;color:var(--ink-2);line-height:1.6;">
-                    Kehadiran di bawah 75% otomatis memicu risiko tinggi. Bobot komponen: UAS 40%, UTS 25%, Tugas 25%, Hadir 10%.
+                <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Aturan UHAMKA</p>
+                <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Skala Nilai &amp; Hadir 75%</h3>
+                <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.55;">
+                    UAS 40% · UTS 25% · Tugas 25% · Hadir 10%. Hadir &lt; 75% otomatis waspada.
                 </p>
-                <div style="margin-top:1.1rem;display:flex;flex-wrap:wrap;gap:0.5rem;" class="mono">
+                <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.5rem;" class="mono">
                     <span class="px-node">A ≥ 80</span>
                     <span class="px-node">B ≥ 68</span>
                     <span class="px-node">C ≥ 56</span>
@@ -233,11 +224,10 @@
                 </div>
             </div>
 
-            {{-- Bento 3: Program Studi --}}
             <div class="px-tile px-col-4">
-                <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Cakupan Fakultas</p>
-                <h3 style="margin-top:0.5rem;font-size:1.15rem;font-weight:600;">5 Program Studi FTII</h3>
-                <ul style="margin-top:0.85rem;space-y:0.4rem;font-size:0.88rem;color:var(--ink-2);list-style:none;padding:0;">
+                <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Cakupan</p>
+                <h3 style="margin-top:0.45rem;font-size:1.1rem;font-weight:600;">5 Program Studi FTII</h3>
+                <ul style="margin-top:0.75rem;font-size:0.86rem;color:var(--ink-2);list-style:none;padding:0;">
                     <li style="padding:0.25rem 0;border-bottom:1px solid var(--line);">Teknik Informatika</li>
                     <li style="padding:0.25rem 0;border-bottom:1px solid var(--line);">Sistem &amp; Teknologi Informasi</li>
                     <li style="padding:0.25rem 0;border-bottom:1px solid var(--line);">Teknik Elektro</li>
@@ -246,12 +236,11 @@
                 </ul>
             </div>
 
-            {{-- Bento 4: Interactive Role Switcher --}}
             <div id="peran" class="px-tile px-col-8">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
                     <div>
-                        <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Alur Terintegrasi</p>
-                        <h3 style="margin-top:0.35rem;font-size:1.2rem;font-weight:600;">Lihat peran di dalam sistem</h3>
+                        <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Alur Pengguna</p>
+                        <h3 style="margin-top:0.3rem;font-size:1.15rem;font-weight:600;">Peran dalam sistem</h3>
                     </div>
                     <div class="px-tabs" role="tablist" aria-label="Pilih peran pengguna">
                         <button type="button" class="px-tab is-active" data-role-tab="mhs">Mahasiswa</button>
@@ -260,22 +249,22 @@
                     </div>
                 </div>
 
-                <div id="role-panel" style="margin-top:1.35rem;padding-top:1.25rem;border-top:1px solid var(--line);">
-                    <p id="role-title" style="font-weight:600;font-size:1.05rem;color:var(--ink);"></p>
-                    <p id="role-desc" style="margin-top:0.45rem;font-size:0.92rem;color:var(--ink-2);line-height:1.6;"></p>
-                    <div id="role-bullets" style="margin-top:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;"></div>
+                <div id="role-panel" style="margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid var(--line);">
+                    <p id="role-title" style="font-weight:600;font-size:1rem;color:var(--ink);"></p>
+                    <p id="role-desc" style="margin-top:0.35rem;font-size:0.88rem;color:var(--ink-2);line-height:1.55;"></p>
+                    <div id="role-bullets" style="margin-top:0.9rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.65rem;"></div>
                 </div>
             </div>
         </div>
     </section>
 </main>
 
-<footer style="border-top:1px solid var(--line);padding:2rem 0;font-size:0.85rem;color:var(--ink-3);">
+<footer style="border-top:1px solid var(--line);padding:1.75rem 0;font-size:0.82rem;color:var(--ink-3);">
     <div class="px-wrap" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
-        <p>Cegah Sebelum Terlambat • Capstone Project FTII UHAMKA</p>
+        <p>Cegah Sebelum Terlambat • FTII UHAMKA</p>
         <div style="display:flex;gap:1.5rem;">
             <a href="{{ route('metodologi') }}" style="color:var(--ink-2);text-decoration:none;">Metodologi</a>
-            <a href="{{ route('tiket.form') }}" style="color:var(--ink-2);text-decoration:none;">E-Ticket Akun</a>
+            <a href="{{ route('tiket.form') }}" style="color:var(--ink-2);text-decoration:none;">E-Ticket</a>
             <a href="{{ route('login') }}" style="color:var(--ink-2);text-decoration:none;">Masuk</a>
         </div>
     </div>
@@ -285,19 +274,19 @@
 document.addEventListener('DOMContentLoaded', function () {
     const roles = {
         mhs: {
-            title: 'Pantau nilai berjalan & kejar target UAS minimal',
-            desc: 'Mahasiswa mengimpor KHS (CSV/Excel/PDF) atau mengisi langsung nilai UTS, tugas, dan kehadiran untuk mengetahui posisi nilai sebelum UAS.',
-            items: ['Input Cepat & Cek Berkala', 'Target UAS Minimal (U_min)', 'Pengingat Email Otomatis']
+            title: 'Pantau nilai berjalan & target 20 SKS pengayaan',
+            desc: 'Impor KHS (CSV/XLSX/PDF) atau isi nilai langsung untuk melihat target UAS minimal dan status wajib PKM.',
+            items: ['Input Cepat & Proyeksi N', 'Target UAS Minimal (U_min)', 'Pelacak 20 SKS & Wajib PKM']
         },
         dpa: {
-            title: 'Deteksi dini mahasiswa bimbingan & catat tindak lanjut',
-            desc: 'Dosen Pembimbing Akademik menerima notifikasi eskalasi risiko tinggi, menilai keaktifan bimbingan, dan mendokumentasikan catatan pertemuan.',
-            items: ['Ringkasan Kohor Mahasiswa', 'Penilaian Keaktifan & TA', 'Log Tindak Lanjut Bimbingan']
+            title: 'Deteksi dini bimbingan & catat tindak lanjut',
+            desc: 'Pantau mahasiswa yang memberi izin, terima notifikasi risiko tinggi, dan dokumentasikan pertemuan bimbingan.',
+            items: ['Ringkasan Kohor & Tren', 'Progres 20 SKS Pengayaan', 'Catatan & Status Bimbingan']
         },
         admin: {
-            title: 'Verifikasi E-Ticket & audit akses terpusat',
-            desc: 'Sekretariat memverifikasi pengajuan akun mahasiswa/DPA via E-Ticket (dengan notifikasi email otomatis), menetapkan DPA, dan memantau log akses.',
-            items: ['Persetujuan E-Ticket + Email', 'Penetapan DPA Mahasiswa', 'Audit Catatan Akses NIM']
+            title: 'Kelola akun, E-Ticket, model, dan audit akses',
+            desc: 'Verifikasi pengajuan akun, latih model ML pada data historis anonim, dan pantau log akses NIM.',
+            items: ['Persetujuan E-Ticket + Email', 'Manajemen Akun & DPA', 'Evaluasi Model & Log Akses']
         }
     };
 
@@ -313,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
         title.textContent = r.title;
         desc.textContent = r.desc;
         bullets.innerHTML = r.items.map(item =>
-            '<div style="padding:0.6rem 0.8rem;border-radius:8px;background:var(--sunken);border:1px solid var(--line);font-size:0.84rem;color:var(--ink);">' + item + '</div>'
+            '<div style="padding:0.55rem 0.75rem;border-radius:8px;background:var(--sunken);border:1px solid var(--line);font-size:0.82rem;color:var(--ink);">' + item + '</div>'
         ).join('');
     }
 
