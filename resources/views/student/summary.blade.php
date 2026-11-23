@@ -101,20 +101,20 @@
         </form>
     </section>
 @else
-    <div class="mt-10 grid gap-10 lg:grid-cols-12">
-        <div class="lg:col-span-8">
+    <div class="mt-8 grid gap-8 lg:grid-cols-12" style="align-items:start;">
+        <div class="rounded-md border border-line bg-surface lg:col-span-8" style="padding:1.75rem;">
             <x-risk-panel :result="$latest" :thresholds="$thresholds" :version="$version?->version" />
         </div>
 
-        <aside class="space-y-6 lg:col-span-4">
+        <aside class="lg:col-span-4" style="display:flex; flex-direction:column; gap:1rem;">
             <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="per-semester">
                 <div class="flex items-center justify-between gap-2">
-                    <h2 id="per-semester" class="text-lg font-medium">Per semester</h2>
+                    <h2 id="per-semester" class="text-base font-medium">Per semester</h2>
                     <a href="{{ route('mhs.riwayat') }}" class="text-xs font-medium text-accent hover:underline">Riwayat &rarr;</a>
                 </div>
                 <ul class="mt-3 divide-y divide-line">
                     @foreach ($results->sortByDesc('semester') as $r)
-                        <li class="flex items-center justify-between gap-3 py-2">
+                        <li class="flex items-center justify-between gap-3 py-2.5">
                             <span class="num text-sm">Sem {{ $r->semester }}</span>
                             <span class="flex items-center gap-2.5">
                                 <span class="mono num text-xs text-ink-2">{{ \App\Support\Fmt::num($r->features['ips'] ?? 0) }}</span>
@@ -127,7 +127,7 @@
 
             <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="status-dpa">
                 <div class="flex items-center justify-between gap-2">
-                    <h2 id="status-dpa" class="text-lg font-medium">Izin DPA</h2>
+                    <h2 id="status-dpa" class="text-base font-medium">Izin DPA</h2>
                     <a href="{{ route('mhs.privasi') }}" class="text-xs font-medium text-accent hover:underline">Atur &rarr;</a>
                 </div>
                 @if (! $dpa)
@@ -146,8 +146,8 @@
 
             @if ($reminders->isNotEmpty())
                 <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="pengingat">
-                    <h2 id="pengingat" class="text-lg font-medium">Pengingat</h2>
-                    <div class="mt-3 space-y-3">
+                    <h2 id="pengingat" class="text-base font-medium">Pengingat</h2>
+                    <div class="mt-3" style="display:flex; flex-direction:column; gap:0.75rem;">
                         @foreach ($reminders as $rem)
                             <div class="text-sm">
                                 <p class="text-xs text-ink-3">
@@ -181,17 +181,17 @@
     </div>
 
     @if ($currentCourses->isNotEmpty())
-        <section class="mt-12 border-t border-line pt-8" aria-labelledby="input-cepat">
+        <section class="mt-10 rounded-md border border-line bg-surface" style="padding:1.75rem;" aria-labelledby="input-cepat">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 id="input-cepat" class="text-2xl">Input Cepat &amp; Target UAS (Sem {{ $latest->semester }})</h2>
+                    <h2 id="input-cepat" class="text-xl font-medium">Input Cepat &amp; Target UAS (Sem {{ $latest->semester }})</h2>
                     <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai untuk melihat proyeksi N &amp; UAS minimal (C: 56 / B: 68).</p>
                 </div>
             </div>
 
             <form method="POST" action="{{ route('mhs.input-cepat') }}" class="mt-5">
                 @csrf
-                <div class="overflow-x-auto rounded-md border border-line bg-surface/40">
+                <div class="overflow-x-auto rounded-md border border-line bg-bg">
                     <table class="tbl w-full">
                         <thead>
                             <tr>
@@ -255,7 +255,7 @@
                 </div>
             </form>
 
-            <details class="mt-6 rounded-md border border-line bg-surface p-5">
+            <details class="mt-6 rounded-md border border-line bg-bg p-5">
                 <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">+ Tambah Mata Kuliah Baru</summary>
                 <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-4">
                     @csrf
@@ -263,7 +263,7 @@
                         <label for="add-semester" class="label m-0 text-sm">Semester</label>
                         <input id="add-semester" type="number" name="semester" min="1" max="14" value="{{ $latest->semester }}" class="input h-9 w-20 mono text-center text-sm" required>
                     </div>
-                    <div class="overflow-x-auto rounded-md border border-line bg-bg">
+                    <div class="overflow-x-auto rounded-md border border-line bg-surface">
                         <table class="tbl w-full">
                             <thead>
                                 <tr>
