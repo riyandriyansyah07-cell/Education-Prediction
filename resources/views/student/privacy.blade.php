@@ -3,87 +3,79 @@
 @section('title', 'Privasi dan izin')
 
 @section('content')
-<h1 class="rise text-3xl sm:text-4xl">Privasi dan izin</h1>
-<p class="rise mt-2 max-w-[60ch] text-ink-2" style="--i: 1">Kamu yang memutuskan siapa yang melihat hasil risikomu. Setiap akses tercatat dan bisa kamu baca di Catatan akses.</p>
+<h1 class="rise text-3xl sm:text-4xl">Privasi &amp; izin</h1>
+<p class="rise mt-1 text-ink-2" style="--i: 1">Atur akses DPA dan notifikasi pengingat.</p>
 
-<div class="mt-8"><x-flow :current="'privasi'" :done="$consent?->granted ? ['privasi'] : []" /></div>
-
-<div class="mt-12 grid gap-14 lg:grid-cols-12">
-    <section class="lg:col-span-7" aria-labelledby="izin-dpa">
-        <h2 id="izin-dpa" class="text-2xl">Izin untuk DPA</h2>
+<div class="mt-10 grid gap-8 lg:grid-cols-12">
+    <section class="rounded-md border border-line bg-surface p-6 lg:col-span-7" aria-labelledby="izin-dpa">
+        <h2 id="izin-dpa" class="text-xl font-medium">Izin untuk DPA</h2>
         @if (! $dpa)
-            <p class="mt-4 text-ink-2">Belum ada DPA yang ditetapkan untukmu. Hubungi sekretariat FTII agar DPA-mu didaftarkan.</p>
+            <p class="mt-3 text-sm text-ink-2">DPA belum ditetapkan. Hubungi sekretariat FTII.</p>
         @else
-            <p class="mt-4 text-lg">{{ $dpa->name }}</p>
-            <p class="mt-2 max-w-[56ch] text-ink-2">
-                @if ($consent?->granted)
-                    DPA boleh melihat tingkat risiko dan faktor utamamu sejak {{ $consent->changed_at->translatedFormat('j F Y, H:i') }}.
-                @elseif ($consent)
-                    Kamu mencabut izin pada {{ $consent->changed_at->translatedFormat('j F Y, H:i') }}. DPA tidak bisa melihat apa pun tentang hasilmu.
-                @else
-                    Kamu belum memberi izin. DPA tidak bisa melihat apa pun tentang hasilmu.
-                @endif
-            </p>
-
-            <form method="POST" action="{{ route('mhs.privasi.izin') }}" class="mt-5">
-                @csrf
-                @if ($consent?->granted)
-                    <input type="hidden" name="granted" value="0">
-                    <button type="submit" class="btn btn-quiet">Cabut izin DPA</button>
-                @else
-                    <input type="hidden" name="granted" value="1">
-                    <button type="submit" class="btn btn-primary">Berikan izin ke DPA</button>
-                @endif
-            </form>
-
-            @if ($consent?->granted)
-                <div class="mt-5 rounded-md border border-ok/40 bg-ok/10 px-4 py-3 text-sm text-ink">
-                    Izin aktif. Setiap kali DPA membuka datamu, aktivitasnya tercatat di <a href="{{ route('mhs.catatan') }}" class="font-medium text-accent hover:underline">Catatan akses</a>.
-                </div>
-            @endif
-
-            <dl class="mt-8 grid gap-6 sm:grid-cols-2">
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-md border border-line bg-bg p-4">
                 <div>
-                    <dt class="font-medium">Yang bisa dilihat DPA</dt>
-                    <dd class="mt-1 text-sm text-ink-2">Nama dan NIM, tingkat risiko, skor, progres 20 SKS pengayaan, dan faktor utama per semester.</dd>
+                    <p class="font-medium">{{ $dpa->name }}</p>
+                    <p class="mt-0.5 text-xs text-ink-2">
+                        @if ($consent?->granted)
+                            <span style="color:var(--ok);">Izin aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
+                        @elseif ($consent)
+                            Izin dicabut &middot; {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
+                        @else
+                            Belum diizinkan
+                        @endif
+                    </p>
                 </div>
-                <div>
-                    <dt class="font-medium">Yang tidak pernah terlihat</dt>
-                    <dd class="mt-1 text-sm text-ink-2">Berkas asli yang kamu unggah. Kamu juga bisa mencabut izin kapan saja.</dd>
+
+                <form method="POST" action="{{ route('mhs.privasi.izin') }}">
+                    @csrf
+                    @if ($consent?->granted)
+                        <input type="hidden" name="granted" value="0">
+                        <button type="submit" class="btn btn-quiet btn-sm">Cabut izin</button>
+                    @else
+                        <input type="hidden" name="granted" value="1">
+                        <button type="submit" class="btn btn-primary btn-sm">Berikan izin</button>
+                    @endif
+                </form>
+            </div>
+
+            <div class="mt-5 grid gap-4 sm:grid-cols-2 text-xs text-ink-2">
+                <div class="rounded-md border border-line bg-bg p-3">
+                    <p class="font-medium text-ink">Terlihat oleh DPA</p>
+                    <p class="mt-1">Nama, NIM, skor risiko, faktor utama, dan progres 20 SKS pengayaan.</p>
                 </div>
-            </dl>
+                <div class="rounded-md border border-line bg-bg p-3">
+                    <p class="font-medium text-ink">Privasi terjaga</p>
+                    <p class="mt-1">Berkas asli tidak disimpan; setiap akses DPA tercatat di <a href="{{ route('mhs.catatan') }}" class="text-accent hover:underline">Catatan akses</a>.</p>
+                </div>
+            </div>
         @endif
     </section>
 
-    <section class="border-t border-line pt-10 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0" aria-labelledby="pengingat">
-        <h2 id="pengingat" class="text-2xl">Pengingat</h2>
-        <p class="mt-2 text-sm text-ink-2">Dikirim saat risiko semester terbaru sedang atau tinggi.</p>
-        <form method="POST" action="{{ route('mhs.privasi.pengingat') }}" class="mt-5 space-y-5">
+    <section class="rounded-md border border-line bg-surface p-6 lg:col-span-5" aria-labelledby="pengingat">
+        <h2 id="pengingat" class="text-xl font-medium">Pengingat risiko</h2>
+        <form method="POST" action="{{ route('mhs.privasi.pengingat') }}" class="mt-4 space-y-4">
             @csrf
-            <label class="flex items-start gap-3">
-                <input type="checkbox" name="remind_in_app" value="1" class="mt-1 size-4 accent-[var(--accent)]" @checked(old('remind_in_app', $settings->remind_in_app))>
-                <span>Tampilkan di aplikasi<span class="block text-sm text-ink-2">Muncul di Ringkasan risiko.</span></span>
+            <label class="flex items-center gap-3 text-sm">
+                <input type="checkbox" name="remind_in_app" value="1" class="size-4 accent-[var(--accent)]" @checked(old('remind_in_app', $settings->remind_in_app))>
+                <span>Notifikasi di aplikasi</span>
             </label>
-            <label class="flex items-start gap-3">
-                <input type="checkbox" name="remind_email" value="1" class="mt-1 size-4 accent-[var(--accent)]" @checked(old('remind_email', $settings->remind_email))>
-                <span>Kirim lewat email<span class="block text-sm text-ink-2">Layanan email bersifat opsional. Pengingat di aplikasi tetap jalan tanpanya.</span></span>
+            <label class="flex items-center gap-3 text-sm">
+                <input type="checkbox" name="remind_email" value="1" class="size-4 accent-[var(--accent)]" @checked(old('remind_email', $settings->remind_email))>
+                <span>Kirim ke email saat risiko Sedang/Tinggi</span>
             </label>
             <div>
-                <label for="email" class="label">Alamat email</label>
-                <input id="email" name="email" type="email" autocomplete="email" class="input" value="{{ old('email', $user->email) }}" aria-describedby="@error('email') email-error @enderror">
-                @error('email')<p id="email-error" class="field-error" role="alert">{{ $message }}</p>@enderror
+                <label for="email" class="label">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email" class="input" placeholder="nama@email.com" value="{{ old('email', $user->email) }}">
+                @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
             </div>
-            <button type="submit" class="btn btn-primary">Simpan pengingat</button>
+            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
         </form>
     </section>
 </div>
 
-<section class="mt-16 border-t border-line pt-10" aria-labelledby="data-tersimpan">
-    <h2 id="data-tersimpan" class="text-2xl">Yang tersimpan tentang dirimu</h2>
-    <ul class="mt-4 grid max-w-3xl gap-3 text-ink-2">
-        <li>Data akademikmu diikat dengan kunci internal (student_ref), dan NIM tidak pernah dikirim keluar ke layanan Machine Learning maupun API LLM.</li>
-        <li>Berkas yang kamu unggah dibaca, diperiksa, lalu dibuang. Yang disimpan hanya mata kuliah, SKS, komponen nilai, dan kehadiran yang lolos pemeriksaan.</li>
-        <li>Admin sekretariat tidak melihat detail nilai mata kuliahmu, namun dapat melihat NIM pada log audit akses untuk keperluan keamanan sistem.</li>
-    </ul>
-</section>
+<div class="mt-8 flex flex-wrap gap-3 text-xs text-ink-3">
+    <span class="rounded border border-line bg-surface px-3 py-1.5">NIM disamarkan (HMAC-SHA256)</span>
+    <span class="rounded border border-line bg-surface px-3 py-1.5">Zero-PII ke API AI</span>
+    <span class="rounded border border-line bg-surface px-3 py-1.5">Berkas unggahan tidak disimpan</span>
+</div>
 @endsection

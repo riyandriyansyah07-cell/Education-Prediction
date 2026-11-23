@@ -6,7 +6,7 @@
     $done = array_values(array_filter([
         $hasData ? 'impor' : null,
         $latest ? 'risiko' : null,
-        $consent ? 'privasi' : null,
+        $consent?->granted ? 'privasi' : null,
     ]));
     $thresholds = $version?->params ?? \App\Support\RiskModel::DEFAULT_THRESHOLDS;
     $currentCourses = $currentCourses ?? collect();
@@ -17,31 +17,33 @@
 <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
         <h1 class="rise text-3xl sm:text-4xl">Ringkasan risiko</h1>
-        <p class="rise mt-2 text-ink-2" style="--i: 1">Halo, {{ strtok($user->name, ' ') }}. Ini posisi dan proyeksi akademikmu menurut data terbaru.</p>
+        <p class="rise mt-1 text-ink-2" style="--i: 1">Halo, {{ strtok($user->name, ' ') }}.</p>
     </div>
     @if ($latest)
         <div class="no-print flex flex-wrap gap-2">
-            <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm">Cara risiko dihitung</a>
+            <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm">Metodologi</a>
             <form method="POST" action="{{ route('mhs.hitung') }}">
                 @csrf
-                <button class="btn btn-quiet btn-sm" type="submit">Hitung ulang</button>
+                <button class="btn btn-primary btn-sm" type="submit">Hitung ulang</button>
             </form>
         </div>
     @endif
 </div>
 
-<div class="mt-8">
-    <x-flow :done="$done" :current="! $hasData ? 'impor' : (! $consent ? 'privasi' : 'risiko')" />
-</div>
+@if (! $hasData || ! $consent?->granted)
+    <div class="mt-6">
+        <x-flow :done="$done" :current="! $hasData ? 'impor' : 'privasi'" />
+    </div>
+@endif
 
 @if (! $hasData)
-    <section class="rise mt-10 rounded-md border border-line-strong bg-surface p-6 sm:p-8" style="--i: 2">
+    <section class="rise mt-8 rounded-md border border-line-strong bg-surface p-6 sm:p-8" style="--i: 2">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h2 class="text-2xl">Cek Risiko Berkala Langsung</h2>
-                <p class="mt-1 max-w-[62ch] text-sm text-ink-2">Langsung masukkan mata kuliah semester berjalan di bawah ini untuk menghitung proyeksi nilai, target UAS minimal (U_min), dan evaluasi AI tanpa harus membuat berkas CSV/Excel terlebih dahulu.</p>
+                <h2 class="text-2xl">Input Mata Kuliah</h2>
+                <p class="mt-1 text-sm text-ink-2">Isi nilai semester berjalan untuk langsung melihat skor risiko dan target UAS minimal.</p>
             </div>
-            <a href="{{ route('mhs.impor') }}" class="btn btn-quiet btn-sm"><x-icon name="upload-simple" /> Impor Riwayat Lengkap (CSV/PDF)</a>
+            <a href="{{ route('mhs.impor') }}" class="btn btn-quiet btn-sm"><x-icon name="upload-simple" /> Impor CSV / PDF</a>
         </div>
 
         @if ($errors->any())
@@ -53,7 +55,7 @@
         <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-6">
             @csrf
             <div class="mb-5 flex flex-wrap items-center gap-3">
-                <label for="manual-semester" class="label m-0">Semester berjalan:</label>
+                <label for="manual-semester" class="label m-0">Semester</label>
                 <input id="manual-semester" type="number" name="semester" min="1" max="14" value="{{ old('semester', 7) }}" class="input h-9 w-24 mono" required>
             </div>
 
@@ -61,13 +63,13 @@
                 <table class="tbl w-full">
                     <thead>
                         <tr>
-                            <th class="px-3 py-2.5">Kode MK</th>
-                            <th class="px-3 py-2.5">Nama Mata Kuliah</th>
+                            <th class="px-3 py-2.5">Kode</th>
+                            <th class="px-3 py-2.5">Mata Kuliah</th>
                             <th class="px-3 py-2.5 text-center">SKS</th>
                             <th class="px-3 py-2.5 text-center">Hadir (%)</th>
                             <th class="px-3 py-2.5 text-center">UTS</th>
                             <th class="px-3 py-2.5 text-center">Tugas</th>
-                            <th class="px-3 py-2.5">Sumber Tugas</th>
+                            <th class="px-3 py-2.5">Sumber</th>
                             <th class="px-3 py-2.5"></th>
                         </tr>
                     </thead>
@@ -81,9 +83,9 @@
                             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" value="{{ old('courses.0.assignment_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                             <td class="px-3 py-2.5">
                                 <select name="courses[0][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                    <option value="mandiri">Isian sendiri</option>
-                                    <option value="olu">Rekap OLU</option>
-                                    <option value="gdrive">Rekap GDrive</option>
+                                    <option value="mandiri">Mandiri</option>
+                                    <option value="olu">OLU</option>
+                                    <option value="gdrive">GDrive</option>
                                 </select>
                             </td>
                             <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
@@ -93,97 +95,101 @@
             </div>
 
             <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <button type="button" class="btn btn-quiet btn-sm" onclick="addManualRow()">+ Tambah Baris Mata Kuliah</button>
-                <button type="submit" class="btn btn-primary">Simpan &amp; Hitung Risiko Sekarang</button>
+                <button type="button" class="btn btn-quiet btn-sm" onclick="addManualRow()">+ Tambah Baris</button>
+                <button type="submit" class="btn btn-primary">Simpan &amp; Hitung</button>
             </div>
         </form>
     </section>
 @else
-    <div class="mt-12 grid gap-12 lg:grid-cols-12">
+    <div class="mt-10 grid gap-10 lg:grid-cols-12">
         <div class="lg:col-span-8">
             <x-risk-panel :result="$latest" :thresholds="$thresholds" :version="$version?->version" />
         </div>
 
-        <aside class="space-y-10 lg:col-span-4">
-            <section aria-labelledby="per-semester">
-                <h2 id="per-semester" class="text-xl">Per semester</h2>
-                <ul class="mt-4 divide-y divide-line">
+        <aside class="space-y-6 lg:col-span-4">
+            <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="per-semester">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 id="per-semester" class="text-lg font-medium">Per semester</h2>
+                    <a href="{{ route('mhs.riwayat') }}" class="text-xs font-medium text-accent hover:underline">Riwayat &rarr;</a>
+                </div>
+                <ul class="mt-3 divide-y divide-line">
                     @foreach ($results->sortByDesc('semester') as $r)
-                        <li class="flex items-center justify-between gap-3 py-2.5">
-                            <span class="num">Semester {{ $r->semester }}</span>
-                            <span class="flex items-center gap-3">
-                                <span class="mono num text-ink-2">{{ \App\Support\Fmt::num($r->features['ips'] ?? 0) }}</span>
+                        <li class="flex items-center justify-between gap-3 py-2">
+                            <span class="num text-sm">Sem {{ $r->semester }}</span>
+                            <span class="flex items-center gap-2.5">
+                                <span class="mono num text-xs text-ink-2">{{ \App\Support\Fmt::num($r->features['ips'] ?? 0) }}</span>
                                 <x-risk :level="$r->level" />
                             </span>
                         </li>
                     @endforeach
                 </ul>
-                <a href="{{ route('mhs.riwayat') }}" class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">Riwayat lengkap <x-icon name="arrow-right" size="size-4" /></a>
             </section>
 
-            @if ($snapshots->isNotEmpty())
-                <section aria-labelledby="jejak-cek" class="border-t border-line pt-8">
-                    <h2 id="jejak-cek" class="text-xl">Jejak cek berkala</h2>
-                    <ul class="mt-3 divide-y divide-line text-sm">
-                        @foreach ($snapshots as $snap)
-                            <li class="py-2.5">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="font-medium">{{ $snap->phaseLabel() }}</span>
-                                    <span class="mono text-xs text-ink-2">Skor {{ \App\Support\Fmt::num($snap->score, 1) }} ({{ $snap->level }})</span>
-                                </div>
-                                <p class="text-xs text-ink-3">{{ $snap->checked_at?->translatedFormat('j M Y, H:i') }} &middot; {{ $snap->components_count }}/4 komponen</p>
-                            </li>
-                        @endforeach
-                    </ul>
-                </section>
-            @endif
-
-            <section aria-labelledby="status-dpa" class="border-t border-line pt-8">
-                <h2 id="status-dpa" class="text-xl">Izin untuk DPA</h2>
+            <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="status-dpa">
+                <div class="flex items-center justify-between gap-2">
+                    <h2 id="status-dpa" class="text-lg font-medium">Izin DPA</h2>
+                    <a href="{{ route('mhs.privasi') }}" class="text-xs font-medium text-accent hover:underline">Atur &rarr;</a>
+                </div>
                 @if (! $dpa)
-                    <p class="mt-3 text-ink-2">Belum ada DPA yang ditetapkan untukmu. Sekretariat bisa mengaturnya.</p>
+                    <p class="mt-2 text-sm text-ink-2">DPA belum ditetapkan.</p>
                 @else
-                    <p class="mt-3">{{ $dpa->name }}</p>
-                    <p class="mt-1 text-ink-2">
+                    <p class="mt-2 text-sm font-medium">{{ $dpa->name }}</p>
+                    <p class="mt-1 text-xs text-ink-2">
                         @if ($consent?->granted)
-                            Boleh melihat hasilmu sejak {{ $consent->changed_at->translatedFormat('j F Y') }}.
-                        @elseif ($consent)
-                            Izin dicabut pada {{ $consent->changed_at->translatedFormat('j F Y') }}. DPA tidak bisa melihat hasilmu.
+                            <span style="color:var(--ok);">Aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y') }}
                         @else
-                            Belum diizinkan. DPA tidak bisa melihat hasilmu.
+                            Belum diizinkan
                         @endif
                     </p>
-                    <a href="{{ route('mhs.privasi') }}" class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">Atur izin <x-icon name="arrow-right" size="size-4" /></a>
                 @endif
             </section>
 
-            <section aria-labelledby="pengingat" class="border-t border-line pt-8">
-                <h2 id="pengingat" class="text-xl">Pengingat</h2>
-                @forelse ($reminders as $rem)
-                    <div class="mt-4">
-                        <p class="text-sm text-ink-3">
-                            {{ $rem->created_at->translatedFormat('j F Y, H:i') }}
-                            @if (in_array($rem->id, $unreadIds, true)) <span class="ml-1 font-medium text-accent">Baru</span> @endif
-                        </p>
-                        <p class="mt-0.5">{{ $rem->message }}</p>
+            @if ($reminders->isNotEmpty())
+                <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="pengingat">
+                    <h2 id="pengingat" class="text-lg font-medium">Pengingat</h2>
+                    <div class="mt-3 space-y-3">
+                        @foreach ($reminders as $rem)
+                            <div class="text-sm">
+                                <p class="text-xs text-ink-3">
+                                    {{ $rem->created_at->translatedFormat('j M, H:i') }}
+                                    @if (in_array($rem->id, $unreadIds, true)) <span class="ml-1 font-medium text-accent">Baru</span> @endif
+                                </p>
+                                <p class="mt-0.5 text-ink-2">{{ $rem->message }}</p>
+                            </div>
+                        @endforeach
                     </div>
-                @empty
-                    <p class="mt-3 text-ink-2">Belum ada pengingat. Pengingat muncul tiap dua minggu atau saat risikomu sedang/tinggi.</p>
-                @endforelse
-            </section>
+                </section>
+            @endif
+
+            @if ($snapshots->isNotEmpty())
+                <details class="rounded-md border border-line bg-surface p-5">
+                    <summary class="cursor-pointer text-sm font-medium text-ink">Jejak cek berkala ({{ $snapshots->count() }})</summary>
+                    <ul class="mt-3 divide-y divide-line text-xs">
+                        @foreach ($snapshots as $snap)
+                            <li class="py-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-medium">{{ $snap->phaseLabel() }}</span>
+                                    <span class="mono text-ink-2">{{ \App\Support\Fmt::num($snap->score, 1) }} ({{ $snap->level }})</span>
+                                </div>
+                                <p class="text-ink-3">{{ $snap->checked_at?->translatedFormat('j M Y, H:i') }} &middot; {{ $snap->components_count }}/4 komponen</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </details>
+            @endif
         </aside>
     </div>
 
     @if ($currentCourses->isNotEmpty())
-        <section class="mt-14 border-t border-line pt-10" aria-labelledby="input-cepat">
+        <section class="mt-12 border-t border-line pt-8" aria-labelledby="input-cepat">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 id="input-cepat" class="text-2xl">Cek Berkala &amp; Target UAS Minimal (Semester {{ $latest->semester }})</h2>
-                    <p class="mt-1 max-w-[70ch] text-sm text-ink-2">Perbarui nilai UTS, rata-rata tugas yang sudah dinilai, atau nilai UAS untuk melihat proyeksi nilai sementara (N) dan nilai UAS minimal (U_min) agar lulus C (56) atau B (68).</p>
+                    <h2 id="input-cepat" class="text-2xl">Input Cepat &amp; Target UAS (Sem {{ $latest->semester }})</h2>
+                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai untuk melihat proyeksi N &amp; UAS minimal (C: 56 / B: 68).</p>
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('mhs.input-cepat') }}" class="mt-6">
+            <form method="POST" action="{{ route('mhs.input-cepat') }}" class="mt-5">
                 @csrf
                 <div class="overflow-x-auto rounded-md border border-line bg-surface/40">
                     <table class="tbl w-full">
@@ -192,13 +198,13 @@
                                 <th class="min-w-[14rem] px-3 py-3">Mata Kuliah</th>
                                 <th class="px-3 py-3 text-center">SKS</th>
                                 <th class="px-3 py-3 text-center">Hadir (%)</th>
-                                <th class="px-3 py-3 text-center">UTS (25%)</th>
-                                <th class="px-3 py-3 text-center">Tugas (25%)</th>
-                                <th class="px-3 py-3">Sumber Tugas</th>
-                                <th class="px-3 py-3 text-center">UAS (40%)</th>
+                                <th class="px-3 py-3 text-center">UTS</th>
+                                <th class="px-3 py-3 text-center">Tugas</th>
+                                <th class="px-3 py-3">Sumber</th>
+                                <th class="px-3 py-3 text-center">UAS</th>
                                 <th class="px-4 py-3 text-center whitespace-nowrap">Proyeksi N</th>
-                                <th class="px-4 py-3 text-center whitespace-nowrap">U_min (C / B)</th>
-                                <th class="px-3 py-3 text-center">Risiko MK</th>
+                                <th class="px-4 py-3 text-center whitespace-nowrap">UAS Min</th>
+                                <th class="px-3 py-3 text-center">Risiko</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -207,7 +213,7 @@
                                     <td class="px-3 py-3">
                                         <input type="hidden" name="courses[{{ $idx }}][id]" value="{{ $c->id }}">
                                         <span class="font-medium">{{ $c->course_name }}</span>
-                                        <span class="mono mt-0.5 block text-xs text-ink-3">{{ $c->course_code }} &middot; {{ $c->trustLabel() }}</span>
+                                        <span class="mono mt-0.5 block text-xs text-ink-3">{{ $c->course_code }}</span>
                                     </td>
                                     <td class="num px-3 py-3 text-center">{{ $c->credits }}</td>
                                     <td class="px-2 py-3 text-center">
@@ -221,9 +227,9 @@
                                     </td>
                                     <td class="px-2 py-3">
                                         <select name="courses[{{ $idx }}][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                            <option value="mandiri" @selected(($c->assignment_source ?? 'mandiri') === 'mandiri')>Isian sendiri</option>
-                                            <option value="olu" @selected($c->assignment_source === 'olu')>Rekap OLU</option>
-                                            <option value="gdrive" @selected($c->assignment_source === 'gdrive')>Rekap GDrive</option>
+                                            <option value="mandiri" @selected(($c->assignment_source ?? 'mandiri') === 'mandiri')>Mandiri</option>
+                                            <option value="olu" @selected($c->assignment_source === 'olu')>OLU</option>
+                                            <option value="gdrive" @selected($c->assignment_source === 'gdrive')>GDrive</option>
                                         </select>
                                     </td>
                                     <td class="px-2 py-3 text-center">
@@ -234,7 +240,7 @@
                                         @if ($c->min_uas_for_c !== null)
                                             C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }}
                                         @else
-                                            Resmi ({{ $c->grade_input ?? '-' }})
+                                            KHS ({{ $c->grade_input ?? '-' }})
                                         @endif
                                     </td>
                                     <td class="px-3 py-3 text-center whitespace-nowrap"><x-risk :level="$c->course_risk_level ?? 'rendah'" /></td>
@@ -244,30 +250,30 @@
                     </table>
                 </div>
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
-                    <p class="text-xs text-ink-3">Mata kuliah tanpa tugas boleh dikosongkan (dilewati dan tidak dihitung nol).</p>
-                    <button type="submit" class="btn btn-primary btn-sm">Simpan &amp; Hitung Proyeksi</button>
+                    <span class="text-xs text-ink-3">Komponen kosong otomatis dilewati (tidak dihitung 0).</span>
+                    <button type="submit" class="btn btn-primary btn-sm">Simpan &amp; Hitung</button>
                 </div>
             </form>
 
             <details class="mt-6 rounded-md border border-line bg-surface p-5">
-                <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">+ Tambah Mata Kuliah Baru Tanpa Impor File</summary>
+                <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">+ Tambah Mata Kuliah Baru</summary>
                 <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-4">
                     @csrf
                     <div class="mb-4 flex items-center gap-3">
-                        <label for="add-semester" class="label m-0 text-sm">Semester:</label>
+                        <label for="add-semester" class="label m-0 text-sm">Semester</label>
                         <input id="add-semester" type="number" name="semester" min="1" max="14" value="{{ $latest->semester }}" class="input h-9 w-20 mono text-center text-sm" required>
                     </div>
                     <div class="overflow-x-auto rounded-md border border-line bg-bg">
                         <table class="tbl w-full">
                             <thead>
                                 <tr>
-                                    <th class="px-3 py-2.5">Kode MK</th>
-                                    <th class="px-3 py-2.5">Nama Mata Kuliah</th>
+                                    <th class="px-3 py-2.5">Kode</th>
+                                    <th class="px-3 py-2.5">Mata Kuliah</th>
                                     <th class="px-3 py-2.5 text-center">SKS</th>
                                     <th class="px-3 py-2.5 text-center">Hadir (%)</th>
                                     <th class="px-3 py-2.5 text-center">UTS</th>
                                     <th class="px-3 py-2.5 text-center">Tugas</th>
-                                    <th class="px-3 py-2.5">Sumber Tugas</th>
+                                    <th class="px-3 py-2.5">Sumber</th>
                                     <th class="px-3 py-2.5"></th>
                                 </tr>
                             </thead>
@@ -281,9 +287,9 @@
                                     <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                                     <td class="px-3 py-2.5">
                                         <select name="courses[0][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                            <option value="mandiri">Isian sendiri</option>
-                                            <option value="olu">Rekap OLU</option>
-                                            <option value="gdrive">Rekap GDrive</option>
+                                            <option value="mandiri">Mandiri</option>
+                                            <option value="olu">OLU</option>
+                                            <option value="gdrive">GDrive</option>
                                         </select>
                                     </td>
                                     <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
@@ -293,7 +299,7 @@
                     </div>
                     <div class="mt-4 flex flex-wrap justify-between gap-2">
                         <button type="button" class="btn btn-quiet btn-sm" onclick="addManualRow()">+ Tambah Baris</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Simpan Mata Kuliah</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
                     </div>
                 </form>
             </details>
@@ -317,9 +323,9 @@
             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
             <td class="px-3 py-2.5">
                 <select name="courses[${idx}][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                    <option value="mandiri">Isian sendiri</option>
-                    <option value="olu">Rekap OLU</option>
-                    <option value="gdrive">Rekap GDrive</option>
+                    <option value="mandiri">Mandiri</option>
+                    <option value="olu">OLU</option>
+                    <option value="gdrive">GDrive</option>
                 </select>
             </td>
             <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
