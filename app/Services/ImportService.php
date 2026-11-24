@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AcademicRecord;
 use App\Models\ImportBatch;
 use App\Models\User;
+use App\Support\EnrichmentCatalog;
 use App\Support\Grades;
 use App\Support\SheetValidator;
 use Illuminate\Http\UploadedFile;
@@ -76,8 +77,8 @@ class ImportService
     }
 
     /**
-     * Ekstrak baris mata kuliah dari berkas PDF KHS menggunakan skala nilai resmi UHAMKA (Grades::toLetter).
-     * Dipakai bersama oleh alur impor langsung maupun fitur konversi PDF ke Excel/CSV di ImportController.
+     * Ekstrak seluruh baris mata kuliah secara dinamis dari berkas PDF KHS UHAMKA
+     * (berapapun jumlah mata kuliah per semester), termasuk komponen nilai Tugas, UTS, UAS, dan %Hadir jika terisi.
      */
     public function parsePdfTranscript(string $filePath, string $studentUsername = '2303045009'): array
     {
@@ -93,7 +94,7 @@ class ImportService
         $lines = explode("\n", $text);
 
         $rows = [
-            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen'],
+            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen', 'nilai_uts', 'nilai_tugas', 'nilai_uas'],
         ];
 
         $entryYear = 2000 + (int) substr(preg_replace('/[^0-9]/', '', $studentUsername), 0, 2);
@@ -163,28 +164,102 @@ class ImportService
                     $namaMk = $rawName;
                 }
 
-                $nilaiHuruf = 'B';
-                if ($explicitGrade !== '' && in_array($explicitGrade, $validLetters, true)) {
-                    $nilaiHuruf = $explicitGrade;
-                } else {
-                    preg_match_all('/(\d{2,3}[\.,]?\d*)/', $tail, $numbers);
-                    if (! empty($numbers[1])) {
-                        $lastNum = (float) str_replace(',', '.', end($numbers[1]));
-                        if ($lastNum <= 4.0) {
-                            $lastNum *= 25;
-                        }
-                        // Gunakan skala nilai UHAMKA dari Grades::toLetter (A>=80, B>=68, C>=56, D>=45, E<45)
-                        $nilaiHuruf = Grades::toLetter($lastNum);
+                // Ekstrak seluruh token angka pada bagian nilai di belakang nama mata kuliah
+                preg_match_all('/\d+(?:[.,]\d+)?/', $tail, $tokMatches);
+                $tokens = $tokMatches[0] ?? [];
+
+                // Pada KHS UHAMKA, Rata2 selalu berformat desimal titik (mis. 81.85 / 70.00),
+                // sedangkan %Hadir berformat desimal koma (mis. 93,00 / 100,00) setelah Rata2 (atau kosong).
+                $rataIdx = null;
+                foreach ($tokens as $idx => $tok) {
+                    if (preg_match('/^\d+\.\d{2}$/', $tok)) {
+                        $rataIdx = $idx;
                     }
                 }
 
-                $kehadiran = '85.00';
-                if (preg_match_all('/(\d{2,3}[\.,]\d{2})/', $line, $matches)) {
-                    $valStr = str_replace(',', '.', end($matches[1]));
-                    $val = (float) $valStr;
-                    if ($val <= 100 && $val >= 0) {
-                        $kehadiran = (string) $val;
+                $rataVal = null;
+                $hadirVal = null;
+                $componentScores = [];
+
+                if ($rataIdx !== null) {
+                    $rataVal = (float) $tokens[$rataIdx];
+                    $before = array_slice($tokens, 0, $rataIdx);
+                    $after = array_slice($tokens, $rataIdx + 1);
+
+                    // Ambil %Hadir bila tersedia setelah Rata2 (format koma, mis. 93,00 atau 100,00)
+                    if ($after !== []) {
+                        $cand = (float) str_replace(',', '.', (string) end($after));
+                        if ($cand >= 0.0 && $cand <= 100.0) {
+                            $hadirVal = $cand;
+                        }
                     }
+
+                    // Fallback bila ada extractor PDF yang meletakkan %Hadir (koma) di depan Keaktifan
+                    if ($before !== [] && preg_match('/^\d+,\d{2}$/', $before[0])) {
+                        $cand = (float) str_replace(',', '.', $before[0]);
+                        if ($hadirVal === null && $cand >= 0.0 && $cand <= 100.0) {
+                            $hadirVal = $cand;
+                        }
+                        array_shift($before);
+                    }
+
+                    foreach ($before as $rawScore) {
+                        $val = (float) str_replace(',', '.', $rawScore);
+                        if ($val >= 0.0 && $val <= 100.0) {
+                            $componentScores[] = $val;
+                        }
+                    }
+                } else {
+                    // Fallback untuk format PDF lain yang tidak memakai titik 2 desimal pada Rata2
+                    if (preg_match_all('/(\d{2,3},\d{2})/', $tail, $commaMatches)) {
+                        $cand = (float) str_replace(',', '.', (string) end($commaMatches[1]));
+                        if ($cand >= 0.0 && $cand <= 100.0) {
+                            $hadirVal = $cand;
+                        }
+                    }
+                }
+
+                // Petakan komponen [Keaktifan, Tugas, UTS, UAS] secara dinamis sesuai jumlah kolom yang terisi
+                $nilaiTugas = '';
+                $nilaiUts = '';
+                $nilaiUas = '';
+                $countScores = count($componentScores);
+                if ($countScores >= 4) {
+                    // Urutan lengkap KHS UHAMKA: Keaktifan, Tugas, UTS, UAS
+                    $nilaiTugas = $this->formatScore($componentScores[1]);
+                    $nilaiUts = $this->formatScore($componentScores[2]);
+                    $nilaiUas = $this->formatScore($componentScores[3]);
+                } elseif ($countScores === 3) {
+                    // Jika Keaktifan kosong: Tugas, UTS, UAS
+                    $nilaiTugas = $this->formatScore($componentScores[0]);
+                    $nilaiUts = $this->formatScore($componentScores[1]);
+                    $nilaiUas = $this->formatScore($componentScores[2]);
+                } elseif ($countScores === 2) {
+                    // Jika hanya 2 komponen: UTS, UAS
+                    $nilaiUts = $this->formatScore($componentScores[0]);
+                    $nilaiUas = $this->formatScore($componentScores[1]);
+                } elseif ($countScores === 1) {
+                    // Kasus MK Pengayaan yang hanya diisi nilai UAS saja (mis. Pengembangan Profesi)
+                    $nilaiUas = $this->formatScore($componentScores[0]);
+                }
+
+                // Tentukan nilai huruf akhir
+                $nilaiHuruf = 'B';
+                if ($explicitGrade !== '' && in_array($explicitGrade, $validLetters, true)) {
+                    $nilaiHuruf = $explicitGrade;
+                } elseif ($rataVal !== null) {
+                    $nilaiHuruf = Grades::toLetter($rataVal <= 4.0 ? $rataVal * 25 : $rataVal);
+                } elseif ($tokens !== []) {
+                    $lastNum = (float) str_replace(',', '.', (string) end($tokens));
+                    $nilaiHuruf = Grades::toLetter($lastNum <= 4.0 ? $lastNum * 25 : $lastNum);
+                }
+
+                // Bila %Hadir kosong di KHS (umum pada 19 MK Pengayaan non-kelas), jangan ambil Rata2 sebagai kehadiran
+                if ($hadirVal !== null) {
+                    $kehadiran = $this->formatScore($hadirVal);
+                } else {
+                    $enrichment = EnrichmentCatalog::matchCourseName($namaMk);
+                    $kehadiran = ($enrichment && ! $enrichment['is_class_based']) ? '100' : '85';
                 }
 
                 $rows[] = [
@@ -194,10 +269,18 @@ class ImportService
                     $sks,
                     $nilaiHuruf,
                     $kehadiran,
+                    $nilaiUts,
+                    $nilaiTugas,
+                    $nilaiUas,
                 ];
             }
         }
 
         return $rows;
+    }
+
+    private function formatScore(float $val): string
+    {
+        return fmod($val, 1.0) === 0.0 ? (string) (int) $val : (string) round($val, 2);
     }
 }

@@ -247,7 +247,7 @@ final class EnrichmentCatalog
 
     /**
      * Cocokkan nama mata kuliah dari KHS/impor dengan katalog resmi 22 MK Pengayaan FTII UHAMKA.
-     * Otomatis mengabaikan akhiran dalam tanda kurung seperti "(Kompetensi)", "(Pengayaan)", dll.
+     * Otomatis mengabaikan akhiran dalam tanda kurung seperti "(Kompetensi)", "(Komp.)", serta singkatan KHS.
      *
      * @return array<string,mixed>|null
      */
@@ -263,6 +263,10 @@ final class EnrichmentCatalog
             'penelitian 1' => 'penelitian',
             'publikasi 1' => 'publikasi-nasional',
             'empati dan kecedasan sosial' => 'empati-kecerdasan-sosial',
+            'ketrampilan komunikasi' => 'keterampilan-komunikasi',
+            'keteramp berbicara bhs jepan' => 'keterampilan-berbicara-jepang',
+            'keteramp berbicara bhs jepang' => 'keterampilan-berbicara-jepang',
+            'keteramp berbahasa jepang' => 'keterampilan-berbahasa-jepang',
         ];
         if (isset($aliases[$normalized])) {
             return self::find($aliases[$normalized]);
