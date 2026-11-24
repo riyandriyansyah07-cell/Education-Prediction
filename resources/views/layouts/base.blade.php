@@ -16,7 +16,33 @@
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM (NATIVE 60FPS SCROLL + GSAP) === */
+        /* === TRANSISI HALAMAN HALUS (VIEW TRANSITIONS + GSAP + LENIS) === */
+        @view-transition {
+            navigation: auto;
+        }
+        ::view-transition-old(root) {
+            animation: vtOut 160ms cubic-bezier(0.4, 0, 1, 1) both;
+        }
+        ::view-transition-new(root) {
+            animation: vtIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes vtOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes vtIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sidebar {
+            view-transition-name: app-sidebar;
+        }
+        ::view-transition-old(app-sidebar),
+        ::view-transition-new(app-sidebar) {
+            animation: none;
+        }
+
+        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM === */
         :root {
             --bg: #f6f7f9;
             --surface: #ffffff;
@@ -51,8 +77,26 @@
             --bad: #f87171;
         }
 
-        /* Matikan keyframe .rise bawaan app.css agar tidak bentrok dengan GSAP */
         .rise { animation: none !important; }
+
+        #page-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2.5px;
+            width: 100%;
+            background: var(--accent);
+            transform-origin: left center;
+            transform: scaleX(0);
+            opacity: 0;
+            z-index: 9999;
+            pointer-events: none;
+            transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+        }
+        #page-progress.is-loading {
+            opacity: 1;
+            transform: scaleX(0.78);
+        }
 
         body {
             background-color: var(--bg);
@@ -77,7 +121,7 @@
         .btn {
             border-radius: 8px !important;
             font-weight: 500;
-            transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease !important;
+            transition: background-color 140ms ease, border-color 140ms ease, opacity 140ms ease !important;
         }
         .btn:active { opacity: 0.88; }
 
@@ -100,7 +144,7 @@
 
         .nav-link {
             border-radius: 8px !important;
-            transition: background-color 120ms ease, color 120ms ease !important;
+            transition: background-color 140ms ease, color 140ms ease !important;
         }
         .nav-link:hover {
             background: color-mix(in oklab, var(--ink) 5%, transparent) !important;
@@ -130,31 +174,47 @@
             font-weight: 600 !important;
             letter-spacing: 0.01em;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-old(root),
+            ::view-transition-new(root) { animation: none !important; }
+        }
     </style>
 </head>
 <body class="min-h-dvh">
+    <div id="page-progress" aria-hidden="true"></div>
     @yield('body')
 
-    {{-- GSAP + ScrollTrigger + Lenis (smoothWheel nonaktif agar scroll wheel/trackpad tetap native GPU 60fps) --}}
+    {{-- GSAP + ScrollTrigger + Lenis --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
     <script>
         window.addEventListener('DOMContentLoaded', function () {
             var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (reduceMotion) return;
-
             var hasGsap = typeof window.gsap !== 'undefined';
             var hasST = typeof window.ScrollTrigger !== 'undefined';
             var isLanding = Boolean(document.body.dataset.customMotion);
+            var bar = document.getElementById('page-progress');
+            var mainEl = document.querySelector('main');
+
+            // Reset state saat kembali lewat tombol Back browser
+            window.addEventListener('pageshow', function () {
+                if (bar) bar.classList.remove('is-loading');
+                if (mainEl && hasGsap) {
+                    window.gsap.set(mainEl, { opacity: 1, y: 0, clearProps: 'transform,opacity' });
+                }
+            });
+
+            if (reduceMotion) return;
 
             if (hasGsap && hasST) {
                 window.gsap.registerPlugin(window.ScrollTrigger);
                 window.ScrollTrigger.config({ ignoreMobileResize: true });
             }
 
-            // Lenis hanya untuk transisi halus saat klik tautan anchor (#bento, #peran); wheel/trackpad pakai native GPU scroll
-            if (isLanding && typeof window.Lenis !== 'undefined') {
+            // Pasang Lenis di semua halaman (smoothWheel: false agar scroll wheel/trackpad tetap native GPU 60fps)
+            if (typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
                     smoothWheel: false,
                     autoRaf: true
@@ -174,15 +234,54 @@
                 });
             }
 
-            // Animasi masuk super ringan di halaman dasbor
-            if (hasGsap && !isLanding) {
-                var main = document.querySelector('main');
-                if (main) {
-                    window.gsap.from(main, {
+            // Transisi keluar halus dengan GSAP saat berpindah halaman internal
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                var href = a.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) return;
+                if (a.origin !== window.location.origin) return;
+                if (a.href === window.location.href) return;
+
+                if (bar) bar.classList.add('is-loading');
+
+                if (hasGsap && mainEl) {
+                    e.preventDefault();
+                    window.gsap.to(mainEl, {
                         opacity: 0,
-                        duration: 0.22,
-                        ease: 'power1.out',
-                        clearProps: 'opacity'
+                        y: -6,
+                        duration: 0.16,
+                        ease: 'power1.in',
+                        force3D: true,
+                        onComplete: function () {
+                            window.location.href = a.href;
+                        }
+                    });
+                }
+            });
+
+            // Transisi masuk bertahap (GSAP stagger) untuk seluruh halaman dasbor & non-landing
+            if (hasGsap && !isLanding && mainEl) {
+                var blocks = mainEl.querySelectorAll(':scope > div, :scope > section');
+                if (blocks.length) {
+                    window.gsap.from(blocks, {
+                        opacity: 0,
+                        y: 12,
+                        duration: 0.36,
+                        stagger: 0.05,
+                        ease: 'power2.out',
+                        force3D: true,
+                        clearProps: 'transform,opacity'
+                    });
+                } else {
+                    window.gsap.from(mainEl, {
+                        opacity: 0,
+                        y: 10,
+                        duration: 0.32,
+                        ease: 'power2.out',
+                        force3D: true,
+                        clearProps: 'transform,opacity'
                     });
                 }
             }
