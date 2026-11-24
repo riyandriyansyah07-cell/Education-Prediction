@@ -27,14 +27,6 @@ class GuidanceController extends Controller
 
     private const LEVEL_RANK = ['rendah' => 1, 'sedang' => 2, 'tinggi' => 3];
 
-    /**
-     * Revisi 3 (Monitoring DPA):
-     * - Hanya mahasiswa bimbingan yang memberi izin yang tampil.
-     * - Ringkasan kohort per tingkat risiko & per status tindak lanjut.
-     * - Penanda mahasiswa yang naik tingkat risiko dibanding semester lalu.
-     * - Pemberitahuan di dalam aplikasi saat mahasiswa izin naik ke Tinggi.
-     * - Satu log akses per kunjungan daftar bimbingan (bukan per baris mahasiswa).
-     */
     public function index(Request $request): View
     {
         $dpa = $request->user();
@@ -125,7 +117,6 @@ class GuidanceController extends Controller
 
         $rows = $rows->sortBy(fn ($r) => self::ORDER[$r['level']].'|'.$r['student']->name)->values();
 
-        // Perbaikan teknis Revisi 3: Satu log per kunjungan daftar bimbingan, bukan per baris mahasiswa
         AccessLogger::record($dpa, null, 'daftar_bimbingan');
 
         $notifications = $highRiskRefs !== []
@@ -154,7 +145,7 @@ class GuidanceController extends Controller
         ]);
     }
 
-    /** Detail faktor, proyeksi mata kuliah, progres SKS pengayaan, penilaian DPA, dan catatan bimbingan satu mahasiswa. */
+    /** Detail faktor, rincian nilai mata kuliah (mendukung pilih semester ?semester=N), progres SKS pengayaan, dan catatan DPA. */
     public function show(Request $request, User $student): View
     {
         $dpa = $request->user();
@@ -162,15 +153,23 @@ class GuidanceController extends Controller
 
         $ref = $student->student_ref;
         $results = RiskResult::with('modelVersion')->where('student_ref', $ref)->orderBy('semester')->get();
-        $latest = $results->last();
+        $latestResult = $results->last();
+
+        $requestedSemester = $request->integer('semester');
+        $selected = $requestedSemester > 0
+            ? ($results->firstWhere('semester', $requestedSemester) ?? $latestResult)
+            : $latestResult;
+
         $setting = StudentSetting::firstOrCreate(['student_ref' => $ref]);
 
-        $courses = $latest
-            ? AcademicRecord::where('student_ref', $ref)->where('semester', $latest->semester)->orderBy('course_code')->get()
+        $courses = $selected
+            ? AcademicRecord::where('student_ref', $ref)->where('semester', $selected->semester)->orderBy('course_code')->get()
             : collect();
 
         $notes = GuidanceNote::where('student_ref', $ref)->orderByDesc('guidance_date')->orderByDesc('id')->get();
-        $snapshots = RiskSnapshot::where('student_ref', $ref)->orderByDesc('checked_at')->limit(6)->get();
+        $snapshots = $selected
+            ? RiskSnapshot::where('student_ref', $ref)->where('semester', $selected->semester)->orderByDesc('checked_at')->limit(6)->get()
+            : collect();
 
         $enrichmentRecords = Schema::hasTable('enrichment_records')
             ? EnrichmentRecord::where('student_ref', $ref)
@@ -180,7 +179,7 @@ class GuidanceController extends Controller
             : collect();
         $enrichment = EnrichmentCatalog::evaluateProgress(
             $enrichmentRecords,
-            (int) ($latest?->semester ?? max(1, (int) ($enrichmentRecords->max('activity_semester') ?? 1)))
+            (int) ($latestResult?->semester ?? max(1, (int) ($enrichmentRecords->max('activity_semester') ?? 1)))
         );
 
         AccessLogger::record($dpa, $ref, 'detail_faktor');
@@ -188,7 +187,8 @@ class GuidanceController extends Controller
         return view('dpa.show', [
             'student' => $student,
             'results' => $results,
-            'latest' => $latest,
+            'latest' => $selected,
+            'latestSemester' => $latestResult?->semester,
             'setting' => $setting,
             'courses' => $courses,
             'notes' => $notes,
