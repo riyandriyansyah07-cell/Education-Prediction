@@ -40,8 +40,8 @@
     <section class="rise mt-8 rounded-md border border-line-strong bg-surface p-6 sm:p-8" style="--i: 2">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h2 class="text-2xl">Simulasi Cepat (Tanpa Impor)</h2>
-                <p class="mt-1 text-sm text-ink-2">Belum punya file KHS? Coba simulasi nilai berjalan di bawah, atau unggah KHS langsung.</p>
+                <h2 class="text-2xl">Input Data Semester</h2>
+                <p class="mt-1 text-sm text-ink-2">Masukkan data mata kuliah semester berjalan, atau impor langsung dari file KHS.</p>
             </div>
             <a href="{{ route('mhs.impor') }}" class="btn btn-primary"><x-icon name="upload-simple" /> Impor KHS (PDF / CSV / XLSX)</a>
         </div>
@@ -179,8 +179,8 @@
         <section class="mt-10 rounded-md border border-line bg-surface" style="padding:1.75rem;" aria-labelledby="input-cepat">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 id="input-cepat" class="text-xl font-medium">Simulasi Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
-                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai untuk melihat proyeksi N &amp; UAS minimal (C: 56 / B: 68).</p>
+                    <h2 id="input-cepat" class="text-xl font-medium">Rincian Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
+                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai mata kuliah untuk menghitung proyeksi N &amp; target UAS minimal (C: 56 / B: 68).</p>
                 </div>
             </div>
 
@@ -209,7 +209,7 @@
                                         <input type="hidden" name="courses[{{ $idx }}][id]" value="{{ $c->id }}">
                                         <input type="hidden" name="courses[{{ $idx }}][assignment_source]" value="{{ $c->assignment_source ?? 'mandiri' }}">
                                         <span class="font-medium">{{ $c->course_name }}</span>
-                                        <span class="mono mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
+                                        <span class="mono mt-0.5 flex flex-wrap items-center text-xs text-ink-3" style="gap:6px;">
                                             <span>{{ $c->course_code }}</span>
                                             @if ($isEnrichment)
                                                 <span class="rounded border border-accent/40 bg-accent-soft px-1.5 py-0.5 text-accent" style="font-size:10px;">Pengayaan</span>
