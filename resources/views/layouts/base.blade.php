@@ -51,6 +51,11 @@
             --bad: #f87171;
         }
 
+        html.lenis, html.lenis body { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto !important; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+
         body {
             background-color: var(--bg);
             background-image: radial-gradient(color-mix(in oklab, var(--ink) 7%, transparent) 1px, transparent 1px);
@@ -142,17 +147,93 @@
             font-weight: 600 !important;
             letter-spacing: 0.01em;
         }
-
-        @keyframes proFadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        main > div, main > section {
-            animation: proFadeUp 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
     </style>
 </head>
 <body class="min-h-dvh">
     @yield('body')
+
+    {{-- GSAP + ScrollTrigger + Lenis Smooth Scroll --}}
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduceMotion) return;
+
+            var hasGsap = typeof window.gsap !== 'undefined';
+            var hasST = typeof window.ScrollTrigger !== 'undefined';
+            if (hasGsap && hasST) {
+                window.gsap.registerPlugin(window.ScrollTrigger);
+            }
+
+            // Lenis smooth scrolling tersinkron dengan GSAP ticker & ScrollTrigger
+            if (typeof window.Lenis !== 'undefined') {
+                var lenis = new window.Lenis({
+                    duration: 1.05,
+                    easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+                    smoothWheel: true,
+                    touchMultiplier: 1.5
+                });
+                window.__lenis = lenis;
+
+                if (hasGsap && hasST) {
+                    lenis.on('scroll', window.ScrollTrigger.update);
+                    window.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+                    window.gsap.ticker.lagSmoothing(0);
+                } else {
+                    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+                    requestAnimationFrame(raf);
+                }
+
+                // Smooth scroll untuk tautan anchor (#bento, #peran, dll.)
+                document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+                    link.addEventListener('click', function (e) {
+                        var id = link.getAttribute('href');
+                        if (!id || id === '#') return;
+                        var target = document.querySelector(id);
+                        if (target) {
+                            e.preventDefault();
+                            lenis.scrollTo(target, { offset: -72 });
+                        }
+                    });
+                });
+            }
+
+            // Animasi masuk halus global untuk halaman selain landing (landing punya koreografi khusus)
+            if (hasGsap && !document.body.dataset.customMotion) {
+                var rises = document.querySelectorAll('main .rise, main > div > h1, main > h1');
+                if (rises.length) {
+                    window.gsap.from(rises, {
+                        y: 16,
+                        opacity: 0,
+                        duration: 0.55,
+                        stagger: 0.06,
+                        ease: 'power3.out',
+                        clearProps: 'transform,opacity'
+                    });
+                }
+
+                var cards = document.querySelectorAll('main section, main .bg-surface, main .mt-card');
+                if (cards.length && hasST) {
+                    cards.forEach(function (el) {
+                        if (el.closest('.lg-preview')) return;
+                        window.gsap.from(el, {
+                            y: 20,
+                            opacity: 0,
+                            duration: 0.6,
+                            ease: 'power3.out',
+                            clearProps: 'transform,opacity',
+                            scrollTrigger: {
+                                trigger: el,
+                                start: 'top 90%',
+                                once: true
+                            }
+                        });
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>

@@ -13,6 +13,17 @@
         backdrop-filter: blur(14px);
         border-bottom: 1px solid var(--line);
     }
+    .px-progress {
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        height: 2px;
+        width: 100%;
+        background: var(--accent);
+        transform-origin: left center;
+        transform: scaleX(0);
+        pointer-events: none;
+    }
     .px-nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .px-brand { display: flex; align-items: center; gap: 0.65rem; text-decoration: none; color: var(--ink); font-weight: 600; letter-spacing: -0.02em; }
     .px-links { display: none; align-items: center; gap: 1.5rem; }
@@ -49,6 +60,7 @@
         border-radius: 14px;
         overflow: hidden;
         box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        will-change: transform;
     }
     .px-winbar {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -148,23 +160,24 @@
             @endauth
         </div>
     </div>
+    <div class="px-progress" id="scroll-progress" aria-hidden="true"></div>
 </header>
 
 <main>
     <section class="px-wrap px-hero">
         <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:2rem;">
             <div>
-                <p class="mono" style="font-size:0.78rem;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">
+                <p class="mono js-hero-item" style="font-size:0.78rem;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;">
                     FTII UHAMKA • Peringatan Dini Akademik
                 </p>
-                <h1 class="rise px-h1" style="margin-top:0.75rem;">
+                <h1 class="px-h1 js-hero-item" style="margin-top:0.75rem;">
                     Ketahui risiko nilaimu lebih awal.
                 </h1>
-                <p class="rise px-sub" style="--i: 1">
+                <p class="px-sub js-hero-item">
                     Pantau proyeksi nilai, target UAS minimal, progres 20 SKS pengayaan &amp; wajib PKM, serta saran belajar berbasis AI.
                 </p>
             </div>
-            <div class="rise" style="--i: 2;display:flex;flex-wrap:wrap;gap:0.75rem;">
+            <div class="js-hero-item" style="display:flex;flex-wrap:wrap;gap:0.75rem;">
                 @auth
                     <a href="{{ route('beranda') }}" class="btn btn-primary h-11 px-5">Buka Beranda</a>
                 @else
@@ -174,7 +187,7 @@
             </div>
         </div>
 
-        <div class="rise px-window" style="--i: 3">
+        <div class="px-window js-hero-window">
             <div class="px-winbar">
                 <div class="px-dots"><span></span><span></span><span></span></div>
                 <span class="px-url">peringatandini.online/mahasiswa/ringkasan</span>
@@ -187,19 +200,19 @@
     </section>
 
     <section id="bento" class="px-wrap" style="padding-bottom:4rem;">
-        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;">
+        <div class="js-section-head" style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;">
             <h2 style="font-size:1.55rem;font-weight:600;letter-spacing:-0.025em;">Transparan, aman, dan sesuai aturan FTII</h2>
             <a href="{{ route('metodologi') }}" class="mono" style="font-size:0.82rem;color:var(--accent);text-decoration:none;">Lihat rumus →</a>
         </div>
 
         <div class="px-bento">
-            <div class="px-tile px-col-7">
+            <div class="px-tile px-col-7 js-bento-tile">
                 <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Privacy-by-Design</p>
                 <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Zero-PII ke layanan AI</h3>
                 <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.55;">
                     NIM disamarkan dengan HMAC-SHA256. AI hanya memproses angka statistik anonim.
                 </p>
-                <div class="px-pipe">
+                <div class="px-pipe js-pipe">
                     <span class="px-node">NIM</span>
                     <span style="color:var(--ink-3);">→</span>
                     <span class="px-node px-node-accent">HMAC-SHA256</span>
@@ -210,7 +223,7 @@
                 </div>
             </div>
 
-            <div class="px-tile px-col-5">
+            <div class="px-tile px-col-5 js-bento-tile">
                 <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Aturan UHAMKA</p>
                 <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Skala Nilai &amp; Hadir 75%</h3>
                 <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.55;">
@@ -224,7 +237,7 @@
                 </div>
             </div>
 
-            <div class="px-tile px-col-4">
+            <div class="px-tile px-col-4 js-bento-tile">
                 <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Cakupan</p>
                 <h3 style="margin-top:0.45rem;font-size:1.1rem;font-weight:600;">5 Program Studi FTII</h3>
                 <ul style="margin-top:0.75rem;font-size:0.86rem;color:var(--ink-2);list-style:none;padding:0;">
@@ -236,7 +249,7 @@
                 </ul>
             </div>
 
-            <div id="peran" class="px-tile px-col-8">
+            <div id="peran" class="px-tile px-col-8 js-bento-tile">
                 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
                     <div>
                         <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;">Alur Pengguna</p>
@@ -271,12 +284,14 @@
 </footer>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.body.dataset.customMotion = '1';
+
+window.addEventListener('DOMContentLoaded', function () {
     const roles = {
         mhs: {
             title: 'Pantau nilai berjalan & target 20 SKS pengayaan',
             desc: 'Impor KHS (CSV/XLSX/PDF) atau isi nilai langsung untuk melihat target UAS minimal dan status wajib PKM.',
-            items: ['Input Cepat & Proyeksi N', 'Target UAS Minimal (U_min)', 'Pelacak 20 SKS & Wajib PKM']
+            items: ['Rincian Nilai & Proyeksi N', 'Target UAS Minimal (U_min)', 'Pelacak 20 SKS & Wajib PKM']
         },
         dpa: {
             title: 'Deteksi dini bimbingan & catat tindak lanjut',
@@ -294,20 +309,95 @@ document.addEventListener('DOMContentLoaded', function () {
     const title = document.getElementById('role-title');
     const desc = document.getElementById('role-desc');
     const bullets = document.getElementById('role-bullets');
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function showRole(key) {
+    function showRole(key, animate) {
         const r = roles[key];
         if (!r) return;
         tabs.forEach(t => t.classList.toggle('is-active', t.dataset.roleTab === key));
         title.textContent = r.title;
         desc.textContent = r.desc;
         bullets.innerHTML = r.items.map(item =>
-            '<div style="padding:0.55rem 0.75rem;border-radius:8px;background:var(--sunken);border:1px solid var(--line);font-size:0.82rem;color:var(--ink);">' + item + '</div>'
+            '<div class="js-role-pill" style="padding:0.55rem 0.75rem;border-radius:8px;background:var(--sunken);border:1px solid var(--line);font-size:0.82rem;color:var(--ink);">' + item + '</div>'
         ).join('');
+
+        if (animate && !reduceMotion && typeof window.gsap !== 'undefined') {
+            window.gsap.fromTo([title, desc], { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.05, ease: 'power2.out' });
+            window.gsap.fromTo('.js-role-pill', { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.06, ease: 'power2.out' });
+        }
     }
 
-    tabs.forEach(t => t.addEventListener('click', () => showRole(t.dataset.roleTab)));
-    showRole('mhs');
+    tabs.forEach(t => t.addEventListener('click', () => showRole(t.dataset.roleTab, true)));
+    showRole('mhs', false);
+
+    // Koreografi GSAP + ScrollTrigger khusus landing page
+    if (reduceMotion || typeof window.gsap === 'undefined') return;
+    const gsap = window.gsap;
+    const hasST = typeof window.ScrollTrigger !== 'undefined';
+    if (hasST) gsap.registerPlugin(window.ScrollTrigger);
+
+    // 1. Hero entrance timeline
+    const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    heroTl
+        .from('.js-hero-item', { y: 24, opacity: 0, duration: 0.7, stagger: 0.09, clearProps: 'transform,opacity' })
+        .from('.js-hero-window', { y: 34, opacity: 0, scale: 0.97, duration: 0.85, clearProps: 'opacity,scale' }, '-=0.4');
+
+    if (!hasST) return;
+
+    // 2. Scroll progress bar di bawah navbar
+    gsap.to('#scroll-progress', {
+        scaleX: 1,
+        ease: 'none',
+        scrollTrigger: {
+            trigger: document.documentElement,
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: 0.2
+        }
+    });
+
+    // 3. Parallax halus pada jendela pratinjau hero saat scroll
+    gsap.to('.js-hero-window', {
+        y: -22,
+        ease: 'none',
+        scrollTrigger: {
+            trigger: '.px-hero',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 0.7
+        }
+    });
+
+    // 4. Reveal judul section + bento grid stagger
+    gsap.from('.js-section-head', {
+        y: 20,
+        opacity: 0,
+        duration: 0.65,
+        ease: 'power3.out',
+        clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '#bento', start: 'top 85%', once: true }
+    });
+
+    gsap.from('.js-bento-tile', {
+        y: 28,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.1,
+        ease: 'power3.out',
+        clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '.px-bento', start: 'top 82%', once: true }
+    });
+
+    // 5. Stagger berurutan pada node pipeline Zero-PII
+    gsap.from('.js-pipe > *', {
+        y: 12,
+        opacity: 0,
+        duration: 0.45,
+        stagger: 0.07,
+        ease: 'power2.out',
+        clearProps: 'transform,opacity',
+        scrollTrigger: { trigger: '.js-pipe', start: 'top 88%', once: true }
+    });
 });
 </script>
 @endsection
