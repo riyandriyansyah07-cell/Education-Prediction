@@ -48,7 +48,6 @@
                         <tr><td class="mono">nilai</td><td>A–E / 0–100 (opsional)</td><td class="mono">B / 72</td></tr>
                         <tr><td class="mono">kehadiran_persen</td><td>0–100 (min. 75%)</td><td class="mono">86</td></tr>
                         <tr><td class="mono">nilai_uts / tugas / uas</td><td>Opsional (0–100)</td><td class="mono">65 / 75 / -</td></tr>
-                        <tr><td class="mono">sumber_tugas</td><td>mandiri / olu / gdrive</td><td class="mono">olu</td></tr>
                     </tbody>
                 </table>
             </div>
