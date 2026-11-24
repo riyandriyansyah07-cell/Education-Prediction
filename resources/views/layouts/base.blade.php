@@ -56,6 +56,9 @@
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: hidden; }
 
+        /* Matikan keyframe .rise bawaan app.css agar tidak bentrok ganda dengan GSAP */
+        .rise { animation: none !important; }
+
         body {
             background-color: var(--bg);
             color: var(--ink);
@@ -66,13 +69,12 @@
             border-right: 1px solid var(--line) !important;
         }
 
-        /* Penting: jangan pasang transition: transform di sini agar tidak bentrok dengan GSAP */
         main .bg-surface {
             background: var(--surface) !important;
             border: 1px solid var(--line) !important;
             border-radius: 12px !important;
             box-shadow: 0 2px 12px -4px rgba(0, 0, 0, 0.14);
-            transition: border-color 150ms ease, box-shadow 150ms ease;
+            transition: border-color 150ms ease;
         }
 
         main .bg-surface:hover {
@@ -142,7 +144,7 @@
 <body class="min-h-dvh">
     @yield('body')
 
-    {{-- GSAP + ScrollTrigger + Lenis (ringan & 60fps untuk laptop) --}}
+    {{-- GSAP + ScrollTrigger + Lenis --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
@@ -153,26 +155,25 @@
 
             var hasGsap = typeof window.gsap !== 'undefined';
             var hasST = typeof window.ScrollTrigger !== 'undefined';
+            var isLanding = Boolean(document.body.dataset.customMotion);
+
             if (hasGsap && hasST) {
                 window.gsap.registerPlugin(window.ScrollTrigger);
+                window.ScrollTrigger.config({ ignoreMobileResize: true });
             }
 
-            // Lenis ringan dengan lerp responsif (tidak berat / tidak laggy di trackpad maupun mouse)
-            if (typeof window.Lenis !== 'undefined') {
+            // Aktifkan Lenis hanya di halaman landing (halaman dasbor pakai native GPU scroll agar tetap 60fps penuh)
+            if (isLanding && typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
-                    lerp: 0.14,
-                    wheelMultiplier: 0.95,
-                    smoothWheel: true
+                    lerp: 0.09,
+                    wheelMultiplier: 0.9,
+                    smoothWheel: true,
+                    autoRaf: true
                 });
                 window.__lenis = lenis;
 
-                if (hasGsap && hasST) {
+                if (hasST) {
                     lenis.on('scroll', window.ScrollTrigger.update);
-                    window.gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
-                    window.gsap.ticker.lagSmoothing(0);
-                } else {
-                    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-                    requestAnimationFrame(raf);
                 }
 
                 document.querySelectorAll('a[href^="#"]').forEach(function (link) {
@@ -188,15 +189,14 @@
                 });
             }
 
-            // Animasi masuk ringan untuk halaman selain landing
-            if (hasGsap && !document.body.dataset.customMotion) {
-                var targets = document.querySelectorAll('main > div, main > section');
-                if (targets.length) {
-                    window.gsap.from(targets, {
-                        y: 12,
+            // Animasi masuk GSAP super ringan untuk halaman dasbor & halaman lainnya
+            if (hasGsap && !isLanding) {
+                var main = document.querySelector('main');
+                if (main) {
+                    window.gsap.from(main, {
                         opacity: 0,
-                        duration: 0.42,
-                        stagger: 0.05,
+                        y: 8,
+                        duration: 0.32,
                         ease: 'power2.out',
                         force3D: true,
                         clearProps: 'transform,opacity'
