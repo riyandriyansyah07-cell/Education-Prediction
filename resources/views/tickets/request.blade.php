@@ -13,7 +13,7 @@
 <main class="mx-auto max-w-5xl px-4 py-10 sm:px-8">
     <h1 class="rise text-3xl sm:text-4xl">E-Ticket Pengajuan Akun</h1>
     <p class="rise mt-2 max-w-[62ch] text-ink-2" style="--i: 1">
-        Belum memiliki akun atau lupa kata sandi? Kirim tiket pengajuan ke Admin Sekretariat FTII dan pantau statusnya dengan kode tiketmu.
+        Ajukan pembuatan akun atau reset kata sandi ke Admin Sekretariat FTII. Setelah disetujui, detail akun dikirim ke email aktifmu.
     </p>
 
     @if (session('status'))
@@ -63,14 +63,15 @@
                 </div>
 
                 <div>
-                    <label for="email" class="label">Email aktif <span class="font-normal text-ink-3">(opsional)</span></label>
-                    <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input">
+                    <label for="email" class="label">Email aktif <span style="color:var(--bad);">*</span></label>
+                    <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input" required>
+                    <p class="mt-1 text-xs text-ink-3">Wajib diisi — detail akun dan kata sandi akan dikirim ke email ini setelah disetujui Admin.</p>
                     @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
                     <label for="notes" class="label">Keterangan tambahan <span class="font-normal text-ink-3">(Angkatan / Nama DPA)</span></label>
-                    <textarea id="notes" name="notes" rows="3" class="input py-2" placeholder="Contoh: Angkatan 2023, DPA Dr. Hanafi Rahmat">{{ old('notes') }}</textarea>
+                    <textarea id="notes" name="notes" rows="3" class="input py-2" placeholder="Contoh: Angkatan 2023, DPA Erizal, S.Kom., M.Kom.">{{ old('notes') }}</textarea>
                     @error('notes')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
