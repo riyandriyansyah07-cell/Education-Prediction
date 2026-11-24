@@ -16,7 +16,33 @@
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM (NATIVE 60FPS SCROLL + GSAP) === */
+        /* === TRANSISI HALAMAN HALUS (NATIVE VIEW TRANSITIONS + GPU 60FPS) === */
+        @view-transition {
+            navigation: auto;
+        }
+        ::view-transition-old(root) {
+            animation: vtOut 160ms cubic-bezier(0.4, 0, 1, 1) both;
+        }
+        ::view-transition-new(root) {
+            animation: vtIn 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes vtOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes vtIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sidebar {
+            view-transition-name: app-sidebar;
+        }
+        ::view-transition-old(app-sidebar),
+        ::view-transition-new(app-sidebar) {
+            animation: none;
+        }
+
+        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM === */
         :root {
             --bg: #f6f7f9;
             --surface: #ffffff;
@@ -54,6 +80,26 @@
         /* Matikan keyframe .rise bawaan app.css agar tidak bentrok dengan GSAP */
         .rise { animation: none !important; }
 
+        /* Garis progres halus saat berpindah halaman */
+        #page-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2.5px;
+            width: 100%;
+            background: var(--accent);
+            transform-origin: left center;
+            transform: scaleX(0);
+            opacity: 0;
+            z-index: 9999;
+            pointer-events: none;
+            transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+        }
+        #page-progress.is-loading {
+            opacity: 1;
+            transform: scaleX(0.78);
+        }
+
         body {
             background-color: var(--bg);
             color: var(--ink);
@@ -77,7 +123,7 @@
         .btn {
             border-radius: 8px !important;
             font-weight: 500;
-            transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease !important;
+            transition: background-color 140ms ease, border-color 140ms ease, opacity 140ms ease !important;
         }
         .btn:active { opacity: 0.88; }
 
@@ -100,7 +146,7 @@
 
         .nav-link {
             border-radius: 8px !important;
-            transition: background-color 120ms ease, color 120ms ease !important;
+            transition: background-color 140ms ease, color 140ms ease !important;
         }
         .nav-link:hover {
             background: color-mix(in oklab, var(--ink) 5%, transparent) !important;
@@ -130,9 +176,15 @@
             font-weight: 600 !important;
             letter-spacing: 0.01em;
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-old(root),
+            ::view-transition-new(root) { animation: none !important; }
+        }
     </style>
 </head>
 <body class="min-h-dvh">
+    <div id="page-progress" aria-hidden="true"></div>
     @yield('body')
 
     {{-- GSAP + ScrollTrigger + Lenis (smoothWheel nonaktif agar scroll wheel/trackpad tetap native GPU 60fps) --}}
@@ -142,6 +194,23 @@
     <script>
         window.addEventListener('DOMContentLoaded', function () {
             var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var bar = document.getElementById('page-progress');
+
+            // Tampilkan garis progres halus saat klik tautan internal antar halaman
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                var href = a.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:')) return;
+                if (a.origin !== window.location.origin) return;
+                if (bar) bar.classList.add('is-loading');
+            });
+
+            window.addEventListener('pageshow', function () {
+                if (bar) bar.classList.remove('is-loading');
+            });
+
             if (reduceMotion) return;
 
             var hasGsap = typeof window.gsap !== 'undefined';
@@ -153,7 +222,7 @@
                 window.ScrollTrigger.config({ ignoreMobileResize: true });
             }
 
-            // Lenis hanya untuk transisi halus saat klik tautan anchor (#bento, #peran); wheel/trackpad pakai native GPU scroll
+            // Lenis untuk scroll halus saat klik anchor (#bento, #peran)
             if (isLanding && typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
                     smoothWheel: false,
@@ -174,15 +243,18 @@
                 });
             }
 
-            // Animasi masuk super ringan di halaman dasbor
+            // Animasi masuk bertahap (stagger) halus untuk konten halaman dasbor
             if (hasGsap && !isLanding) {
-                var main = document.querySelector('main');
-                if (main) {
-                    window.gsap.from(main, {
+                var blocks = document.querySelectorAll('main > div, main > section');
+                if (blocks.length) {
+                    window.gsap.from(blocks, {
                         opacity: 0,
-                        duration: 0.22,
-                        ease: 'power1.out',
-                        clearProps: 'opacity'
+                        y: 10,
+                        duration: 0.34,
+                        stagger: 0.045,
+                        ease: 'power2.out',
+                        force3D: true,
+                        clearProps: 'transform,opacity'
                     });
                 }
             }
