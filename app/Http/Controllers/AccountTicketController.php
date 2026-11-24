@@ -44,13 +44,16 @@ class AccountTicketController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:32', 'regex:/^[A-Za-z0-9.\-]+$/'],
             'program_studi' => [Rule::requiredIf($request->input('request_type') === AccountTicket::TYPE_STUDENT), 'nullable', Rule::in(AccountTicket::PROGRAMS)],
-            'email' => ['nullable', 'email', 'max:120'],
+            'email' => ['required', 'email', 'max:120'],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [
             'username.regex' => 'NIM atau ID pegawai hanya boleh berisi huruf, angka, titik, dan strip.',
+            'email.required' => 'Email aktif wajib diisi untuk menerima informasi akun setelah disetujui.',
+            'email.email' => 'Format alamat email tidak valid.',
         ]);
 
         $username = trim($data['username']);
+        $email = strtolower(trim($data['email']));
 
         // Cegah duplikasi tiket menunggu untuk username yang sama
         $existingPending = AccountTicket::where('username', $username)
@@ -72,13 +75,13 @@ class AccountTicketController extends Controller
             'program_studi' => $data['request_type'] === AccountTicket::TYPE_STUDENT
                 ? ($data['program_studi'] ?? null)
                 : null,
-            'email' => ($data['email'] ?? null) ?: null,
+            'email' => $email,
             'notes' => ($data['notes'] ?? null) ?: null,
             'status' => AccountTicket::STATUS_PENDING,
         ]);
 
         return redirect()->route('tiket.form', ['kode' => $ticket->ticket_code])
-            ->with('status', "E-Ticket {$ticket->ticket_code} berhasil dibuat! Simpan kode ini untuk mengecek status persetujuan dari Admin Sekretariat.");
+            ->with('status', "E-Ticket {$ticket->ticket_code} berhasil dibuat! Setelah disetujui Admin Sekretariat, detail akun dan kata sandi akan dikirim ke {$ticket->email}.");
     }
 
     /** Daftar tiket pengajuan akun di panel Admin Sekretariat. */
@@ -110,7 +113,7 @@ class AccountTicketController extends Controller
         ]);
     }
 
-    /** Setujui tiket: otomatis buat akun baru atau reset kata sandi pengguna. */
+    /** Setujui tiket: otomatis buat akun baru atau reset kata sandi pengguna, lalu kirim kredensial ke email pemohon. */
     public function approve(Request $request, AccountTicket $ticket): RedirectResponse
     {
         if ($ticket->status !== AccountTicket::STATUS_PENDING) {
@@ -134,6 +137,7 @@ class AccountTicketController extends Controller
                 if ($existingUser) {
                     $existingUser->update([
                         'password' => $data['password'],
+                        'email' => $existingUser->email ?: $ticket->email,
                         'is_active' => true,
                     ]);
                 } else {
@@ -171,6 +175,7 @@ class AccountTicketController extends Controller
                 } else {
                     $existingUser->update([
                         'password' => $data['password'],
+                        'email' => $existingUser->email ?: $ticket->email,
                         'is_active' => true,
                     ]);
                 }
@@ -178,7 +183,7 @@ class AccountTicketController extends Controller
 
             $ticket->update([
                 'status' => AccountTicket::STATUS_APPROVED,
-                'admin_note' => ($data['admin_note'] ?? null) ?: 'Akun telah aktif dan siap digunakan dengan kata sandi awal yang ditetapkan sekretariat.',
+                'admin_note' => ($data['admin_note'] ?? null) ?: 'Akun telah aktif dan detail akses sudah dikirim ke email pemohon.',
                 'processed_by' => $request->user()->id,
                 'processed_at' => now(),
             ]);
@@ -188,10 +193,10 @@ class AccountTicketController extends Controller
         if ($ticket->email) {
             try {
                 Mail::to($ticket->email)->send(new AccountTicketMail($ticket->fresh(), $data['password']));
-                $mailNote = " Notifikasi dikirim ke {$ticket->email}.";
+                $mailNote = " Detail akun dan kata sandi telah dikirim ke {$ticket->email}.";
             } catch (\Throwable $e) {
                 Log::warning('Email notifikasi persetujuan tiket gagal dikirim: '.$e->getMessage());
-                $mailNote = ' Namun email notifikasi gagal terkirim.';
+                $mailNote = ' Namun email gagal terkirim — cek pengaturan SMTP di .env atau sampaikan sandi secara manual.';
             }
         }
 
