@@ -30,17 +30,21 @@ class SummaryController extends Controller
             $results = RiskResult::where('student_ref', $ref)->orderBy('semester')->get();
         }
 
-        $latest = $results->last();
-        if ($latest) {
+        $requestedSemester = $request->integer('semester');
+        $selected = $requestedSemester > 0
+            ? ($results->firstWhere('semester', $requestedSemester) ?? $results->last())
+            : $results->last();
+
+        if ($selected) {
             AccessLogger::record($user, $ref, 'lihat_hasil');
         }
 
-        $currentCourses = $latest
-            ? AcademicRecord::where('student_ref', $ref)->where('semester', $latest->semester)->orderBy('course_code')->get()
+        $currentCourses = $selected
+            ? AcademicRecord::where('student_ref', $ref)->where('semester', $selected->semester)->orderBy('course_code')->get()
             : collect();
 
-        $snapshots = $latest
-            ? RiskSnapshot::where('student_ref', $ref)->where('semester', $latest->semester)->orderByDesc('checked_at')->limit(6)->get()
+        $snapshots = $selected
+            ? RiskSnapshot::where('student_ref', $ref)->where('semester', $selected->semester)->orderByDesc('checked_at')->limit(6)->get()
             : collect();
 
         $reminders = Reminder::where('student_ref', $ref)->latest('id')->limit(4)->get();
@@ -57,10 +61,11 @@ class SummaryController extends Controller
             'user' => $user,
             'hasData' => $hasData,
             'results' => $results,
-            'latest' => $latest,
+            'latest' => $selected,
+            'latestSemester' => $results->last()?->semester,
             'currentCourses' => $currentCourses,
             'snapshots' => $snapshots,
-            'version' => $latest?->modelVersion,
+            'version' => $selected?->modelVersion,
             'reminders' => $reminders,
             'unreadIds' => $unreadIds,
             'dpa' => $user->dpa,
@@ -71,8 +76,13 @@ class SummaryController extends Controller
     public function recalculate(Request $request, RiskService $risk): RedirectResponse
     {
         $result = $risk->refresh($request->user()->student_ref, true);
+        $semester = $request->integer('semester');
 
-        return redirect()->route('mhs.ringkasan')->with('status', $result
+        $redirect = $semester > 0
+            ? redirect()->route('mhs.ringkasan', ['semester' => $semester])
+            : redirect()->route('mhs.ringkasan');
+
+        return $redirect->with('status', $result
             ? 'Risiko dihitung ulang dengan data, proyeksi mata kuliah, dan AI terbaru.'
             : 'Belum ada data akademik. Tambahkan mata kuliah langsung atau impor berkas dulu.');
     }
@@ -156,14 +166,14 @@ class SummaryController extends Controller
             $risk->refresh($ref, true);
         }
 
-        return redirect()->route('mhs.ringkasan')->with(
+        return redirect()->route('mhs.ringkasan', ['semester' => $semester])->with(
             'status',
             "{$savedCount} mata kuliah semester {$semester} berhasil disimpan dan risiko langsung dihitung."
         );
     }
 
     /**
-     * Input cepat nilai UTS, Tugas, dan UAS per mata kuliah pada semester berjalan
+     * Input cepat nilai UTS, Tugas, dan UAS per mata kuliah pada semester yang sedang dibuka
      * untuk memperbarui proyeksi nilai akhir (N) dan target UAS minimal (U_min).
      */
     public function quickUpdate(Request $request, RiskService $risk): RedirectResponse
@@ -172,6 +182,7 @@ class SummaryController extends Controller
         $ref = $user->student_ref;
 
         $data = $request->validate([
+            'semester' => ['nullable', 'integer', 'min:1', 'max:14'],
             'courses' => ['required', 'array', 'min:1'],
             'courses.*.id' => ['required', 'integer'],
             'courses.*.attendance' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -183,6 +194,7 @@ class SummaryController extends Controller
 
         $today = now()->toDateString();
         $updatedCount = 0;
+        $targetSemester = isset($data['semester']) ? (int) $data['semester'] : null;
 
         foreach ($data['courses'] as $item) {
             $record = AcademicRecord::where('id', (int) $item['id'])
@@ -192,6 +204,8 @@ class SummaryController extends Controller
             if (! $record) {
                 continue;
             }
+
+            $targetSemester ??= (int) $record->semester;
 
             $uts = isset($item['uts_score']) && $item['uts_score'] !== '' ? (float) $item['uts_score'] : null;
             $tugas = isset($item['assignment_score']) && $item['assignment_score'] !== '' ? (float) $item['assignment_score'] : null;
@@ -215,7 +229,11 @@ class SummaryController extends Controller
             $risk->refresh($ref, false);
         }
 
-        return redirect()->route('mhs.ringkasan')->with(
+        $redirect = $targetSemester
+            ? redirect()->route('mhs.ringkasan', ['semester' => $targetSemester])
+            : redirect()->route('mhs.ringkasan');
+
+        return $redirect->with(
             'status',
             "Proyeksi {$updatedCount} mata kuliah berhasil diperbarui dan jejak cek berkala telah disimpan."
         );

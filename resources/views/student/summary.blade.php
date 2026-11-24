@@ -11,6 +11,7 @@
     $thresholds = $version?->params ?? \App\Support\RiskModel::DEFAULT_THRESHOLDS;
     $currentCourses = $currentCourses ?? collect();
     $snapshots = $snapshots ?? collect();
+    $latestSemester = $latestSemester ?? $results->last()?->semester;
 @endphp
 
 @section('content')
@@ -24,6 +25,7 @@
             <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm">Metodologi</a>
             <form method="POST" action="{{ route('mhs.hitung') }}">
                 @csrf
+                <input type="hidden" name="semester" value="{{ $latest->semester }}">
                 <button class="btn btn-primary btn-sm" type="submit">Hitung ulang</button>
             </form>
         </div>
@@ -98,6 +100,12 @@
 @else
     <div class="mt-8 grid gap-8 lg:grid-cols-12" style="align-items:start;">
         <div class="rounded-md border border-line bg-surface lg:col-span-8" style="padding:1.75rem;">
+            @if ($latestSemester && $latest->semester !== $latestSemester)
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-bg px-3 py-2 text-xs text-ink-2">
+                    <span>Menampilkan arsip <strong>Semester {{ $latest->semester }}</strong>.</span>
+                    <a href="{{ route('mhs.ringkasan') }}" class="font-medium text-accent hover:underline">Kembali ke Sem {{ $latestSemester }} (terbaru) &rarr;</a>
+                </div>
+            @endif
             <x-risk-panel :result="$latest" :thresholds="$thresholds" :version="$version?->version" />
         </div>
 
@@ -107,14 +115,22 @@
                     <h2 id="per-semester" class="text-base font-medium">Per semester</h2>
                     <a href="{{ route('mhs.riwayat') }}" class="text-xs font-medium text-accent hover:underline">Riwayat &rarr;</a>
                 </div>
-                <ul class="mt-3 divide-y divide-line">
+                <p class="mt-1 text-xs text-ink-3">Klik semester untuk melihat hasil &amp; rinciannya.</p>
+                <ul class="mt-3" style="display:flex; flex-direction:column; gap:4px;">
                     @foreach ($results->sortByDesc('semester') as $r)
-                        <li class="flex items-center justify-between gap-3 py-2.5">
-                            <span class="num text-sm">Sem {{ $r->semester }}</span>
-                            <span class="flex items-center gap-2.5">
-                                <span class="mono num text-xs text-ink-2">{{ \App\Support\Fmt::num($r->features['ips'] ?? 0) }}</span>
-                                <x-risk :level="$r->level" />
-                            </span>
+                        @php $isActiveSem = $r->semester === $latest->semester; @endphp
+                        <li>
+                            <a href="{{ route('mhs.ringkasan', ['semester' => $r->semester]) }}"
+                               class="flex items-center justify-between gap-3 text-ink"
+                               style="padding:0.55rem 0.65rem; border-radius:8px; text-decoration:none; border:1px solid {{ $isActiveSem ? 'var(--accent)' : 'transparent' }}; background:{{ $isActiveSem ? 'var(--accent-soft)' : 'transparent' }}; transition:background-color 140ms ease;">
+                                <span class="num text-sm {{ $isActiveSem ? 'font-semibold text-accent' : '' }}">
+                                    Sem {{ $r->semester }}
+                                </span>
+                                <span class="flex items-center gap-2.5">
+                                    <span class="mono num text-xs text-ink-2">{{ \App\Support\Fmt::num($r->features['ips'] ?? 0) }}</span>
+                                    <x-risk :level="$r->level" />
+                                </span>
+                            </a>
                         </li>
                     @endforeach
                 </ul>
@@ -158,7 +174,7 @@
 
             @if ($snapshots->isNotEmpty())
                 <details class="rounded-md border border-line bg-surface p-5">
-                    <summary class="cursor-pointer text-sm font-medium text-ink">Jejak cek berkala ({{ $snapshots->count() }})</summary>
+                    <summary class="cursor-pointer text-sm font-medium text-ink">Jejak cek berkala Sem {{ $latest->semester }} ({{ $snapshots->count() }})</summary>
                     <ul class="mt-3 divide-y divide-line text-xs">
                         @foreach ($snapshots as $snap)
                             <li class="py-2">
@@ -186,6 +202,7 @@
 
             <form method="POST" action="{{ route('mhs.input-cepat') }}" class="mt-5">
                 @csrf
+                <input type="hidden" name="semester" value="{{ $latest->semester }}">
                 <div class="overflow-x-auto rounded-md border border-line bg-bg">
                     <table class="tbl w-full">
                         <thead>
