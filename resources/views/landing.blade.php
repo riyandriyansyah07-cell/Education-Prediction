@@ -9,8 +9,7 @@
 
     .px-nav {
         position: sticky; top: 0; z-index: 30;
-        background: color-mix(in oklab, var(--bg) 82%, transparent);
-        backdrop-filter: blur(14px);
+        background: color-mix(in oklab, var(--bg) 96%, transparent);
         border-bottom: 1px solid var(--line);
     }
     .px-progress {
@@ -22,6 +21,7 @@
         background: var(--accent);
         transform-origin: left center;
         transform: scaleX(0);
+        will-change: transform;
         pointer-events: none;
     }
     .px-nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -59,8 +59,7 @@
         border: 1px solid var(--line-strong);
         border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        will-change: transform;
+        box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.25);
     }
     .px-winbar {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -89,18 +88,15 @@
         .px-col-4 { grid-column: span 4; }
         .px-col-8 { grid-column: span 8; }
     }
+    /* Tanpa transition: transform agar GSAP berjalan mulus 60fps */
     .px-tile {
         background: var(--surface);
         border: 1px solid var(--line);
         border-radius: 14px;
         padding: 1.5rem;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-        transition: border-color 180ms ease, transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        transition: border-color 150ms ease;
     }
-    .px-tile:hover {
-        border-color: var(--line-strong);
-        transform: translateY(-2px);
-    }
+    .px-tile:hover { border-color: var(--line-strong); }
 
     .px-tabs {
         display: inline-flex; padding: 3px; border-radius: 10px;
@@ -114,7 +110,7 @@
     }
     .px-tab.is-active {
         background: var(--surface); color: var(--ink);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
 
     .px-pipe {
@@ -322,29 +318,27 @@ window.addEventListener('DOMContentLoaded', function () {
         ).join('');
 
         if (animate && !reduceMotion && typeof window.gsap !== 'undefined') {
-            window.gsap.fromTo([title, desc], { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.05, ease: 'power2.out' });
-            window.gsap.fromTo('.js-role-pill', { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, stagger: 0.06, ease: 'power2.out' });
+            window.gsap.fromTo([title, desc], { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, stagger: 0.04, ease: 'power2.out', force3D: true });
+            window.gsap.fromTo('.js-role-pill', { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, stagger: 0.05, ease: 'power2.out', force3D: true });
         }
     }
 
     tabs.forEach(t => t.addEventListener('click', () => showRole(t.dataset.roleTab, true)));
     showRole('mhs', false);
 
-    // Koreografi GSAP + ScrollTrigger khusus landing page
     if (reduceMotion || typeof window.gsap === 'undefined') return;
     const gsap = window.gsap;
     const hasST = typeof window.ScrollTrigger !== 'undefined';
     if (hasST) gsap.registerPlugin(window.ScrollTrigger);
 
-    // 1. Hero entrance timeline
-    const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    heroTl
-        .from('.js-hero-item', { y: 24, opacity: 0, duration: 0.7, stagger: 0.09, clearProps: 'transform,opacity' })
-        .from('.js-hero-window', { y: 34, opacity: 0, scale: 0.97, duration: 0.85, clearProps: 'opacity,scale' }, '-=0.4');
+    // 1. Hero entrance (ringan, GPU-accelerated)
+    gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } })
+        .from('.js-hero-item', { y: 18, opacity: 0, duration: 0.55, stagger: 0.07, clearProps: 'transform,opacity' })
+        .from('.js-hero-window', { y: 22, opacity: 0, duration: 0.65, clearProps: 'transform,opacity' }, '-=0.35');
 
     if (!hasST) return;
 
-    // 2. Scroll progress bar di bawah navbar
+    // 2. Scroll progress bar (hanya animasi GPU scaleX, super ringan)
     gsap.to('#scroll-progress', {
         scaleX: 1,
         ease: 'none',
@@ -352,51 +346,30 @@ window.addEventListener('DOMContentLoaded', function () {
             trigger: document.documentElement,
             start: 'top top',
             end: 'bottom bottom',
-            scrub: 0.2
+            scrub: true
         }
     });
 
-    // 3. Parallax halus pada jendela pratinjau hero saat scroll
-    gsap.to('.js-hero-window', {
-        y: -22,
-        ease: 'none',
-        scrollTrigger: {
-            trigger: '.px-hero',
-            start: 'top top',
-            end: 'bottom top',
-            scrub: 0.7
-        }
-    });
-
-    // 4. Reveal judul section + bento grid stagger
+    // 3. Reveal section & bento tiles dengan sekali trigger (tanpa parallax scrub berat)
     gsap.from('.js-section-head', {
-        y: 20,
+        y: 16,
         opacity: 0,
-        duration: 0.65,
-        ease: 'power3.out',
+        duration: 0.5,
+        ease: 'power2.out',
+        force3D: true,
         clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '#bento', start: 'top 85%', once: true }
+        scrollTrigger: { trigger: '#bento', start: 'top 88%', once: true }
     });
 
     gsap.from('.js-bento-tile', {
-        y: 28,
+        y: 20,
         opacity: 0,
-        duration: 0.7,
-        stagger: 0.1,
-        ease: 'power3.out',
-        clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '.px-bento', start: 'top 82%', once: true }
-    });
-
-    // 5. Stagger berurutan pada node pipeline Zero-PII
-    gsap.from('.js-pipe > *', {
-        y: 12,
-        opacity: 0,
-        duration: 0.45,
-        stagger: 0.07,
+        duration: 0.55,
+        stagger: 0.08,
         ease: 'power2.out',
+        force3D: true,
         clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '.js-pipe', start: 'top 88%', once: true }
+        scrollTrigger: { trigger: '.px-bento', start: 'top 86%', once: true }
     });
 });
 </script>

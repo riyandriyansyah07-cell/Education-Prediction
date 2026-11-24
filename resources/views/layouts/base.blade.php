@@ -58,48 +58,40 @@
 
         body {
             background-color: var(--bg);
-            background-image: radial-gradient(color-mix(in oklab, var(--ink) 7%, transparent) 1px, transparent 1px);
-            background-size: 24px 24px;
             color: var(--ink);
         }
 
         .sidebar {
-            background: color-mix(in oklab, var(--bg) 90%, var(--surface)) !important;
-            backdrop-filter: blur(16px);
+            background: var(--bg) !important;
             border-right: 1px solid var(--line) !important;
         }
 
+        /* Penting: jangan pasang transition: transform di sini agar tidak bentrok dengan GSAP */
         main .bg-surface {
             background: var(--surface) !important;
             border: 1px solid var(--line) !important;
             border-radius: 12px !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 20px -6px rgba(0, 0, 0, 0.25);
-            transition: border-color 180ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
+            box-shadow: 0 2px 12px -4px rgba(0, 0, 0, 0.14);
+            transition: border-color 150ms ease, box-shadow 150ms ease;
         }
 
         main .bg-surface:hover {
             border-color: var(--line-strong) !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 28px -8px rgba(0, 0, 0, 0.35);
         }
 
         .btn {
             border-radius: 8px !important;
             font-weight: 500;
-            transition: transform 130ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+            transition: background-color 140ms ease, border-color 140ms ease, opacity 140ms ease !important;
         }
-        .btn:hover { transform: translateY(-1px); }
-        .btn:active { transform: translateY(0) scale(0.985); }
+        .btn:active { opacity: 0.88; }
 
         .btn-primary {
             background: var(--ink) !important;
             color: var(--bg) !important;
             border-color: var(--ink) !important;
-            box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.25);
         }
-        .btn-primary:hover {
-            opacity: 0.92;
-            box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.35);
-        }
+        .btn-primary:hover { opacity: 0.9; }
 
         .btn-quiet {
             background: var(--surface) !important;
@@ -113,18 +105,16 @@
 
         .nav-link {
             border-radius: 8px !important;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms ease !important;
+            transition: background-color 140ms ease, color 140ms ease !important;
         }
         .nav-link:hover {
             background: color-mix(in oklab, var(--ink) 5%, transparent) !important;
-            transform: translateX(2px);
         }
         .nav-link[aria-current='page'],
         .nav-link.is-active {
             background: var(--surface) !important;
             color: var(--ink) !important;
             border-left: 2px solid var(--accent) !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
 
         .input {
@@ -152,7 +142,7 @@
 <body class="min-h-dvh">
     @yield('body')
 
-    {{-- GSAP + ScrollTrigger + Lenis Smooth Scroll --}}
+    {{-- GSAP + ScrollTrigger + Lenis (ringan & 60fps untuk laptop) --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
@@ -167,13 +157,12 @@
                 window.gsap.registerPlugin(window.ScrollTrigger);
             }
 
-            // Lenis smooth scrolling tersinkron dengan GSAP ticker & ScrollTrigger
+            // Lenis ringan dengan lerp responsif (tidak berat / tidak laggy di trackpad maupun mouse)
             if (typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
-                    duration: 1.05,
-                    easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
-                    smoothWheel: true,
-                    touchMultiplier: 1.5
+                    lerp: 0.14,
+                    wheelMultiplier: 0.95,
+                    smoothWheel: true
                 });
                 window.__lenis = lenis;
 
@@ -186,7 +175,6 @@
                     requestAnimationFrame(raf);
                 }
 
-                // Smooth scroll untuk tautan anchor (#bento, #peran, dll.)
                 document.querySelectorAll('a[href^="#"]').forEach(function (link) {
                     link.addEventListener('click', function (e) {
                         var id = link.getAttribute('href');
@@ -200,36 +188,18 @@
                 });
             }
 
-            // Animasi masuk halus global untuk halaman selain landing (landing punya koreografi khusus)
+            // Animasi masuk ringan untuk halaman selain landing
             if (hasGsap && !document.body.dataset.customMotion) {
-                var rises = document.querySelectorAll('main .rise, main > div > h1, main > h1');
-                if (rises.length) {
-                    window.gsap.from(rises, {
-                        y: 16,
+                var targets = document.querySelectorAll('main > div, main > section');
+                if (targets.length) {
+                    window.gsap.from(targets, {
+                        y: 12,
                         opacity: 0,
-                        duration: 0.55,
-                        stagger: 0.06,
-                        ease: 'power3.out',
+                        duration: 0.42,
+                        stagger: 0.05,
+                        ease: 'power2.out',
+                        force3D: true,
                         clearProps: 'transform,opacity'
-                    });
-                }
-
-                var cards = document.querySelectorAll('main section, main .bg-surface, main .mt-card');
-                if (cards.length && hasST) {
-                    cards.forEach(function (el) {
-                        if (el.closest('.lg-preview')) return;
-                        window.gsap.from(el, {
-                            y: 20,
-                            opacity: 0,
-                            duration: 0.6,
-                            ease: 'power3.out',
-                            clearProps: 'transform,opacity',
-                            scrollTrigger: {
-                                trigger: el,
-                                start: 'top 90%',
-                                once: true
-                            }
-                        });
                     });
                 }
             }
