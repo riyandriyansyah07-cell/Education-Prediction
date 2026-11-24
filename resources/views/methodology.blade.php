@@ -36,6 +36,68 @@
         border-radius: 10px;
         padding: 1rem 1.15rem;
     }
+    .mt-grades {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.9rem;
+    }
+    .mt-grade-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        font-size: 0.76rem;
+        color: var(--ink-2);
+    }
+    .mt-grade-chip strong { color: var(--ink); font-family: var(--font-mono); }
+    .mt-table-box {
+        margin-top: 1.15rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        overflow: hidden;
+    }
+    .mt-table-head {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--sunken);
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: var(--ink);
+    }
+    .mt-ref-tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+    }
+    .mt-ref-tbl th {
+        text-align: left;
+        padding: 0.65rem 1rem;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--ink-3);
+        border-bottom: 1px solid var(--line);
+        background: color-mix(in oklab, var(--sunken) 45%, var(--bg));
+    }
+    .mt-ref-tbl td {
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid var(--line);
+        color: var(--ink-2);
+        vertical-align: middle;
+    }
+    .mt-ref-tbl tr:last-child td { border-bottom: 0; }
+    .mt-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-right: 0.45rem;
+        vertical-align: middle;
+    }
 </style>
 
 <header class="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
@@ -161,36 +223,98 @@
 
     {{-- 4. Detail Teknis (Opsional untuk Dosen / Penguji) --}}
     <section class="mt-12">
-        <details class="mt-card">
+        <details class="mt-card" style="padding:1.4rem 1.5rem;">
             <summary class="cursor-pointer text-base font-medium text-ink">Lihat rincian ambang angka &amp; skala nilai UHAMKA</summary>
-            <p class="mt-3 text-xs text-ink-2">
-                Skala huruf UHAMKA: <strong>A</strong> (80–100 / 4,0), <strong>B</strong> (68–79 / 3,0), <strong>C</strong> (56–67 / 2,0), <strong>D</strong> (45–55 / 1,0), <strong>E</strong> (0–44 / 0,0).
-            </p>
 
-            <div class="mt-grid-2 mt-5">
+            <div class="mt-grades">
+                <span class="mt-grade-chip"><strong>A</strong> 80–100 (4,0)</span>
+                <span class="mt-grade-chip"><strong>B</strong> 68–79 (3,0)</span>
+                <span class="mt-grade-chip"><strong>C</strong> 56–67 (2,0)</span>
+                <span class="mt-grade-chip"><strong>D</strong> 45–55 (1,0)</span>
+                <span class="mt-grade-chip"><strong>E</strong> 0–44 (0,0)</span>
+            </div>
+
+            <div class="mt-table-box">
+                <div class="mt-table-head">Risiko per Mata Kuliah</div>
                 <div class="overflow-x-auto">
-                    <h3 class="text-sm font-medium text-ink">Risiko per Mata Kuliah</h3>
-                    <table class="tbl mt-2 w-full text-xs">
-                        <thead><tr><th>Tingkat</th><th>Sebelum UAS (Target C)</th><th>Setelah UAS / KHS</th></tr></thead>
+                    <table class="mt-ref-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width:24%;">Tingkat (Poin)</th>
+                                <th style="width:38%;">Sebelum UAS (Target Nilai C)</th>
+                                <th style="width:38%;">Setelah UAS / KHS Resmi</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Rendah (0)</td><td>UAS Min &lt; 40</td><td>Nilai &ge; 68 (B ke atas)</td></tr>
-                            <tr><td>Sedang (0,5)</td><td>UAS Min 40 – 70</td><td>Nilai 56 – 67,9 (C)</td></tr>
-                            <tr><td>Tinggi (1,0)</td><td>UAS Min &gt; 70 / hadir &lt; 75%</td><td>Nilai &lt; 56 (D atau E)</td></tr>
+                            <tr>
+                                <td class="font-medium text-ink"><span class="mt-dot" style="background:var(--ok);"></span>Rendah <span class="mono text-ink-3">(0)</span></td>
+                                <td class="mono">UAS Min &lt; 40</td>
+                                <td>Nilai <span class="mono">&ge; 68</span> (B ke atas)</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink"><span class="mt-dot" style="background:var(--warn);"></span>Sedang <span class="mono text-ink-3">(0,5)</span></td>
+                                <td class="mono">UAS Min 40 – 70</td>
+                                <td>Nilai <span class="mono">56 – 67,9</span> (C)</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink"><span class="mt-dot" style="background:var(--bad);"></span>Tinggi <span class="mono text-ink-3">(1,0)</span></td>
+                                <td><span class="mono">UAS Min &gt; 70</span> atau hadir <span class="mono">&lt; 75%</span></td>
+                                <td>Nilai <span class="mono">&lt; 56</span> (D atau E)</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+            </div>
 
+            <div class="mt-table-box">
+                <div class="mt-table-head">Band Riwayat Akademik &amp; Penilaian DPA</div>
                 <div class="overflow-x-auto">
-                    <h3 class="text-sm font-medium text-ink">Band Riwayat &amp; Input DPA</h3>
-                    <table class="tbl mt-2 w-full text-xs">
-                        <thead><tr><th>Variabel</th><th>Aman (0)</th><th>Waspada (0,5)</th><th>Kritis (1,0)</th></tr></thead>
+                    <table class="mt-ref-tbl">
+                        <thead>
+                            <tr>
+                                <th style="width:34%;">Variabel</th>
+                                <th style="width:22%;"><span class="mt-dot" style="background:var(--ok);"></span>Aman (0)</th>
+                                <th style="width:22%;"><span class="mt-dot" style="background:var(--warn);"></span>Waspada (0,5)</th>
+                                <th style="width:22%;"><span class="mt-dot" style="background:var(--bad);"></span>Kritis (1,0)</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>IPK kumulatif</td><td>&ge; 3,00</td><td>2,00 – 2,99</td><td>&lt; 2,00</td></tr>
-                            <tr><td>Penurunan IPS</td><td>Tidak turun</td><td>Turun &lt; 0,50</td><td>Turun &ge; 0,50</td></tr>
-                            <tr><td>MK mengulang (D/E)</td><td>0 MK</td><td>1 MK</td><td>&ge; 2 MK</td></tr>
-                            <tr><td>Kenaikan beban SKS</td><td>&le; +3 SKS</td><td>+4 s.d. +6 SKS</td><td>&gt; +6 SKS</td></tr>
-                            <tr><td>Keaktifan (DPA)</td><td>Aktif</td><td>Cukup</td><td>Kurang</td></tr>
-                            <tr><td>Tugas akhir sem 7+</td><td>&le; 30 hari lalu</td><td>31 – 60 hari</td><td>&gt; 60 hari / belum</td></tr>
+                            <tr>
+                                <td class="font-medium text-ink">IPK kumulatif</td>
+                                <td class="mono">&ge; 3,00</td>
+                                <td class="mono">2,00 – 2,99</td>
+                                <td class="mono">&lt; 2,00</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink">Penurunan IPS</td>
+                                <td>Tidak turun</td>
+                                <td>Turun <span class="mono">&lt; 0,50</span></td>
+                                <td>Turun <span class="mono">&ge; 0,50</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink">MK mengulang (D/E)</td>
+                                <td class="mono">0 MK</td>
+                                <td class="mono">1 MK</td>
+                                <td class="mono">&ge; 2 MK</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink">Kenaikan beban SKS</td>
+                                <td class="mono">&le; +3 SKS</td>
+                                <td class="mono">+4 s.d. +6 SKS</td>
+                                <td class="mono">&gt; +6 SKS</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink">Keaktifan bimbingan (DPA)</td>
+                                <td>Aktif</td>
+                                <td>Cukup</td>
+                                <td>Kurang</td>
+                            </tr>
+                            <tr>
+                                <td class="font-medium text-ink">Tugas akhir sem 7+ (DPA)</td>
+                                <td>&le; 30 hari lalu</td>
+                                <td>31 – 60 hari lalu</td>
+                                <td>&gt; 60 hari / belum mulai</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
