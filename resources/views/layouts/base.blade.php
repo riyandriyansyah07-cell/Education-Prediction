@@ -16,7 +16,7 @@
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM (ULTRA-LIGHT 60FPS) === */
+        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM (NATIVE 60FPS SCROLL + GSAP) === */
         :root {
             --bg: #f6f7f9;
             --surface: #ffffff;
@@ -50,11 +50,6 @@
             --warn: #fbbf24;
             --bad: #f87171;
         }
-
-        html.lenis, html.lenis body { height: auto; }
-        .lenis.lenis-smooth { scroll-behavior: auto !important; }
-        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
-        .lenis.lenis-stopped { overflow: hidden; }
 
         /* Matikan keyframe .rise bawaan app.css agar tidak bentrok dengan GSAP */
         .rise { animation: none !important; }
@@ -140,7 +135,7 @@
 <body class="min-h-dvh">
     @yield('body')
 
-    {{-- GSAP + ScrollTrigger + Lenis (ultra-ringan, tanpa beban callback per-frame) --}}
+    {{-- GSAP + ScrollTrigger + Lenis (smoothWheel nonaktif agar scroll wheel/trackpad tetap native GPU 60fps) --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
@@ -158,12 +153,10 @@
                 window.ScrollTrigger.config({ ignoreMobileResize: true });
             }
 
-            // Lenis ringan khusus landing page (autoRaf, tanpa callback scroll berat)
+            // Lenis hanya untuk transisi halus saat klik tautan anchor (#bento, #peran); wheel/trackpad pakai native GPU scroll
             if (isLanding && typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
-                    lerp: 0.12,
-                    wheelMultiplier: 1,
-                    smoothWheel: true,
+                    smoothWheel: false,
                     autoRaf: true
                 });
                 window.__lenis = lenis;
@@ -175,13 +168,13 @@
                         var target = document.querySelector(id);
                         if (target) {
                             e.preventDefault();
-                            lenis.scrollTo(target, { offset: -72 });
+                            lenis.scrollTo(target, { offset: -72, duration: 0.7 });
                         }
                     });
                 });
             }
 
-            // Animasi masuk super singkat di halaman dasbor (tanpa menyentuh scroll)
+            // Animasi masuk super ringan di halaman dasbor
             if (hasGsap && !isLanding) {
                 var main = document.querySelector('main');
                 if (main) {
