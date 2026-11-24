@@ -8,13 +8,15 @@ use Illuminate\Support\Collection;
 /**
  * Katalog resmi 22 Mata Kuliah Pengayaan FTII UHAMKA (Panduan 2025)
  * beserta logika pencocokan nama KHS, evaluasi progres target wajib 20 SKS,
- * dan perhitungan penalti risiko khusus semester 5 ke atas.
+ * pemantauan syarat wajib PKM (paling lambat semester 7), dan bobot risiko semester 5+.
  */
 final class EnrichmentCatalog
 {
     public const TARGET_SKS = 20;
 
     public const MIN_CONVERSION_SEMESTER = 5;
+
+    public const PKM_DEADLINE_SEMESTER = 7;
 
     /**
      * @return list<array{
@@ -245,12 +247,14 @@ final class EnrichmentCatalog
 
     /**
      * Cocokkan nama mata kuliah dari KHS/impor dengan katalog resmi 22 MK Pengayaan FTII UHAMKA.
+     * Otomatis mengabaikan akhiran dalam tanda kurung seperti "(Kompetensi)", "(Pengayaan)", dll.
      *
      * @return array<string,mixed>|null
      */
     public static function matchCourseName(string $courseName): ?array
     {
-        $normalized = self::normalizeName($courseName);
+        $withoutParens = (string) preg_replace('/\([^)]*\)/u', ' ', $courseName);
+        $normalized = self::normalizeName($withoutParens);
         if ($normalized === '') {
             return null;
         }
@@ -264,8 +268,17 @@ final class EnrichmentCatalog
             return self::find($aliases[$normalized]);
         }
 
+        // 1. Pencocokan persis setelah normalisasi & penghapusan tanda kurung
         foreach (self::all() as $item) {
             if (self::normalizeName($item['name']) === $normalized) {
+                return $item;
+            }
+        }
+
+        // 2. Pencocokan awalan nama (misal "Etika Profesional Kompetensi" atau "Pengembangan Profesi 1")
+        foreach (self::all() as $item) {
+            $itemNorm = self::normalizeName($item['name']);
+            if ($itemNorm !== '' && str_starts_with($normalized, $itemNorm.' ')) {
                 return $item;
             }
         }
@@ -273,18 +286,26 @@ final class EnrichmentCatalog
         return null;
     }
 
+    /** Deteksi apakah catatan pengayaan ini merupakan kegiatan PKM / PIMNAS. */
+    public static function isPkmRecord(EnrichmentRecord $record): bool
+    {
+        $haystack = mb_strtolower($record->activity_type.' '.($record->evidence_notes ?? ''));
+
+        return (bool) preg_match('/\b(pkm|pimnas)\b/u', $haystack);
+    }
+
     private static function normalizeName(string $raw): string
     {
         $s = mb_strtolower(trim($raw));
         $s = str_replace(['&', '-', '_', '/', '(', ')', '.'], ' ', $s);
-        $s = (string) preg_replace('/\bdan\b/u', 'dan', $s);
         $s = (string) preg_replace('/\s+/u', ' ', $s);
 
         return trim($s);
     }
 
     /**
-     * Hitung kontribusi poin risiko (0.0 s.d. 1.5) dari keterlambatan progres 20 SKS Pengayaan.
+     * Hitung kontribusi poin risiko (0.0 s.d. 2.0) dari keterlambatan progres 20 SKS Pengayaan
+     * dan syarat wajib PKM (paling lambat semester 7).
      * Khusus berlaku mulai semester 5 ke atas agar mahasiswa semester 1-4 tidak kena penalti palsu.
      *
      * @param  array<string,mixed>  $progress
@@ -294,23 +315,38 @@ final class EnrichmentCatalog
         $semester = (int) ($progress['current_semester'] ?? 1);
         $converted = (int) ($progress['converted_sks'] ?? 0);
         $effective = (int) ($progress['effective_sks'] ?? 0);
+        $pkmStatus = (string) ($progress['pkm_status'] ?? 'belum');
 
-        if ($semester < self::MIN_CONVERSION_SEMESTER || $converted >= self::TARGET_SKS) {
+        if ($semester < self::MIN_CONVERSION_SEMESTER) {
             return 0.0;
         }
 
-        if ($semester <= 6) {
-            $expected = $semester === 5 ? 10 : 14;
+        $penalty = 0.0;
 
-            return $effective < $expected ? 0.6 : 0.0;
+        if ($converted < self::TARGET_SKS) {
+            if ($semester <= 6) {
+                $expected = $semester === 5 ? 10 : 14;
+                if ($effective < $expected) {
+                    $penalty += 0.6;
+                }
+            } else {
+                $penalty += $effective >= self::TARGET_SKS ? 0.8 : 1.5;
+            }
         }
 
-        // Semester 7 ke atas (fase kritis kelulusan)
-        return $effective >= self::TARGET_SKS ? 0.8 : 1.5;
+        if ($pkmStatus !== 'selesai') {
+            if ($semester >= self::PKM_DEADLINE_SEMESTER) {
+                $penalty += $pkmStatus === 'proses' ? 0.5 : 1.0;
+            } elseif ($pkmStatus === 'belum') {
+                $penalty += 0.4;
+            }
+        }
+
+        return round(min(2.0, $penalty), 2);
     }
 
     /**
-     * Hitung progres 20 SKS Pengayaan beserta peringatan dini berdasarkan semester mahasiswa saat ini.
+     * Hitung progres 20 SKS Pengayaan dan status wajib PKM (batas akhir semester 7).
      *
      * @param  Collection<int,EnrichmentRecord>  $records
      * @return array{
@@ -327,7 +363,10 @@ final class EnrichmentCatalog
      *   current_semester:int,
      *   phase_label:string,
      *   risk_level:string,
-     *   status_message:string
+     *   status_message:string,
+     *   pkm_status:string,
+     *   pkm_label:string,
+     *   pkm_message:string
      * }
      */
     public static function evaluateProgress(Collection $records, int $currentSemester): array
@@ -356,6 +395,31 @@ final class EnrichmentCatalog
         $readyPct = min(max(0.0, 100.0 - $convertedPct), round(($ready / $target) * 100, 1));
         $inProgressPct = min(max(0.0, 100.0 - $convertedPct - $readyPct), round(($inProgress / $target) * 100, 1));
 
+        $pkmRecords = $records->filter(fn (EnrichmentRecord $r) => self::isPkmRecord($r));
+        $hasCompletedPkm = $pkmRecords->contains(fn (EnrichmentRecord $r) => in_array($r->status, [EnrichmentRecord::STATUS_DIKONVERSI, EnrichmentRecord::STATUS_SIAP], true)
+            && strtoupper((string) $r->grade) !== 'E');
+        $hasOngoingPkm = $pkmRecords->contains(fn (EnrichmentRecord $r) => $r->status === EnrichmentRecord::STATUS_DICICIL);
+
+        if ($hasCompletedPkm) {
+            $pkmStatus = 'selesai';
+            $pkmLabel = 'PKM Tuntas';
+            $pkmMessage = 'Syarat wajib PKM sudah terpenuhi.';
+        } elseif ($hasOngoingPkm) {
+            $pkmStatus = 'proses';
+            $pkmLabel = 'PKM Sedang Proses';
+            $pkmMessage = $semester >= self::PKM_DEADLINE_SEMESTER
+                ? 'PKM masih berstatus dicicil di semester '.$semester.' — segera selesaikan laporan/sertifikat karena batas wajib PKM adalah semester 7.'
+                : 'PKM sedang berjalan; pastikan tuntas dan buktinya lengkap paling lambat semester 7.';
+        } else {
+            $pkmStatus = 'belum';
+            $pkmLabel = 'Belum Ikut PKM';
+            $pkmMessage = $semester >= self::PKM_DEADLINE_SEMESTER
+                ? 'Syarat wajib PKM (batas akhir semester 7) belum tercatat. Segera koordinasi dengan DPA atau PKM Centre FTII.'
+                : ($semester >= 5
+                    ? 'Belum ada catatan PKM. Segera ajukan proposal PKM sebelum batas akhir semester 7.'
+                    : 'Ingat syarat wajib mengikuti PKM paling lambat semester 7 (bisa mulai dicicil sejak sekarang).');
+        }
+
         if ($semester <= 4) {
             $phaseLabel = 'Fase Cicil Bukti (Semester 1–4)';
             if ($effective >= $target) {
@@ -366,32 +430,46 @@ final class EnrichmentCatalog
                 $message = 'Kamu sudah di semester '.$semester.' tetapi belum mencicil kegiatan pengayaan. Mulai kumpulkan 2–3 SKS per semester agar tidak menumpuk di semester 5 ke atas.';
             } else {
                 $riskLevel = 'rendah';
-                $message = 'Kamu berada di fase cicil. Kumpulkan bukti kegiatan dan konsultasikan sejak dini agar siap dikonversi ke KRS mulai semester 5.';
+                $message = 'Kamu berada di fase cicil. Kumpulkan bukti kegiatan dan siapkan PKM (wajib maksimal semester 7) agar siap dikonversi mulai semester 5.';
             }
         } elseif ($semester <= 6) {
             $phaseLabel = 'Fase Konversi KRS (Semester 5–6)';
             $expected = $semester === 5 ? 10 : 14;
-            if ($converted >= $target) {
+            if ($converted >= $target && $pkmStatus === 'selesai') {
                 $riskLevel = 'rendah';
-                $message = 'Target wajib 20 SKS MK Pengayaan sudah tuntas dikonversi di KRS!';
-            } elseif ($effective >= $expected) {
+                $message = 'Target wajib 20 SKS MK Pengayaan dan syarat wajib PKM sudah tuntas!';
+            } elseif ($effective >= $expected && $pkmStatus !== 'belum') {
                 $riskLevel = 'rendah';
                 $message = "Progresmu di jalur aman ({$converted} SKS terkonversi, {$ready} SKS siap rekognisi). Pastikan bukti siap rekognisi segera di-KRS-kan dengan Dosen Pengampu.";
             } else {
                 $riskLevel = 'sedang';
-                $message = "Di semester {$semester}, idealnya minimal {$expected} SKS sudah terkumpul/terkonversi. Saat ini baru {$effective} SKS — segera rencanakan kegiatan tambahan.";
+                $parts = [];
+                if ($effective < $expected) {
+                    $parts[] = "progres baru {$effective} SKS (target minimal Sem {$semester}: {$expected} SKS)";
+                }
+                if ($pkmStatus === 'belum') {
+                    $parts[] = 'wajib PKM (batas terakhir semester 7) belum tercatat';
+                }
+                $message = 'Perlu perhatian di semester '.$semester.': '.implode(' dan ', $parts).'.';
             }
         } else {
             $phaseLabel = 'Fase Kritis Kelulusan (Semester 7+)';
-            if ($converted >= $target) {
+            if ($converted >= $target && $pkmStatus === 'selesai') {
                 $riskLevel = 'rendah';
-                $message = 'Selamat! Seluruh 20 SKS wajib MK Pengayaan sudah tuntas dikonversi dan tidak menghambat kelulusanmu.';
-            } elseif ($effective >= $target) {
-                $riskLevel = 'sedang';
-                $message = "Bukti 20 SKS sudah terkumpul ({$converted} SKS terkonversi, {$ready} SKS siap rekognisi). Segera urus konversi KRS dan penilaian ke Dosen Pengampu sebelum UAS.";
-            } else {
+                $message = 'Selamat! Seluruh 20 SKS wajib MK Pengayaan dan syarat wajib PKM sudah tuntas.';
+            } elseif ($pkmStatus === 'belum' || $effective < $target) {
                 $riskLevel = 'tinggi';
-                $message = "Perhatian: di semester {$semester}, kamu masih kekurangan {$remainingToCollect} SKS bukti pengayaan (baru {$converted} SKS terkonversi). Segera konsultasi dengan DPA dan Dosen Pengampu agar kelulusan tidak tertunda.";
+                $issues = [];
+                if ($effective < $target) {
+                    $issues[] = "kekurangan {$remainingToCollect} SKS bukti pengayaan (baru {$converted} SKS terkonversi)";
+                }
+                if ($pkmStatus === 'belum') {
+                    $issues[] = 'syarat wajib PKM (batas akhir semester 7) belum diikuti';
+                }
+                $message = "Perhatian kritis di semester {$semester}: ".implode(' dan ', $issues).'. Segera konsultasi dengan DPA dan Dosen Pengampu agar kelulusan tidak tertunda.';
+            } else {
+                $riskLevel = 'sedang';
+                $message = "Bukti 20 SKS sudah terkumpul ({$converted} SKS terkonversi, {$ready} SKS siap rekognisi). Segera tuntaskan konversi KRS dan finalisasi bukti PKM sebelum UAS.";
             }
         }
 
@@ -410,6 +488,9 @@ final class EnrichmentCatalog
             'phase_label' => $phaseLabel,
             'risk_level' => $riskLevel,
             'status_message' => $message,
+            'pkm_status' => $pkmStatus,
+            'pkm_label' => $pkmLabel,
+            'pkm_message' => $pkmMessage,
         ];
     }
 }

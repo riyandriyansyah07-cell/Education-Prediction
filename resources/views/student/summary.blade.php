@@ -38,12 +38,12 @@
 
 @if (! $hasData)
     <section class="rise mt-8 rounded-md border border-line-strong bg-surface p-6 sm:p-8" style="--i: 2">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h2 class="text-2xl">Input Mata Kuliah</h2>
-                <p class="mt-1 text-sm text-ink-2">Isi nilai semester berjalan untuk langsung melihat skor risiko dan target UAS minimal.</p>
+                <h2 class="text-2xl">Simulasi Cepat (Tanpa Impor)</h2>
+                <p class="mt-1 text-sm text-ink-2">Belum punya file KHS? Coba simulasi nilai berjalan di bawah, atau unggah KHS langsung.</p>
             </div>
-            <a href="{{ route('mhs.impor') }}" class="btn btn-quiet btn-sm"><x-icon name="upload-simple" /> Impor CSV / PDF</a>
+            <a href="{{ route('mhs.impor') }}" class="btn btn-primary"><x-icon name="upload-simple" /> Impor KHS (PDF / CSV / XLSX)</a>
         </div>
 
         @if ($errors->any())
@@ -69,25 +69,20 @@
                             <th class="px-3 py-2.5 text-center">Hadir (%)</th>
                             <th class="px-3 py-2.5 text-center">UTS</th>
                             <th class="px-3 py-2.5 text-center">Tugas</th>
-                            <th class="px-3 py-2.5">Sumber</th>
                             <th class="px-3 py-2.5"></th>
                         </tr>
                     </thead>
                     <tbody id="manual-courses-body">
                         <tr>
-                            <td class="px-3 py-2.5"><input type="text" name="courses[0][course_code]" value="{{ old('courses.0.course_code', 'IF701') }}" placeholder="IF701" class="input h-9 w-24 mono text-sm" required></td>
-                            <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" value="{{ old('courses.0.course_name') }}" placeholder="Seminar Capstone Project" class="input h-9 w-full min-w-[13rem] text-sm" required></td>
+                            <td class="px-3 py-2.5">
+                                <input type="hidden" name="courses[0][assignment_source]" value="mandiri">
+                                <input type="text" name="courses[0][course_code]" value="{{ old('courses.0.course_code', 'IF701') }}" placeholder="IF701" class="input h-9 w-24 mono text-sm" required>
+                            </td>
+                            <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" value="{{ old('courses.0.course_name') }}" placeholder="Seminar Capstone Project" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
                             <td class="px-3 py-2.5 text-center"><input type="number" name="courses[0][credits]" min="1" max="6" value="{{ old('courses.0.credits', 3) }}" class="input h-9 w-16 mono text-center text-sm" required></td>
                             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="{{ old('courses.0.attendance', 90) }}" class="input h-9 w-20 mono text-center text-sm" required></td>
                             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" value="{{ old('courses.0.uts_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" value="{{ old('courses.0.assignment_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                            <td class="px-3 py-2.5">
-                                <select name="courses[0][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                    <option value="mandiri">Mandiri</option>
-                                    <option value="olu">OLU</option>
-                                    <option value="gdrive">GDrive</option>
-                                </select>
-                            </td>
                             <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                         </tr>
                     </tbody>
@@ -184,7 +179,7 @@
         <section class="mt-10 rounded-md border border-line bg-surface" style="padding:1.75rem;" aria-labelledby="input-cepat">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 id="input-cepat" class="text-xl font-medium">Input Cepat &amp; Target UAS (Sem {{ $latest->semester }})</h2>
+                    <h2 id="input-cepat" class="text-xl font-medium">Simulasi Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
                     <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai untuk melihat proyeksi N &amp; UAS minimal (C: 56 / B: 68).</p>
                 </div>
             </div>
@@ -195,27 +190,33 @@
                     <table class="tbl w-full">
                         <thead>
                             <tr>
-                                <th class="min-w-[14rem] px-3 py-3">Mata Kuliah</th>
-                                <th class="px-3 py-3 text-center">SKS</th>
-                                <th class="px-3 py-3 text-center">Hadir (%)</th>
-                                <th class="px-3 py-3 text-center">UTS</th>
-                                <th class="px-3 py-3 text-center">Tugas</th>
-                                <th class="px-3 py-3">Sumber</th>
-                                <th class="px-3 py-3 text-center">UAS</th>
-                                <th class="px-4 py-3 text-center whitespace-nowrap">Proyeksi N</th>
-                                <th class="px-4 py-3 text-center whitespace-nowrap">UAS Min</th>
+                                <th class="px-3 py-3">Mata Kuliah</th>
+                                <th class="px-2 py-3 text-center">SKS</th>
+                                <th class="px-2 py-3 text-center">Hadir (%)</th>
+                                <th class="px-2 py-3 text-center">UTS</th>
+                                <th class="px-2 py-3 text-center">Tugas</th>
+                                <th class="px-2 py-3 text-center">UAS</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">UAS Min</th>
                                 <th class="px-3 py-3 text-center">Risiko</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($currentCourses as $idx => $c)
+                                @php $isEnrichment = \App\Support\EnrichmentCatalog::matchCourseName((string) $c->course_name) !== null; @endphp
                                 <tr>
                                     <td class="px-3 py-3">
                                         <input type="hidden" name="courses[{{ $idx }}][id]" value="{{ $c->id }}">
+                                        <input type="hidden" name="courses[{{ $idx }}][assignment_source]" value="{{ $c->assignment_source ?? 'mandiri' }}">
                                         <span class="font-medium">{{ $c->course_name }}</span>
-                                        <span class="mono mt-0.5 block text-xs text-ink-3">{{ $c->course_code }}</span>
+                                        <span class="mono mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
+                                            <span>{{ $c->course_code }}</span>
+                                            @if ($isEnrichment)
+                                                <span class="rounded border border-accent/40 bg-accent-soft px-1.5 py-0.5 text-accent" style="font-size:10px;">Pengayaan</span>
+                                            @endif
+                                        </span>
                                     </td>
-                                    <td class="num px-3 py-3 text-center">{{ $c->credits }}</td>
+                                    <td class="num px-2 py-3 text-center">{{ $c->credits }}</td>
                                     <td class="px-2 py-3 text-center">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][attendance]" value="{{ $c->attendance }}" class="input h-9 w-16 px-2 text-center text-sm mono" required>
                                     </td>
@@ -225,18 +226,11 @@
                                     <td class="px-2 py-3 text-center">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][assignment_score]" value="{{ $c->assignment_score }}" placeholder="-" class="input h-9 w-16 px-2 text-center text-sm mono">
                                     </td>
-                                    <td class="px-2 py-3">
-                                        <select name="courses[{{ $idx }}][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                            <option value="mandiri" @selected(($c->assignment_source ?? 'mandiri') === 'mandiri')>Mandiri</option>
-                                            <option value="olu" @selected($c->assignment_source === 'olu')>OLU</option>
-                                            <option value="gdrive" @selected($c->assignment_source === 'gdrive')>GDrive</option>
-                                        </select>
-                                    </td>
                                     <td class="px-2 py-3 text-center">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input h-9 w-16 px-2 text-center text-sm mono">
                                     </td>
-                                    <td class="num mono px-4 py-3 text-center font-semibold whitespace-nowrap">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
-                                    <td class="num mono px-4 py-3 text-center text-xs whitespace-nowrap">
+                                    <td class="num mono px-3 py-3 text-center font-semibold whitespace-nowrap">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
+                                    <td class="num mono px-3 py-3 text-center text-xs whitespace-nowrap">
                                         @if ($c->min_uas_for_c !== null)
                                             C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }}
                                         @else
@@ -250,7 +244,7 @@
                     </table>
                 </div>
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
-                    <span class="text-xs text-ink-3">Komponen kosong otomatis dilewati (tidak dihitung 0).</span>
+                    <span class="text-xs text-ink-3">Komponen kosong dilewati (tidak dihitung 0). MK Pengayaan non-kelas bebas syarat absen 75%.</span>
                     <button type="submit" class="btn btn-primary btn-sm">Simpan &amp; Hitung</button>
                 </div>
             </form>
@@ -273,25 +267,20 @@
                                     <th class="px-3 py-2.5 text-center">Hadir (%)</th>
                                     <th class="px-3 py-2.5 text-center">UTS</th>
                                     <th class="px-3 py-2.5 text-center">Tugas</th>
-                                    <th class="px-3 py-2.5">Sumber</th>
                                     <th class="px-3 py-2.5"></th>
                                 </tr>
                             </thead>
                             <tbody id="manual-courses-body">
                                 <tr>
-                                    <td class="px-3 py-2.5"><input type="text" name="courses[0][course_code]" placeholder="IF702" class="input h-9 w-24 mono text-sm" required></td>
-                                    <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[13rem] text-sm" required></td>
+                                    <td class="px-3 py-2.5">
+                                        <input type="hidden" name="courses[0][assignment_source]" value="mandiri">
+                                        <input type="text" name="courses[0][course_code]" placeholder="IF702" class="input h-9 w-24 mono text-sm" required>
+                                    </td>
+                                    <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
                                     <td class="px-3 py-2.5 text-center"><input type="number" name="courses[0][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
                                     <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
                                     <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                                     <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                                    <td class="px-3 py-2.5">
-                                        <select name="courses[0][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                                            <option value="mandiri">Mandiri</option>
-                                            <option value="olu">OLU</option>
-                                            <option value="gdrive">GDrive</option>
-                                        </select>
-                                    </td>
                                     <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                                 </tr>
                             </tbody>
@@ -315,19 +304,15 @@
         const idx = manualRowIdx++;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="px-3 py-2.5"><input type="text" name="courses[${idx}][course_code]" placeholder="IF70${idx + 1}" class="input h-9 w-24 mono text-sm" required></td>
-            <td class="px-3 py-2.5"><input type="text" name="courses[${idx}][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[13rem] text-sm" required></td>
+            <td class="px-3 py-2.5">
+                <input type="hidden" name="courses[${idx}][assignment_source]" value="mandiri">
+                <input type="text" name="courses[${idx}][course_code]" placeholder="IF70${idx + 1}" class="input h-9 w-24 mono text-sm" required>
+            </td>
+            <td class="px-3 py-2.5"><input type="text" name="courses[${idx}][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
             <td class="px-3 py-2.5 text-center"><input type="number" name="courses[${idx}][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
             <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-            <td class="px-3 py-2.5">
-                <select name="courses[${idx}][assignment_source]" class="input h-9 w-32 px-2.5 text-xs">
-                    <option value="mandiri">Mandiri</option>
-                    <option value="olu">OLU</option>
-                    <option value="gdrive">GDrive</option>
-                </select>
-            </td>
             <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
         `;
         tbody.appendChild(tr);
