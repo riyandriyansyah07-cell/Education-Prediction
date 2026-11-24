@@ -16,7 +16,7 @@
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM === */
+        /* === UI/UX PRO MAX — ARCHITECTURAL DARK/LIGHT SYSTEM (ULTRA-LIGHT 60FPS) === */
         :root {
             --bg: #f6f7f9;
             --surface: #ffffff;
@@ -56,7 +56,7 @@
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: hidden; }
 
-        /* Matikan keyframe .rise bawaan app.css agar tidak bentrok ganda dengan GSAP */
+        /* Matikan keyframe .rise bawaan app.css agar tidak bentrok dengan GSAP */
         .rise { animation: none !important; }
 
         body {
@@ -73,8 +73,6 @@
             background: var(--surface) !important;
             border: 1px solid var(--line) !important;
             border-radius: 12px !important;
-            box-shadow: 0 2px 12px -4px rgba(0, 0, 0, 0.14);
-            transition: border-color 150ms ease;
         }
 
         main .bg-surface:hover {
@@ -84,7 +82,7 @@
         .btn {
             border-radius: 8px !important;
             font-weight: 500;
-            transition: background-color 140ms ease, border-color 140ms ease, opacity 140ms ease !important;
+            transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease !important;
         }
         .btn:active { opacity: 0.88; }
 
@@ -107,7 +105,7 @@
 
         .nav-link {
             border-radius: 8px !important;
-            transition: background-color 140ms ease, color 140ms ease !important;
+            transition: background-color 120ms ease, color 120ms ease !important;
         }
         .nav-link:hover {
             background: color-mix(in oklab, var(--ink) 5%, transparent) !important;
@@ -123,15 +121,13 @@
             border-radius: 8px !important;
             background: var(--sunken) !important;
             border-color: var(--line-strong) !important;
-            transition: border-color 150ms ease, box-shadow 150ms ease !important;
         }
         .input:focus {
             outline: none !important;
             border-color: var(--accent) !important;
-            box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent) !important;
+            box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 20%, transparent) !important;
         }
 
-        .tbl tbody tr { transition: background-color 120ms ease; }
         .tbl tbody tr:hover { background-color: color-mix(in oklab, var(--ink) 3%, transparent); }
 
         .risk-chip {
@@ -144,7 +140,7 @@
 <body class="min-h-dvh">
     @yield('body')
 
-    {{-- GSAP + ScrollTrigger + Lenis --}}
+    {{-- GSAP + ScrollTrigger + Lenis (ultra-ringan, tanpa beban callback per-frame) --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js" defer></script>
@@ -162,19 +158,15 @@
                 window.ScrollTrigger.config({ ignoreMobileResize: true });
             }
 
-            // Aktifkan Lenis hanya di halaman landing (halaman dasbor pakai native GPU scroll agar tetap 60fps penuh)
+            // Lenis ringan khusus landing page (autoRaf, tanpa callback scroll berat)
             if (isLanding && typeof window.Lenis !== 'undefined') {
                 var lenis = new window.Lenis({
-                    lerp: 0.09,
-                    wheelMultiplier: 0.9,
+                    lerp: 0.12,
+                    wheelMultiplier: 1,
                     smoothWheel: true,
                     autoRaf: true
                 });
                 window.__lenis = lenis;
-
-                if (hasST) {
-                    lenis.on('scroll', window.ScrollTrigger.update);
-                }
 
                 document.querySelectorAll('a[href^="#"]').forEach(function (link) {
                     link.addEventListener('click', function (e) {
@@ -189,17 +181,15 @@
                 });
             }
 
-            // Animasi masuk GSAP super ringan untuk halaman dasbor & halaman lainnya
+            // Animasi masuk super singkat di halaman dasbor (tanpa menyentuh scroll)
             if (hasGsap && !isLanding) {
                 var main = document.querySelector('main');
                 if (main) {
                     window.gsap.from(main, {
                         opacity: 0,
-                        y: 8,
-                        duration: 0.32,
-                        ease: 'power2.out',
-                        force3D: true,
-                        clearProps: 'transform,opacity'
+                        duration: 0.22,
+                        ease: 'power1.out',
+                        clearProps: 'opacity'
                     });
                 }
             }

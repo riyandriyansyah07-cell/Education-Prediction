@@ -9,20 +9,8 @@
 
     .px-nav {
         position: sticky; top: 0; z-index: 30;
-        background: color-mix(in oklab, var(--bg) 96%, transparent);
+        background: var(--bg);
         border-bottom: 1px solid var(--line);
-    }
-    .px-progress {
-        position: absolute;
-        left: 0;
-        bottom: -1px;
-        height: 2px;
-        width: 100%;
-        background: var(--accent);
-        transform-origin: left center;
-        transform: scaleX(0);
-        will-change: transform;
-        pointer-events: none;
     }
     .px-nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .px-brand { display: flex; align-items: center; gap: 0.65rem; text-decoration: none; color: var(--ink); font-weight: 600; letter-spacing: -0.02em; }
@@ -59,7 +47,6 @@
         border: 1px solid var(--line-strong);
         border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.25);
     }
     .px-winbar {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -88,13 +75,11 @@
         .px-col-4 { grid-column: span 4; }
         .px-col-8 { grid-column: span 8; }
     }
-    /* Tanpa transition: transform agar GSAP berjalan mulus 60fps */
     .px-tile {
         background: var(--surface);
         border: 1px solid var(--line);
         border-radius: 14px;
         padding: 1.5rem;
-        transition: border-color 150ms ease;
     }
     .px-tile:hover { border-color: var(--line-strong); }
 
@@ -106,11 +91,9 @@
     .px-tab {
         padding: 0.42rem 0.9rem; border-radius: 7px; font-size: 0.84rem; font-weight: 500;
         color: var(--ink-2); background: transparent; border: 0; cursor: pointer;
-        transition: background-color 150ms ease, color 150ms ease;
     }
     .px-tab.is-active {
         background: var(--surface); color: var(--ink);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
 
     .px-pipe {
@@ -156,7 +139,6 @@
             @endauth
         </div>
     </div>
-    <div class="px-progress" id="scroll-progress" aria-hidden="true"></div>
 </header>
 
 <main>
@@ -208,7 +190,7 @@
                 <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.55;">
                     NIM disamarkan dengan HMAC-SHA256. AI hanya memproses angka statistik anonim.
                 </p>
-                <div class="px-pipe js-pipe">
+                <div class="px-pipe">
                     <span class="px-node">NIM</span>
                     <span style="color:var(--ink-3);">→</span>
                     <span class="px-node px-node-accent">HMAC-SHA256</span>
@@ -318,8 +300,7 @@ window.addEventListener('DOMContentLoaded', function () {
         ).join('');
 
         if (animate && !reduceMotion && typeof window.gsap !== 'undefined') {
-            window.gsap.fromTo([title, desc], { y: 6, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, stagger: 0.04, ease: 'power2.out', force3D: true });
-            window.gsap.fromTo('.js-role-pill', { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, stagger: 0.05, ease: 'power2.out', force3D: true });
+            window.gsap.fromTo([title, desc, '.js-role-pill'], { y: 5, opacity: 0 }, { y: 0, opacity: 1, duration: 0.24, stagger: 0.03, ease: 'power2.out', force3D: true });
         }
     }
 
@@ -331,45 +312,34 @@ window.addEventListener('DOMContentLoaded', function () {
     const hasST = typeof window.ScrollTrigger !== 'undefined';
     if (hasST) gsap.registerPlugin(window.ScrollTrigger);
 
-    // 1. Hero entrance (ringan, GPU-accelerated)
-    gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } })
-        .from('.js-hero-item', { y: 18, opacity: 0, duration: 0.55, stagger: 0.07, clearProps: 'transform,opacity' })
-        .from('.js-hero-window', { y: 22, opacity: 0, duration: 0.65, clearProps: 'transform,opacity' }, '-=0.35');
+    // 1. Hero entrance singkat & GPU-only
+    gsap.from('.js-hero-item, .js-hero-window', {
+        y: 14,
+        opacity: 0,
+        duration: 0.45,
+        stagger: 0.06,
+        ease: 'power2.out',
+        force3D: true,
+        clearProps: 'transform,opacity'
+    });
 
     if (!hasST) return;
 
-    // 2. Scroll progress bar (hanya animasi GPU scaleX, super ringan)
-    gsap.to('#scroll-progress', {
-        scaleX: 1,
-        ease: 'none',
-        scrollTrigger: {
-            trigger: document.documentElement,
-            start: 'top top',
-            end: 'bottom bottom',
-            scrub: true
-        }
-    });
-
-    // 3. Reveal section & bento tiles dengan sekali trigger (tanpa parallax scrub berat)
-    gsap.from('.js-section-head', {
+    // 2. Satu kali reveal ringan untuk bento grid (tanpa continuous scrub agar scroll 100% enteng)
+    gsap.from('.js-bento-tile', {
         y: 16,
         opacity: 0,
-        duration: 0.5,
+        duration: 0.42,
+        stagger: 0.06,
         ease: 'power2.out',
         force3D: true,
         clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '#bento', start: 'top 88%', once: true }
-    });
-
-    gsap.from('.js-bento-tile', {
-        y: 20,
-        opacity: 0,
-        duration: 0.55,
-        stagger: 0.08,
-        ease: 'power2.out',
-        force3D: true,
-        clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '.px-bento', start: 'top 86%', once: true }
+        scrollTrigger: {
+            trigger: '.px-bento',
+            start: 'top 90%',
+            once: true,
+            fastScrollEnd: true
+        }
     });
 });
 </script>
