@@ -72,20 +72,29 @@ class GuidanceController extends Controller
                 $escalated = $currRank > $prevRank;
             }
 
+            $level = $latest?->level ?? 'belum';
+            $followUp = $setting?->follow_up_status ?? StudentSetting::STATUS_BELUM;
+            $isPriority = in_array($level, ['tinggi', 'sedang'], true)
+                && $followUp === StudentSetting::STATUS_BELUM;
+
             return [
                 'student' => $s,
                 'result' => $latest,
                 'previous_level' => $previous?->level,
                 'escalated' => $escalated,
-                'level' => $latest?->level ?? 'belum',
+                'level' => $level,
                 'setting' => $setting,
-                'follow_up_status' => $setting?->follow_up_status ?? StudentSetting::STATUS_BELUM,
+                'follow_up_status' => $followUp,
+                'is_priority' => $isPriority,
             ];
         });
 
         $counts = ['semua' => $rows->count()];
+        $riskPcts = [];
+        $visibleTotal = max(0, $rows->count());
         foreach (['tinggi', 'sedang', 'rendah', 'belum'] as $level) {
             $counts[$level] = $rows->where('level', $level)->count();
+            $riskPcts[$level] = $visibleTotal > 0 ? round(($counts[$level] / $visibleTotal) * 100, 1) : 0.0;
         }
 
         $statusCounts = [
@@ -94,6 +103,47 @@ class GuidanceController extends Controller
             StudentSetting::STATUS_SUDAH => $rows->where('follow_up_status', StudentSetting::STATUS_SUDAH)->count(),
             StudentSetting::STATUS_SELESAI => $rows->where('follow_up_status', StudentSetting::STATUS_SELESAI)->count(),
         ];
+
+        $priorityCount = $rows->where('is_priority', true)->count();
+        $escalatedCount = $rows->where('escalated', true)->count();
+        $handledCount = $statusCounts[StudentSetting::STATUS_SUDAH] + $statusCounts[StudentSetting::STATUS_SELESAI];
+        $handledPct = $visibleTotal > 0 ? round(($handledCount / $visibleTotal) * 100) : 0;
+
+        $semesterStats = $rows
+            ->groupBy(fn ($r) => $r['result']?->semester ? (int) $r['result']->semester : 0)
+            ->map(function ($group, $semKey) {
+                $semNum = (int) $semKey;
+
+                return [
+                    'key' => (string) $semNum,
+                    'label' => $semNum > 0 ? 'Semester '.$semNum : 'Belum dihitung',
+                    'total' => $group->count(),
+                    'tinggi' => $group->where('level', 'tinggi')->count(),
+                    'sedang' => $group->where('level', 'sedang')->count(),
+                    'rendah' => $group->where('level', 'rendah')->count(),
+                    'belum' => $group->where('level', 'belum')->count(),
+                ];
+            })
+            ->sortBy(fn ($item) => $item['key'] === '0' ? 999 : (int) $item['key'])
+            ->values();
+
+        $factorTally = [];
+        foreach ($rows as $r) {
+            $factors = $r['result']?->factors;
+            if (! is_array($factors) || $factors === []) {
+                continue;
+            }
+            $top = $factors[0]['label'] ?? null;
+            if (is_string($top) && trim($top) !== '') {
+                $label = trim($top);
+                $factorTally[$label] = ($factorTally[$label] ?? 0) + 1;
+            }
+        }
+        arsort($factorTally);
+        $topFactors = collect($factorTally)
+            ->take(5)
+            ->map(fn ($cnt, $label) => ['label' => $label, 'count' => $cnt])
+            ->values();
 
         $highRiskRefs = $rows
             ->where('level', 'tinggi')
@@ -135,7 +185,14 @@ class GuidanceController extends Controller
         return view('dpa.index', [
             'rows' => $rows,
             'counts' => $counts,
+            'riskPcts' => $riskPcts,
             'statusCounts' => $statusCounts,
+            'priorityCount' => $priorityCount,
+            'escalatedCount' => $escalatedCount,
+            'handledCount' => $handledCount,
+            'handledPct' => $handledPct,
+            'semesterStats' => $semesterStats,
+            'topFactors' => $topFactors,
             'filter' => $filter,
             'statusFilter' => $statusFilter,
             'total' => $students->count(),
