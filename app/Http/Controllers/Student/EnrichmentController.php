@@ -69,6 +69,7 @@ class EnrichmentController extends Controller
         $course = EnrichmentCatalog::find($data['course_code']);
         $ref = $request->user()->student_ref;
         $isConverted = $data['status'] === EnrichmentRecord::STATUS_DIKONVERSI;
+        $isFailedGrade = $isConverted && strtoupper((string) $data['grade']) === 'E';
 
         EnrichmentRecord::updateOrCreate(
             [
@@ -82,15 +83,18 @@ class EnrichmentController extends Controller
                 'lecturer' => $course['lecturer'],
                 'activity_type' => trim($data['activity_type']),
                 'activity_semester' => (int) $data['activity_semester'],
-                'conversion_semester' => $isConverted ? (int) $data['conversion_semester'] : null,
-                'status' => $data['status'],
+                'conversion_semester' => ($isConverted && ! $isFailedGrade) ? (int) $data['conversion_semester'] : null,
+                'status' => $isFailedGrade ? EnrichmentRecord::STATUS_DICICIL : $data['status'],
                 'grade' => $isConverted ? $data['grade'] : null,
                 'evidence_notes' => ($data['evidence_notes'] ?? null) ? trim($data['evidence_notes']) : null,
             ]
         );
 
-        return redirect()->route('mhs.pengayaan')
-            ->with('status', "Catatan MK Pengayaan \"{$course['name']}\" ({$course['credits']} SKS) berhasil disimpan.");
+        $flash = $isFailedGrade
+            ? "Catatan MK Pengayaan \"{$course['name']}\" disimpan dengan nilai E (belum lulus konversi, status otomatis diatur ke Sedang dicicil)."
+            : "Catatan MK Pengayaan \"{$course['name']}\" ({$course['credits']} SKS) berhasil disimpan.";
+
+        return redirect()->route('mhs.pengayaan')->with('status', $flash);
     }
 
     public function updateStatus(Request $request, EnrichmentRecord $record): RedirectResponse
@@ -117,10 +121,11 @@ class EnrichmentController extends Controller
         ]);
 
         $isConverted = $data['status'] === EnrichmentRecord::STATUS_DIKONVERSI;
+        $isFailedGrade = $isConverted && strtoupper((string) $data['grade']) === 'E';
 
         $record->update([
-            'status' => $data['status'],
-            'conversion_semester' => $isConverted ? (int) $data['conversion_semester'] : null,
+            'status' => $isFailedGrade ? EnrichmentRecord::STATUS_DICICIL : $data['status'],
+            'conversion_semester' => ($isConverted && ! $isFailedGrade) ? (int) $data['conversion_semester'] : null,
             'grade' => $isConverted ? $data['grade'] : null,
         ]);
 

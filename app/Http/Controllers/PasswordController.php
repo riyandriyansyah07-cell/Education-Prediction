@@ -74,7 +74,7 @@ class PasswordController extends Controller
                 ->withErrors(['email' => 'Tautan pengaturan kata sandi sudah kedaluwarsa. Ajukan tiket reset baru ke sekretariat.']);
         }
 
-        $user = User::where('email', $email)->where('is_active', true)->first();
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->where('is_active', true)->first();
         if (! $user) {
             return back()->withInput($request->only('email'))
                 ->withErrors(['email' => 'Akun aktif dengan email tersebut tidak ditemukan.']);
