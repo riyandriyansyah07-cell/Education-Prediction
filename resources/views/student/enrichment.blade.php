@@ -90,198 +90,6 @@
     </div>
 </section>
 
-
-{{-- Kartu 4 Syarat Wajib SKPI & Tahap PKM FTII --}}
-@php
-    $skpi = $progress['skpi'] ?? ['completed' => 0, 'total' => 4, 'pct' => 0, 'items' => []];
-    $stObj = $setting ?? null;
-@endphp
-<style>
-    .skpi-card {
-        margin-top: 2rem;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        padding: 1.5rem 1.65rem;
-    }
-    .skpi-grid {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin-top: 1.25rem;
-    }
-    .skpi-item {
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: var(--bg);
-        padding: 1rem 1.1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.65rem;
-    }
-    .skpi-item.is-done {
-        border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
-    }
-    .skpi-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.16rem 0.55rem;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 600;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        color: var(--ink-2);
-        white-space: nowrap;
-    }
-    .skpi-badge.is-ok {
-        color: var(--ok);
-        border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
-        background: color-mix(in srgb, var(--ok) 12%, var(--surface));
-    }
-    .skpi-badge.is-warn {
-        color: var(--warn);
-        border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
-        background: color-mix(in srgb, var(--warn) 12%, var(--surface));
-    }
-    @media (max-width: 768px) {
-        .skpi-grid { grid-template-columns: 1fr; }
-        .skpi-card { padding: 1.15rem; }
-    }
-</style>
-
-<section class="skpi-card" aria-labelledby="skpi-ftii">
-    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
-        <div>
-            <h2 id="skpi-ftii" class="text-xl font-semibold">4 Syarat Wajib SKPI &amp; Tahap PKM FTII</h2>
-            <p class="mt-1 text-sm text-ink-2">
-                Perbarui progres 4 sertifikat wajib SKPI kelulusan FTII UHAMKA. Status ini juga tampil otomatis di akun DPA kamu.
-            </p>
-        </div>
-        <span class="skpi-badge {{ $skpi['completed'] === 4 ? 'is-ok' : 'is-warn' }} mono">
-            {{ $skpi['completed'] }}/{{ $skpi['total'] }} SKPI Tuntas ({{ $skpi['pct'] }}%)
-        </span>
-    </div>
-
-    <div class="mt-3" style="height:6px;width:100%;border-radius:9999px;background:var(--bg);border:1px solid var(--line);overflow:hidden;">
-        <div style="height:100%;width:{{ $skpi['pct'] }}%;background:var(--ok);border-radius:9999px;transition:width 0.3s ease;"></div>
-    </div>
-
-    <form method="POST" action="{{ route('mhs.pengayaan.skpi') }}">
-        @csrf
-        <div class="skpi-grid">
-            {{-- 1. Sertifikat Kompetensi IT --}}
-            @php $itVal = old('skpi_it_status', $stObj?->skpi_it_status ?? 'belum'); @endphp
-            <div class="skpi-item {{ $itVal === 'selesai' ? 'is-done' : '' }}">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                    <span class="text-sm font-semibold">1. Sertifikat Kompetensi IT</span>
-                    <span class="skpi-badge {{ $itVal === 'selesai' ? 'is-ok' : ($itVal === 'proses' ? 'is-warn' : '') }}">
-                        {{ $itVal === 'selesai' ? 'Tuntas' : ($itVal === 'proses' ? 'Proses' : 'Belum') }}
-                    </span>
-                </div>
-                <p class="text-xs text-ink-3">Wajib dari lembaga kredibel seperti <strong>Mahira</strong> atau <strong>BNSP</strong>.</p>
-                <div style="display:grid;gap:0.55rem;grid-template-columns:1fr 1fr;">
-                    <div>
-                        <label for="skpi_it_status" class="label text-xs">Status</label>
-                        <select id="skpi_it_status" name="skpi_it_status" class="input text-sm">
-                            <option value="belum" @selected($itVal === 'belum')>Belum ikut</option>
-                            <option value="proses" @selected($itVal === 'proses')>Sedang proses / uji</option>
-                            <option value="selesai" @selected($itVal === 'selesai')>Lulus &amp; bersertifikat</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="skpi_it_provider" class="label text-xs">Lembaga Sertifikasi</label>
-                        <input id="skpi_it_provider" name="skpi_it_provider" type="text" list="skpi-it-providers" class="input text-sm" maxlength="80"
-                            placeholder="Mahira / BNSP" value="{{ old('skpi_it_provider', $stObj?->skpi_it_provider) }}">
-                        <datalist id="skpi-it-providers">
-                            <option value="Mahira">
-                            <option value="BNSP">
-                        </datalist>
-                    </div>
-                </div>
-            </div>
-
-            {{-- 2. Baitul Arqam Purna Studi (BAPS) --}}
-            @php $bapsVal = old('skpi_baps_status', $stObj?->skpi_baps_status ?? 'belum'); @endphp
-            <div class="skpi-item {{ $bapsVal === 'selesai' ? 'is-done' : '' }}">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                    <span class="text-sm font-semibold">2. Baitul Arqam Purna Studi (BAPS)</span>
-                    <span class="skpi-badge {{ $bapsVal === 'selesai' ? 'is-ok' : ($bapsVal === 'terdaftar' ? 'is-warn' : '') }}">
-                        {{ $bapsVal === 'selesai' ? 'Tuntas' : ($bapsVal === 'terdaftar' ? 'Terdaftar' : 'Belum') }}
-                    </span>
-                </div>
-                <p class="text-xs text-ink-3">Wajib mengikuti kegiatan BAPS hingga memperoleh sertifikat.</p>
-                <div>
-                    <label for="skpi_baps_status" class="label text-xs">Status Keikutsertaan</label>
-                    <select id="skpi_baps_status" name="skpi_baps_status" class="input text-sm">
-                        <option value="belum" @selected($bapsVal === 'belum')>Belum mengikuti</option>
-                        <option value="terdaftar" @selected($bapsVal === 'terdaftar')>Sudah terdaftar / sedang berjalan</option>
-                        <option value="selesai" @selected($bapsVal === 'selesai')>Selesai &amp; bersertifikat BAPS</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- 3. Sertifikat PKM --}}
-            @php
-                $pkmVal = old('skpi_pkm_stage', $skpi['pkm_stage'] ?? ($stObj?->skpi_pkm_stage ?? 'belum'));
-                $pkmOk = in_array($pkmVal, ['universitas', 'pendanaan'], true);
-            @endphp
-            <div class="skpi-item {{ $pkmOk ? 'is-done' : '' }}">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                    <span class="text-sm font-semibold">3. Sertifikat PKM (Wajib FTII)</span>
-                    <span class="skpi-badge {{ $pkmOk ? 'is-ok' : ($pkmVal === 'fakultas' ? 'is-warn' : '') }}">
-                        {{ $progress['pkm_label'] }}
-                    </span>
-                </div>
-                <p class="text-xs text-ink-3">
-                    Diikuti tiap <strong>semester ganjil</strong> (mulai Sem 1). Wajib lolos minimal <strong>tahap Universitas</strong> agar dapat Sertifikat PKM (SKPI); lolos Fakultas saja belum diakui SKPI.
-                </p>
-                <div>
-                    <label for="skpi_pkm_stage" class="label text-xs">Tahap Pencapaian PKM</label>
-                    <select id="skpi_pkm_stage" name="skpi_pkm_stage" class="input text-sm">
-                        <option value="belum" @selected($pkmVal === 'belum')>Belum mengikuti PKM</option>
-                        <option value="fakultas" @selected($pkmVal === 'fakultas')>Lolos Tahap Fakultas (belum diakui SKPI)</option>
-                        <option value="universitas" @selected($pkmVal === 'universitas')>Lolos Tahap Universitas (Sertifikat PKM &amp; diakui SKPI)</option>
-                        <option value="pendanaan" @selected($pkmVal === 'pendanaan')>Lolos Pendanaan / PIMNAS (diakui SKPI + rekognisi SKS)</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- 4. Sertifikat TOEFL UHAMKA --}}
-            @php $toeflVal = old('skpi_toefl_status', $stObj?->skpi_toefl_status ?? 'belum'); @endphp
-            <div class="skpi-item {{ $toeflVal === 'selesai' ? 'is-done' : '' }}">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                    <span class="text-sm font-semibold">4. Sertifikat TOEFL UHAMKA</span>
-                    <span class="skpi-badge {{ $toeflVal === 'selesai' ? 'is-ok' : ($toeflVal === 'proses' ? 'is-warn' : '') }}">
-                        {{ $toeflVal === 'selesai' ? 'Tuntas' : ($toeflVal === 'proses' ? 'Proses' : 'Belum') }}
-                    </span>
-                </div>
-                <p class="text-xs text-ink-3">Sertifikat TOEFL <strong>harus diterbitkan oleh UHAMKA</strong>.</p>
-                <div style="display:grid;gap:0.55rem;grid-template-columns:1.3fr 0.7fr;">
-                    <div>
-                        <label for="skpi_toefl_status" class="label text-xs">Status TOEFL UHAMKA</label>
-                        <select id="skpi_toefl_status" name="skpi_toefl_status" class="input text-sm">
-                            <option value="belum" @selected($toeflVal === 'belum')>Belum tes</option>
-                            <option value="proses" @selected($toeflVal === 'proses')>Terdaftar / menunggu hasil</option>
-                            <option value="selesai" @selected($toeflVal === 'selesai')>Lulus &amp; bersertifikat UHAMKA</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="skpi_toefl_score" class="label text-xs">Skor (Opsional)</label>
-                        <input id="skpi_toefl_score" name="skpi_toefl_score" type="number" min="200" max="677" class="input text-sm"
-                            placeholder="450" value="{{ old('skpi_toefl_score', $stObj?->skpi_toefl_score) }}">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs text-ink-3">{{ $progress['pkm_message'] }}</p>
-            <button type="submit" class="btn btn-primary btn-sm">Simpan Status SKPI &amp; PKM</button>
-        </div>
-    </form>
-</section>
-
 <div class="mt-12 grid gap-10 lg:grid-cols-12">
     {{-- Form Tambah / Perbarui MK Pengayaan --}}
     <section class="lg:col-span-5" aria-labelledby="form-pengayaan">
@@ -491,6 +299,197 @@
         </details>
     </section>
 </div>
+
+{{-- Kartu 4 Syarat Wajib SKPI & Tahap PKM FTII --}}
+@php
+    $skpi = $progress['skpi'] ?? ['completed' => 0, 'total' => 4, 'pct' => 0, 'items' => []];
+    $stObj = $setting ?? null;
+@endphp
+<style>
+    .skpi-card {
+        margin-top: 2.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: 1.5rem 1.65rem;
+    }
+    .skpi-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 1.25rem;
+    }
+    .skpi-item {
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        padding: 1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+    .skpi-item.is-done {
+        border-color: color-mix(in srgb, var(--ok) 45%, var(--line));
+    }
+    .skpi-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.16rem 0.55rem;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--ink-2);
+        white-space: nowrap;
+    }
+    .skpi-badge.is-ok {
+        color: var(--ok);
+        border-color: color-mix(in srgb, var(--ok) 40%, var(--line));
+        background: color-mix(in srgb, var(--ok) 12%, var(--surface));
+    }
+    .skpi-badge.is-warn {
+        color: var(--warn);
+        border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
+        background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+    }
+    @media (max-width: 768px) {
+        .skpi-grid { grid-template-columns: 1fr; }
+        .skpi-card { padding: 1.15rem; }
+    }
+</style>
+
+<section class="skpi-card" aria-labelledby="skpi-ftii">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
+        <div>
+            <h2 id="skpi-ftii" class="text-xl font-semibold">4 Syarat Wajib SKPI &amp; Tahap PKM FTII</h2>
+            <p class="mt-1 text-sm text-ink-2">
+                Perbarui progres 4 sertifikat wajib SKPI kelulusan FTII UHAMKA. Status ini juga tampil otomatis di akun DPA kamu.
+            </p>
+        </div>
+        <span class="skpi-badge {{ $skpi['completed'] === 4 ? 'is-ok' : 'is-warn' }} mono">
+            {{ $skpi['completed'] }}/{{ $skpi['total'] }} SKPI Tuntas ({{ $skpi['pct'] }}%)
+        </span>
+    </div>
+
+    <div class="mt-3" style="height:6px;width:100%;border-radius:9999px;background:var(--bg);border:1px solid var(--line);overflow:hidden;">
+        <div style="height:100%;width:{{ $skpi['pct'] }}%;background:var(--ok);border-radius:9999px;transition:width 0.3s ease;"></div>
+    </div>
+
+    <form method="POST" action="{{ route('mhs.pengayaan.skpi') }}">
+        @csrf
+        <div class="skpi-grid">
+            {{-- 1. Sertifikat Kompetensi IT --}}
+            @php $itVal = old('skpi_it_status', $stObj?->skpi_it_status ?? 'belum'); @endphp
+            <div class="skpi-item {{ $itVal === 'selesai' ? 'is-done' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <span class="text-sm font-semibold">1. Sertifikat Kompetensi IT</span>
+                    <span class="skpi-badge {{ $itVal === 'selesai' ? 'is-ok' : ($itVal === 'proses' ? 'is-warn' : '') }}">
+                        {{ $itVal === 'selesai' ? 'Tuntas' : ($itVal === 'proses' ? 'Proses' : 'Belum') }}
+                    </span>
+                </div>
+                <p class="text-xs text-ink-3">Wajib dari lembaga kredibel seperti <strong>Mahira</strong> atau <strong>BNSP</strong>.</p>
+                <div style="display:grid;gap:0.55rem;grid-template-columns:1fr 1fr;">
+                    <div>
+                        <label for="skpi_it_status" class="label text-xs">Status</label>
+                        <select id="skpi_it_status" name="skpi_it_status" class="input text-sm">
+                            <option value="belum" @selected($itVal === 'belum')>Belum ikut</option>
+                            <option value="proses" @selected($itVal === 'proses')>Sedang proses / uji</option>
+                            <option value="selesai" @selected($itVal === 'selesai')>Lulus &amp; bersertifikat</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="skpi_it_provider" class="label text-xs">Lembaga Sertifikasi</label>
+                        <input id="skpi_it_provider" name="skpi_it_provider" type="text" list="skpi-it-providers" class="input text-sm" maxlength="80"
+                            placeholder="Mahira / BNSP" value="{{ old('skpi_it_provider', $stObj?->skpi_it_provider) }}">
+                        <datalist id="skpi-it-providers">
+                            <option value="Mahira">
+                            <option value="BNSP">
+                        </datalist>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 2. Baitul Arqam Purna Studi (BAPS) --}}
+            @php $bapsVal = old('skpi_baps_status', $stObj?->skpi_baps_status ?? 'belum'); @endphp
+            <div class="skpi-item {{ $bapsVal === 'selesai' ? 'is-done' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <span class="text-sm font-semibold">2. Baitul Arqam Purna Studi (BAPS)</span>
+                    <span class="skpi-badge {{ $bapsVal === 'selesai' ? 'is-ok' : ($bapsVal === 'terdaftar' ? 'is-warn' : '') }}">
+                        {{ $bapsVal === 'selesai' ? 'Tuntas' : ($bapsVal === 'terdaftar' ? 'Terdaftar' : 'Belum') }}
+                    </span>
+                </div>
+                <p class="text-xs text-ink-3">Wajib mengikuti kegiatan BAPS hingga memperoleh sertifikat.</p>
+                <div>
+                    <label for="skpi_baps_status" class="label text-xs">Status Keikutsertaan</label>
+                    <select id="skpi_baps_status" name="skpi_baps_status" class="input text-sm">
+                        <option value="belum" @selected($bapsVal === 'belum')>Belum mengikuti</option>
+                        <option value="terdaftar" @selected($bapsVal === 'terdaftar')>Sudah terdaftar / sedang berjalan</option>
+                        <option value="selesai" @selected($bapsVal === 'selesai')>Selesai &amp; bersertifikat BAPS</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- 3. Sertifikat PKM --}}
+            @php
+                $pkmVal = old('skpi_pkm_stage', $skpi['pkm_stage'] ?? ($stObj?->skpi_pkm_stage ?? 'belum'));
+                $pkmOk = in_array($pkmVal, ['universitas', 'pendanaan'], true);
+            @endphp
+            <div class="skpi-item {{ $pkmOk ? 'is-done' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <span class="text-sm font-semibold">3. Sertifikat PKM (Wajib FTII)</span>
+                    <span class="skpi-badge {{ $pkmOk ? 'is-ok' : ($pkmVal === 'fakultas' ? 'is-warn' : '') }}">
+                        {{ $progress['pkm_label'] }}
+                    </span>
+                </div>
+                <p class="text-xs text-ink-3">
+                    Diikuti tiap <strong>semester ganjil</strong> (mulai Sem 1). Wajib lolos minimal <strong>tahap Universitas</strong> agar dapat Sertifikat PKM (SKPI); lolos Fakultas saja belum diakui SKPI.
+                </p>
+                <div>
+                    <label for="skpi_pkm_stage" class="label text-xs">Tahap Pencapaian PKM</label>
+                    <select id="skpi_pkm_stage" name="skpi_pkm_stage" class="input text-sm">
+                        <option value="belum" @selected($pkmVal === 'belum')>Belum mengikuti PKM</option>
+                        <option value="fakultas" @selected($pkmVal === 'fakultas')>Lolos Tahap Fakultas (belum diakui SKPI)</option>
+                        <option value="universitas" @selected($pkmVal === 'universitas')>Lolos Tahap Universitas (Sertifikat PKM &amp; diakui SKPI)</option>
+                        <option value="pendanaan" @selected($pkmVal === 'pendanaan')>Lolos Pendanaan / PIMNAS (diakui SKPI + rekognisi SKS)</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- 4. Sertifikat TOEFL UHAMKA --}}
+            @php $toeflVal = old('skpi_toefl_status', $stObj?->skpi_toefl_status ?? 'belum'); @endphp
+            <div class="skpi-item {{ $toeflVal === 'selesai' ? 'is-done' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <span class="text-sm font-semibold">4. Sertifikat TOEFL UHAMKA</span>
+                    <span class="skpi-badge {{ $toeflVal === 'selesai' ? 'is-ok' : ($toeflVal === 'proses' ? 'is-warn' : '') }}">
+                        {{ $toeflVal === 'selesai' ? 'Tuntas' : ($toeflVal === 'proses' ? 'Proses' : 'Belum') }}
+                    </span>
+                </div>
+                <p class="text-xs text-ink-3">Sertifikat TOEFL <strong>harus diterbitkan oleh UHAMKA</strong>.</p>
+                <div style="display:grid;gap:0.55rem;grid-template-columns:1.3fr 0.7fr;">
+                    <div>
+                        <label for="skpi_toefl_status" class="label text-xs">Status TOEFL UHAMKA</label>
+                        <select id="skpi_toefl_status" name="skpi_toefl_status" class="input text-sm">
+                            <option value="belum" @selected($toeflVal === 'belum')>Belum tes</option>
+                            <option value="proses" @selected($toeflVal === 'proses')>Terdaftar / menunggu hasil</option>
+                            <option value="selesai" @selected($toeflVal === 'selesai')>Lulus &amp; bersertifikat UHAMKA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="skpi_toefl_score" class="label text-xs">Skor (Opsional)</label>
+                        <input id="skpi_toefl_score" name="skpi_toefl_score" type="number" min="200" max="677" class="input text-sm"
+                            placeholder="450" value="{{ old('skpi_toefl_score', $stObj?->skpi_toefl_score) }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-ink-3">{{ $progress['pkm_message'] }}</p>
+            <button type="submit" class="btn btn-primary btn-sm">Simpan Status SKPI &amp; PKM</button>
+        </div>
+    </form>
+</section>
 
 <script>
 function updateCourseMeta() {
