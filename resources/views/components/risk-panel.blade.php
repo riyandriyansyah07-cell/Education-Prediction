@@ -24,18 +24,10 @@
 @endphp
 
 <style>
-    .rp-hero {
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        border-left: 4px solid var(--c);
-        background: var(--surface);
-        padding: 1.45rem 1.6rem;
-        box-shadow: var(--shadow-card);
-    }
     .rp-badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.18rem 0.58rem;
+        padding: 0.18rem 0.6rem;
         border-radius: 9999px;
         font-size: 11px;
         font-weight: 500;
@@ -43,28 +35,15 @@
         background: var(--bg);
         color: var(--ink-2);
     }
-    .rp-grid {
-        display: grid;
-        gap: 1.25rem;
-        margin-top: 1.25rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
-    }
-    .rp-card {
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        padding: 1.35rem 1.5rem;
-        box-shadow: var(--shadow-card);
-    }
-    @media (max-width: 820px) {
-        .rp-grid { grid-template-columns: 1fr; }
-        .rp-hero, .rp-card { padding: 1.15rem 1.2rem; }
+    .rp-section {
+        margin-top: 1.5rem;
+        padding-top: 1.35rem;
+        border-top: 1px solid var(--line);
     }
 </style>
 
 <article class="risk-{{ $level }}">
-    <div class="rp-hero">
+    <div style="border-left:4px solid var(--c);padding-left:1.25rem;">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;">
             <span class="rp-badge mono">Semester {{ $result->semester }}</span>
             <span class="rp-badge">{{ $trustLabel }}</span>
@@ -75,7 +54,7 @@
         </div>
 
         <div style="margin-top:0.85rem;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem 1.5rem;">
-            <h2 class="risk" style="font-size:clamp(1.75rem, 3.4vw, 2.6rem);line-height:1.15;margin:0;">
+            <h2 class="risk" style="font-size:clamp(1.75rem, 3.4vw, 2.55rem);line-height:1.15;margin:0;">
                 {{ ['rendah' => 'Risiko rendah', 'sedang' => 'Risiko sedang', 'tinggi' => 'Risiko tinggi'][$level] }}
             </h2>
             <p class="num text-ink" style="margin:0;">
@@ -84,7 +63,7 @@
             </p>
         </div>
 
-        <p class="mt-3 max-w-[64ch] text-sm text-ink-2" style="line-height:1.6;">
+        <p class="mt-2.5 max-w-[66ch] text-sm text-ink-2" style="line-height:1.6;">
             {{ $audience === 'student' ? ($result->features['encouragement'] ?? $copy[$level]) : $copy[$level] }}
         </p>
 
@@ -94,7 +73,7 @@
             </p>
         @endif
 
-        <div class="mt-6" role="img" aria-label="Skor risiko {{ \App\Support\Fmt::num($score, 1) }} dari 10.">
+        <div class="mt-5" role="img" aria-label="Skor risiko {{ \App\Support\Fmt::num($score, 1) }} dari 10.">
             <div class="relative pb-6">
                 <div class="relative h-3 overflow-hidden rounded-full" style="border:1px solid var(--line);">
                     <div class="absolute inset-y-0 left-0" style="width: {{ $pos($thresholds['sedang']) }}%; background: color-mix(in oklab, var(--ok) 36%, transparent)"></div>
@@ -112,57 +91,57 @@
         </div>
     </div>
 
-    <div class="{{ $compact ? 'mt-5' : 'rp-grid' }}">
-        <section class="rp-card" aria-labelledby="faktor-{{ $audience }}">
-            <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem;">
-                <h3 id="faktor-{{ $audience }}" class="text-base font-semibold">{{ $audience === 'dpa' ? 'Faktor utama' : 'Penyebab utama' }}</h3>
-                <a href="{{ route('metodologi') }}" class="text-xs font-medium text-accent hover:underline">Metodologi &rarr;</a>
-            </div>
-            @if ($explanationUnavailable)
-                <p class="mt-3 text-sm text-ink-2">Penjelasan belum tersedia. Klik Hitung ulang.</p>
-            @elseif (count($factors))
-                <ul style="list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.95rem;">
-                    @foreach ($factors as $f)
-                        <li class="rise" style="--i: {{ $loop->index }}">
-                            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem;">
-                                <p class="text-sm font-medium text-ink" style="margin:0;">{{ $f['label'] }}</p>
-                                <p class="num mono shrink-0 text-xs text-ink-2" style="margin:0;">+{{ \App\Support\Fmt::num($f['points'], 2) }}</p>
-                            </div>
-                            @if (! empty($f['detail']))
-                                <p class="mt-1 text-xs text-ink-2" style="line-height:1.5;">{{ $f['detail'] }}</p>
-                            @endif
-                            <div style="margin-top:0.45rem;height:6px;width:100%;border-radius:9999px;background:var(--bg);overflow:hidden;" aria-hidden="true">
-                                <div class="grow h-full rounded-full bg-accent" style="--i: {{ $loop->index }}; width: {{ min(100, $f['points'] / $maxPoints * 100) }}%"></div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <p class="mt-3 text-sm text-ink-2">Tidak ada faktor risiko yang menonjol.</p>
-            @endif
-        </section>
-
-        @unless ($compact)
-        <section class="rp-card" aria-labelledby="saran-{{ $audience }}">
-            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
-                <h3 id="saran-{{ $audience }}" class="text-base font-semibold">{{ $audience === 'dpa' ? 'Bahan pendampingan' : 'Langkah yang bisa dicoba' }}</h3>
-                @if ($result->llm_generated)
-                    <span class="rp-badge" style="color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, var(--line));background:color-mix(in srgb, var(--accent) 12%, var(--surface));font-weight:600;">AI (LLM)</span>
-                @endif
-            </div>
-            <ol style="list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.75rem;" class="text-sm">
-                @foreach ($suggestions as $s)
-                    <li style="display:flex;align-items:flex-start;gap:0.7rem;line-height:1.55;">
-                        <span class="mono" style="width:22px;height:22px;border-radius:9999px;background:var(--bg);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-2);flex-shrink:0;margin-top:1px;">{{ $loop->iteration }}</span>
-                        <span class="text-ink-2">{{ $s }}</span>
+    <section class="rp-section" aria-labelledby="faktor-{{ $audience }}">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem;">
+            <h3 id="faktor-{{ $audience }}" class="text-base font-semibold">{{ $audience === 'dpa' ? 'Faktor utama' : 'Penyebab utama' }}</h3>
+            <a href="{{ route('metodologi') }}" class="text-xs font-medium text-accent hover:underline">Metodologi &rarr;</a>
+        </div>
+        @if ($explanationUnavailable)
+            <p class="mt-2.5 text-sm text-ink-2">Penjelasan belum tersedia. Klik Hitung ulang.</p>
+        @elseif (count($factors))
+            <ul style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.9rem;">
+                @foreach ($factors as $f)
+                    <li class="rise" style="--i: {{ $loop->index }}">
+                        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:0.75rem;">
+                            <p class="text-sm font-medium text-ink" style="margin:0;">{{ $f['label'] }}</p>
+                            <p class="num mono shrink-0 text-xs text-ink-2" style="margin:0;">+{{ \App\Support\Fmt::num($f['points'], 2) }}</p>
+                        </div>
+                        @if (! empty($f['detail']))
+                            <p class="mt-1 text-xs text-ink-2" style="line-height:1.55;">{{ $f['detail'] }}</p>
+                        @endif
+                        <div style="margin-top:0.45rem;height:6px;width:100%;border-radius:9999px;background:var(--bg);overflow:hidden;" aria-hidden="true">
+                            <div class="grow h-full rounded-full bg-accent" style="--i: {{ $loop->index }}; width: {{ min(100, $f['points'] / $maxPoints * 100) }}%"></div>
+                        </div>
                     </li>
                 @endforeach
-            </ol>
-        </section>
-        @endunless
-    </div>
+            </ul>
+        @else
+            <p class="mt-2.5 text-sm text-ink-2" style="display:inline-flex;align-items:center;gap:0.45rem;padding:0.45rem 0.75rem;border-radius:9px;background:color-mix(in srgb, var(--ok) 10%, var(--bg));border:1px solid color-mix(in srgb, var(--ok) 28%, var(--line));color:var(--ok);font-size:0.82rem;">
+                Tidak ada faktor risiko yang menonjol.
+            </p>
+        @endif
+    </section>
 
-    <p class="mt-5 text-xs text-ink-3">
+    @unless ($compact)
+    <section class="rp-section" aria-labelledby="saran-{{ $audience }}">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <h3 id="saran-{{ $audience }}" class="text-base font-semibold">{{ $audience === 'dpa' ? 'Bahan pendampingan' : 'Langkah yang bisa dicoba' }}</h3>
+            @if ($result->llm_generated)
+                <span class="rp-badge" style="color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, var(--line));background:color-mix(in srgb, var(--accent) 12%, var(--surface));font-weight:600;">AI (LLM)</span>
+            @endif
+        </div>
+        <ol style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.75rem;" class="text-sm">
+            @foreach ($suggestions as $s)
+                <li style="display:flex;align-items:flex-start;gap:0.75rem;line-height:1.6;">
+                    <span class="mono" style="width:22px;height:22px;border-radius:9999px;background:var(--bg);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-2);flex-shrink:0;margin-top:2px;">{{ $loop->iteration }}</span>
+                    <span class="text-ink-2">{{ $s }}</span>
+                </li>
+            @endforeach
+        </ol>
+    </section>
+    @endunless
+
+    <p class="mt-6 border-t border-line pt-3 text-xs text-ink-3">
         Perkiraan berbasis pola data, bukan keputusan akademik &middot; {{ $result->data_as_of?->translatedFormat('j M Y') }}@if ($version) &middot; {{ $version }}@endif
     </p>
 </article>

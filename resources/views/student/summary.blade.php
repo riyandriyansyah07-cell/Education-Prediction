@@ -15,6 +15,103 @@
 @endphp
 
 @section('content')
+<style>
+    .sum-tbl .sum-inp {
+        min-height: 36px !important;
+        height: 36px;
+        width: 4.1rem;
+        padding: 0.25rem 0.35rem !important;
+        text-align: center;
+        font-size: 0.84rem !important;
+    }
+    @media (max-width: 860px) {
+        .sum-card-wrap {
+            padding: 1.1rem !important;
+        }
+        .sum-tbl-box {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+        .sum-tbl thead {
+            display: none;
+        }
+        .sum-tbl, .sum-tbl tbody {
+            display: block;
+            width: 100%;
+        }
+        .sum-tbl tbody tr {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.55rem 0.5rem;
+            padding: 0.95rem;
+            margin-bottom: 0.85rem;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: var(--bg);
+        }
+        .sum-tbl tbody tr:last-child {
+            margin-bottom: 0;
+        }
+        .sum-tbl tbody td {
+            display: block;
+            padding: 0 !important;
+            border: none !important;
+            text-align: left !important;
+        }
+        .sum-tbl tbody td.sum-td-course {
+            grid-column: 1 / 4;
+            order: 1;
+            padding-bottom: 0.35rem !important;
+        }
+        .sum-tbl tbody td.sum-td-risk {
+            grid-column: 4 / 5;
+            order: 2;
+            justify-self: end;
+            align-self: start;
+        }
+        .sum-tbl tbody td.sum-td-inp {
+            order: 3;
+        }
+        .sum-tbl tbody td.sum-td-inp::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--ink-3);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.25rem;
+            text-align: center;
+        }
+        .sum-tbl tbody td.sum-td-inp .sum-inp {
+            width: 100% !important;
+            min-height: 40px !important;
+            height: 40px;
+            font-size: 15px !important;
+        }
+        .sum-tbl tbody td.sum-td-meta {
+            order: 4;
+            grid-column: span 1;
+            padding-top: 0.45rem !important;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--line) !important;
+            font-size: 12px !important;
+        }
+        .sum-tbl tbody td.sum-td-meta::before {
+            content: attr(data-label) " ";
+            font-size: 10.5px;
+            color: var(--ink-3);
+            font-weight: 500;
+        }
+        .sum-tbl tbody td.sum-td-uasmin {
+            grid-column: span 2;
+            text-align: right !important;
+        }
+    }
+</style>
+
 <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
         <h1 class="rise text-3xl sm:text-4xl">Ringkasan risiko</h1>
@@ -192,7 +289,7 @@
     </div>
 
     @if ($currentCourses->isNotEmpty())
-        <section class="mt-10 rounded-md border border-line bg-surface" style="padding:1.75rem;" aria-labelledby="input-cepat">
+        <section class="sum-card-wrap mt-8 bg-surface" style="padding:1.5rem 1.65rem;" aria-labelledby="input-cepat">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h2 id="input-cepat" class="text-xl font-medium">Rincian Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
@@ -203,8 +300,8 @@
             <form method="POST" action="{{ route('mhs.input-cepat') }}" class="mt-5">
                 @csrf
                 <input type="hidden" name="semester" value="{{ $latest->semester }}">
-                <div class="overflow-x-auto rounded-md border border-line bg-bg">
-                    <table class="tbl w-full">
+                <div class="sum-tbl-box overflow-x-auto">
+                    <table class="tbl sum-tbl w-full">
                         <thead>
                             <tr>
                                 <th class="px-3 py-3">Mata Kuliah</th>
@@ -222,7 +319,7 @@
                             @foreach ($currentCourses as $idx => $c)
                                 @php $isEnrichment = \App\Support\EnrichmentCatalog::matchCourseName((string) $c->course_name) !== null; @endphp
                                 <tr>
-                                    <td class="px-3 py-3">
+                                    <td class="sum-td-course px-3 py-3">
                                         <input type="hidden" name="courses[{{ $idx }}][id]" value="{{ $c->id }}">
                                         <input type="hidden" name="courses[{{ $idx }}][assignment_source]" value="{{ $c->assignment_source ?? 'mandiri' }}">
                                         <span class="font-medium">{{ $c->course_name }}</span>
@@ -233,28 +330,28 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td class="num px-2 py-3 text-center">{{ $c->credits }}</td>
-                                    <td class="px-2 py-3 text-center">
-                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][attendance]" value="{{ $c->attendance }}" class="input h-9 w-16 px-2 text-center text-sm mono" required>
+                                    <td class="sum-td-meta num px-2 py-3 text-center" data-label="SKS">{{ $c->credits }}</td>
+                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="Hadir %">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][attendance]" value="{{ $c->attendance }}" class="input sum-inp mono" required>
                                     </td>
-                                    <td class="px-2 py-3 text-center">
-                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uts_score]" value="{{ $c->uts_score }}" placeholder="-" class="input h-9 w-16 px-2 text-center text-sm mono">
+                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="UTS">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uts_score]" value="{{ $c->uts_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
-                                    <td class="px-2 py-3 text-center">
-                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][assignment_score]" value="{{ $c->assignment_score }}" placeholder="-" class="input h-9 w-16 px-2 text-center text-sm mono">
+                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="Tugas">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][assignment_score]" value="{{ $c->assignment_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
-                                    <td class="px-2 py-3 text-center">
-                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input h-9 w-16 px-2 text-center text-sm mono">
+                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="UAS">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
-                                    <td class="num mono px-3 py-3 text-center font-semibold whitespace-nowrap">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
-                                    <td class="num mono px-3 py-3 text-center text-xs whitespace-nowrap">
+                                    <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Nilai N">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
+                                    <td class="sum-td-meta sum-td-uasmin num mono px-3 py-3 text-center text-xs whitespace-nowrap" data-label="UAS Min">
                                         @if ($c->min_uas_for_c !== null)
                                             C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }}
                                         @else
                                             KHS ({{ $c->grade_input ?? '-' }})
                                         @endif
                                     </td>
-                                    <td class="px-3 py-3 text-center whitespace-nowrap"><x-risk :level="$c->course_risk_level ?? 'rendah'" /></td>
+                                    <td class="sum-td-risk px-3 py-3 text-center whitespace-nowrap"><x-risk :level="$c->course_risk_level ?? 'rendah'" /></td>
                                 </tr>
                             @endforeach
                         </tbody>
