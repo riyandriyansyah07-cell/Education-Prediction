@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicRecord;
+use App\Models\AccountTicket;
 use App\Models\Consent;
 use App\Models\DpaNotification;
 use App\Models\EnrichmentRecord;
@@ -60,6 +61,7 @@ class AccountController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'max:32', 'regex:/^[A-Za-z0-9.\-]+$/', 'unique:users,username'],
+            'program_studi' => ['nullable', 'string', Rule::in(AccountTicket::PROGRAMS)],
             'email' => ['nullable', 'email', 'max:120', 'unique:users,email'],
             'role' => ['required', Rule::in(['mahasiswa', 'dpa', 'admin'])],
             'password' => ['required', 'string', 'min:8', 'max:72'],
@@ -77,9 +79,14 @@ class AccountController extends Controller
             ? (int) $data['dpa_id']
             : null;
 
+        $prodi = $data['role'] === User::ROLE_STUDENT && ! empty($data['program_studi'])
+            ? $data['program_studi']
+            : null;
+
         User::create([
             'name' => $data['name'],
             'username' => $data['username'],
+            'program_studi' => $prodi,
             'email' => ($data['email'] ?? null) ?: null,
             'role' => $data['role'],
             'password' => $data['password'],
@@ -103,6 +110,7 @@ class AccountController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'program_studi' => ['nullable', 'string', Rule::in(AccountTicket::PROGRAMS)],
             'email' => ['nullable', 'email', 'max:120', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'max:72'],
             'dpa_id' => [
@@ -123,8 +131,12 @@ class AccountController extends Controller
             $dpaId = $request->exists('dpa_id')
                 ? (! empty($data['dpa_id']) ? (int) $data['dpa_id'] : null)
                 : $user->dpa_id;
+            $prodi = $request->exists('program_studi')
+                ? (($data['program_studi'] ?? null) ?: null)
+                : $user->program_studi;
         } else {
             $dpaId = null;
+            $prodi = null;
         }
 
         $email = $request->exists('email')
@@ -133,6 +145,7 @@ class AccountController extends Controller
 
         $user->fill([
             'name' => $data['name'],
+            'program_studi' => $prodi,
             'email' => $email,
             'dpa_id' => $dpaId,
             'is_active' => $active,

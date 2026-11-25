@@ -87,8 +87,11 @@ Route::middleware('auth')->group(function () {
             ->name('bimbingan.catatan');
     });
 
-    // Admin: UC-07, UC-10 sampai UC-12 + Persetujuan E-Ticket Akun
+    // Admin: Dasbor Ringkasan + UC-07, UC-10 sampai UC-12 + Persetujuan E-Ticket Akun
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dasbor', [Admin\DashboardController::class, 'index'])->name('dasbor');
+        Route::get('/dasbor/ekspor', [Admin\DashboardController::class, 'export'])->name('dasbor.ekspor');
+
         Route::get('/akun', [Admin\AccountController::class, 'index'])->name('akun');
         Route::get('/akun/baru', [Admin\AccountController::class, 'create'])->name('akun.baru');
         Route::post('/akun', [Admin\AccountController::class, 'store'])->name('akun.store');

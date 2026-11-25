@@ -54,7 +54,7 @@ class PageController extends Controller
     {
         return redirect()->route(match ($request->user()->role) {
             'dpa' => 'dpa.bimbingan',
-            'admin' => 'admin.akun',
+            'admin' => 'admin.dasbor',
             default => 'mhs.ringkasan',
         });
     }

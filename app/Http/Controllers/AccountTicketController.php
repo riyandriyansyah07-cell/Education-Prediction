@@ -193,6 +193,7 @@ class AccountTicketController extends Controller
                     User::create([
                         'name' => $ticket->name,
                         'username' => $ticket->username,
+                        'program_studi' => $role === User::ROLE_STUDENT ? $ticket->program_studi : null,
                         'email' => $ticket->email,
                         'role' => $role,
                         'password' => $placeholderPassword,
@@ -207,6 +208,7 @@ class AccountTicketController extends Controller
                     $resolvedEmail = strtolower(trim((string) ($existingUser->email ?: $ticket->email)));
                     $existingUser->update([
                         'email' => $resolvedEmail ?: $existingUser->email,
+                        'program_studi' => $existingUser->program_studi ?: ($role === User::ROLE_STUDENT ? $ticket->program_studi : null),
                         'is_active' => true,
                     ]);
                     $targetEmail = $resolvedEmail ?: $targetEmail;

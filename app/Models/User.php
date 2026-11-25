@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-#[Fillable(['name', 'username', 'email', 'role', 'password', 'student_ref', 'dpa_id', 'is_active'])]
+#[Fillable(['name', 'username', 'program_studi', 'email', 'role', 'password', 'student_ref', 'dpa_id', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -49,6 +49,21 @@ class User extends Authenticatable
             self::ROLE_DPA => 'Dosen pembimbing akademik',
             default => 'Admin sekretariat',
         };
+    }
+
+    /**
+     * Ekstrak tahun angkatan (mis. 2023) dari 2 digit awal NIM mahasiswa (mis. 2303045009).
+     */
+    public function entryYear(): ?int
+    {
+        $digits = preg_replace('/[^0-9]/', '', (string) $this->username);
+        if (strlen($digits) < 6) {
+            return null;
+        }
+
+        $year = 2000 + (int) substr($digits, 0, 2);
+
+        return ($year >= 2015 && $year <= 2035) ? $year : null;
     }
 
     public function dpa(): BelongsTo

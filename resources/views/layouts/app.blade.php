@@ -15,6 +15,7 @@
             ['dpa.bimbingan', 'Mahasiswa bimbingan', 'users'],
         ],
         default => [
+            ['admin.dasbor', 'Dasbor ringkasan', 'house'],
             ['admin.akun', 'Akun dan peran', 'identification-card'],
             ['admin.tiket', 'Tiket pengajuan akun', 'list-checks'],
             ['admin.historis', 'Data historis', 'database'],
@@ -81,22 +82,27 @@
             @include('partials.flash')
 
             @if ($user->onboarding_seen_at === null)
-                <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-accent/30 bg-accent-soft px-5 py-4 text-sm text-ink">
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium text-ink">Selamat datang di Cegah Sebelum Terlambat, {{ $user->name }}!</p>
-                        <p class="mt-1 text-xs text-ink-2">
-                            @if ($user->isStudent())
-                                Mulai dengan mengimpor KHS (CSV, XLSX, atau PDF) di menu <strong>Impor data</strong>, pantau target UAS minimal di <strong>Ringkasan risiko</strong>, dan catat progres 20 SKS di <strong>SKS Pengayaan</strong>.
-                            @elseif ($user->isDpa())
-                                Pantau mahasiswa bimbingan yang telah memberikan izin akses pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
-                            @else
-                                Kelola akun pengguna, proses <strong>Tiket pengajuan akun</strong>, unggah data historis, serta latih dan aktifkan versi model prediksi dari panel ini.
-                            @endif
-                        </p>
+                <div class="no-print" style="margin-bottom: 1.5rem; padding: 1.05rem 1.3rem; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line)); border-left: 4px solid var(--accent); background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, var(--surface)) 0%, var(--surface) 100%); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <div style="display: flex; align-items: flex-start; gap: 0.85rem; flex: 1; min-width: 220px;">
+                        <span style="width: 34px; height: 34px; border-radius: 9px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                            <x-icon name="info" />
+                        </span>
+                        <div style="min-width: 0;">
+                            <p class="text-sm font-semibold text-ink" style="margin: 0;">Selamat datang di Cegah Sebelum Terlambat, {{ $user->name }}!</p>
+                            <p class="text-xs text-ink-2" style="margin: 0.3rem 0 0; line-height: 1.55;">
+                                @if ($user->isStudent())
+                                    Mulai dengan mengimpor KHS (CSV, XLSX, atau PDF) di menu <strong>Impor data</strong>, pantau target UAS minimal di <strong>Ringkasan risiko</strong>, dan catat progres 20 SKS di <strong>SKS Pengayaan</strong>.
+                                @elseif ($user->isDpa())
+                                    Pantau mahasiswa bimbingan yang telah memberikan izin akses pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
+                                @else
+                                    Pantau ringkasan keseluruhan di <strong>Dasbor ringkasan</strong>, kelola akun dan <strong>Tiket pengajuan akun</strong>, unggah data historis, serta latih dan aktifkan model prediksi dari panel ini.
+                                @endif
+                            </p>
+                        </div>
                     </div>
-                    <form method="POST" action="{{ route('onboarding.dismiss') }}">
+                    <form method="POST" action="{{ route('onboarding.dismiss') }}" style="flex-shrink: 0;">
                         @csrf
-                        <button type="submit" class="btn btn-quiet btn-sm shrink-0">Mengerti, sembunyikan</button>
+                        <button type="submit" class="btn btn-quiet btn-sm" style="white-space: nowrap;">Mengerti, sembunyikan</button>
                     </form>
                 </div>
             @endif

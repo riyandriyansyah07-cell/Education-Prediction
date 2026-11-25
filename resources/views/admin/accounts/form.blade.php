@@ -41,6 +41,17 @@
 
     @if (! $account->exists || $account->isStudent())
         <div data-dpa-field>
+            <label for="program_studi" class="label">Program studi <span class="font-normal text-ink-3">(mahasiswa)</span></label>
+            <select id="program_studi" name="program_studi" class="input">
+                <option value="">Belum ditetapkan</option>
+                @foreach (\App\Models\AccountTicket::PROGRAMS as $prodi)
+                    <option value="{{ $prodi }}" @selected(old('program_studi', $account->program_studi) === $prodi)>{{ $prodi }}</option>
+                @endforeach
+            </select>
+            @error('program_studi')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+        </div>
+
+        <div data-dpa-field>
             <label for="dpa_id" class="label">DPA</label>
             <select id="dpa_id" name="dpa_id" class="input">
                 <option value="">Belum ditetapkan</option>
