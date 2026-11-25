@@ -394,7 +394,7 @@
         <div class="px-hero-center">
             <div class="px-eyebrow mono js-hero-item">
                 <span class="px-pulse-dot" aria-hidden="true"></span>
-                <span>FTII UHAMKA &middot; Peringatan Dini Berbasis Gemini AI</span>
+                <span>FTII UHAMKA &middot; Peringatan Dini Berbasis AI</span>
             </div>
 
             <h1 class="px-h1 js-hero-item">
