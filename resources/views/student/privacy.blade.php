@@ -3,21 +3,23 @@
 @section('title', 'Privasi dan izin')
 
 @section('content')
-<h1 class="rise text-3xl sm:text-4xl">Privasi &amp; izin</h1>
-<p class="rise mt-1 text-ink-2" style="--i: 1">Atur akses DPA dan notifikasi pengingat.</p>
+<div>
+    <h1 class="rise">Privasi &amp; izin</h1>
+    <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">Atur akses Dosen Pembimbing Akademik (DPA) dan preferensi notifikasi pengingat.</p>
+</div>
 
-<div class="mt-10 grid gap-8 lg:grid-cols-12">
-    <section class="rounded-md border border-line bg-surface p-6 lg:col-span-7" aria-labelledby="izin-dpa">
-        <h2 id="izin-dpa" class="text-xl font-medium">Izin untuk DPA</h2>
+<div class="mt-6 grid gap-6 lg:grid-cols-12" style="align-items:start;">
+    <section class="bg-surface lg:col-span-7" style="padding:1.4rem 1.5rem;" aria-labelledby="izin-dpa">
+        <h2 id="izin-dpa" class="text-base font-semibold">Izin akses untuk DPA</h2>
         @if (! $dpa)
             <p class="mt-3 text-sm text-ink-2">DPA belum ditetapkan. Hubungi sekretariat FTII.</p>
         @else
-            <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-md border border-line bg-bg p-4">
+            <div style="margin-top:1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:1rem 1.15rem;">
                 <div>
-                    <p class="font-medium">{{ $dpa->name }}</p>
+                    <p class="font-semibold text-ink">{{ $dpa->name }}</p>
                     <p class="mt-0.5 text-xs text-ink-2">
                         @if ($consent?->granted)
-                            <span style="color:var(--ok);">Izin aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
+                            <span style="color:var(--ok);font-weight:600;">Izin aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
                         @elseif ($consent)
                             Izin dicabut &middot; {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
                         @else
@@ -38,44 +40,44 @@
                 </form>
             </div>
 
-            <div class="mt-5 grid gap-4 sm:grid-cols-2 text-xs text-ink-2">
-                <div class="rounded-md border border-line bg-bg p-3">
-                    <p class="font-medium text-ink">Terlihat oleh DPA</p>
-                    <p class="mt-1">Nama, NIM, skor risiko, faktor utama, dan progres 20 SKS pengayaan.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 text-xs text-ink-2">
+                <div style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.9rem 1rem;">
+                    <p class="font-semibold text-ink">Terlihat oleh DPA</p>
+                    <p class="mt-1" style="line-height:1.55;">Nama, NIM, skor risiko, faktor utama, serta progres 20 SKS pengayaan &amp; 4 syarat SKPI.</p>
                 </div>
-                <div class="rounded-md border border-line bg-bg p-3">
-                    <p class="font-medium text-ink">Privasi terjaga</p>
-                    <p class="mt-1">Berkas asli tidak disimpan; setiap akses DPA tercatat di <a href="{{ route('mhs.catatan') }}" class="text-accent hover:underline">Catatan akses</a>.</p>
+                <div style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.9rem 1rem;">
+                    <p class="font-semibold text-ink">Privasi terjaga</p>
+                    <p class="mt-1" style="line-height:1.55;">Berkas asli tidak disimpan; setiap akses DPA tercatat di <a href="{{ route('mhs.catatan') }}" class="text-accent hover:underline">Catatan akses</a>.</p>
                 </div>
             </div>
         @endif
     </section>
 
-    <section class="rounded-md border border-line bg-surface p-6 lg:col-span-5" aria-labelledby="pengingat">
-        <h2 id="pengingat" class="text-xl font-medium">Pengingat risiko</h2>
+    <section class="bg-surface lg:col-span-5" style="padding:1.4rem 1.5rem;" aria-labelledby="pengingat">
+        <h2 id="pengingat" class="text-base font-semibold">Pengingat risiko</h2>
         <form method="POST" action="{{ route('mhs.privasi.pengingat') }}" class="mt-4 space-y-4">
             @csrf
-            <label class="flex items-center gap-3 text-sm">
+            <label style="display:flex;align-items:center;gap:0.65rem;padding:0.65rem 0.85rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;" class="text-sm">
                 <input type="checkbox" name="remind_in_app" value="1" class="size-4 accent-[var(--accent)]" @checked(old('remind_in_app', $settings->remind_in_app))>
                 <span>Notifikasi di aplikasi</span>
             </label>
-            <label class="flex items-center gap-3 text-sm">
+            <label style="display:flex;align-items:center;gap:0.65rem;padding:0.65rem 0.85rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer;" class="text-sm">
                 <input type="checkbox" name="remind_email" value="1" class="size-4 accent-[var(--accent)]" @checked(old('remind_email', $settings->remind_email))>
                 <span>Kirim ke email saat risiko Sedang/Tinggi</span>
             </label>
             <div>
-                <label for="email" class="label">Email</label>
+                <label for="email" class="label">Email penerima pengingat</label>
                 <input id="email" name="email" type="email" autocomplete="email" class="input" placeholder="nama@email.com" value="{{ old('email', $user->email) }}">
                 @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
             </div>
-            <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
+            <button type="submit" class="btn btn-primary w-full sm:w-auto">Simpan preferensi</button>
         </form>
     </section>
 </div>
 
-<div class="mt-8 flex flex-wrap gap-3 text-xs text-ink-3">
-    <span class="rounded border border-line bg-surface px-3 py-1.5">NIM disamarkan (HMAC-SHA256)</span>
-    <span class="rounded border border-line bg-surface px-3 py-1.5">Zero-PII ke API AI</span>
-    <span class="rounded border border-line bg-surface px-3 py-1.5">Berkas unggahan tidak disimpan</span>
+<div class="mt-6 flex flex-wrap gap-2.5 text-xs text-ink-3">
+    <span style="padding:0.35rem 0.75rem;border-radius:9999px;border:1px solid var(--line);background:var(--surface);">NIM disamarkan (HMAC-SHA256)</span>
+    <span style="padding:0.35rem 0.75rem;border-radius:9999px;border:1px solid var(--line);background:var(--surface);">Zero-PII ke API AI</span>
+    <span style="padding:0.35rem 0.75rem;border-radius:9999px;border:1px solid var(--line);background:var(--surface);">Berkas unggahan tidak disimpan</span>
 </div>
 @endsection
