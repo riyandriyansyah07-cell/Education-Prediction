@@ -9,14 +9,17 @@ NIM / ID Pengguna : {{ $ticket->username }}
 @if ($ticket->program_studi)
 Program Studi     : {{ $ticket->program_studi }}
 @endif
-@if ($plainPassword)
-Kata Sandi Awal   : {{ $plainPassword }}
-@endif
 @if ($ticket->admin_note)
 Catatan           : {{ $ticket->admin_note }}
 @endif
 
+@if ($setPasswordUrl)
+Demi keamanan, kata sandi tidak dikirim melalui email.
+Atur kata sandi pribadimu melalui tautan sekali pakai berikut (berlaku {{ $expiresHours }} jam):
+{{ $setPasswordUrl }}
+@else
 Silakan masuk di: {{ $loginUrl }}
+@endif
 @else
 Pengajuan E-Ticket {{ $ticket->ticket_code }} ({{ $ticket->typeLabel() }}) DITOLAK.
 

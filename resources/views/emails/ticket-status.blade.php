@@ -19,16 +19,25 @@
             @if ($ticket->program_studi)
                 <div><strong>Program Studi:</strong> {{ $ticket->program_studi }}</div>
             @endif
-            @if ($plainPassword)
-                <div><strong>Kata Sandi Awal / Baru:</strong> <code>{{ $plainPassword }}</code></div>
-            @endif
         </div>
         @if ($ticket->admin_note)
             <p style="margin:0 0 16px;line-height:1.6;"><strong>Catatan Sekretariat:</strong> {{ $ticket->admin_note }}</p>
         @endif
-        <p style="margin:20px 0 0;">
-            <a href="{{ $loginUrl }}" style="display:inline-block;padding:10px 18px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Masuk ke Aplikasi</a>
-        </p>
+        @if ($setPasswordUrl)
+            <p style="margin:0 0 16px;line-height:1.6;">
+                Demi keamanan, kata sandi tidak dikirim melalui email. Klik tombol di bawah untuk mengatur kata sandi pribadimu (tautan berlaku sekali pakai selama {{ $expiresHours }} jam):
+            </p>
+            <p style="margin:20px 0 12px;">
+                <a href="{{ $setPasswordUrl }}" style="display:inline-block;padding:10px 18px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Atur Kata Sandi Sekarang</a>
+            </p>
+            <p style="margin:0;font-size:12px;color:#5b6773;word-break:break-all;">
+                Jika tombol tidak berfungsi, salin tautan berikut ke peramban: {{ $setPasswordUrl }}
+            </p>
+        @else
+            <p style="margin:20px 0 0;">
+                <a href="{{ $loginUrl }}" style="display:inline-block;padding:10px 18px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Masuk ke Aplikasi</a>
+            </p>
+        @endif
     @else
         <h1 style="margin:0 0 16px;font-size:20px;color:#b42318;">Pengajuan E-Ticket Ditolak</h1>
         <p style="margin:0 0 12px;line-height:1.6;">

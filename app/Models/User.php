@@ -23,6 +23,7 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'onboarding_seen_at' => 'datetime',
         ];
     }
 

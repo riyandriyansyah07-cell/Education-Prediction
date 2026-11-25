@@ -72,6 +72,7 @@ class RiskService
                 // Auto-sinkronisasi MK Pengayaan yang sudah bernilai di KHS resmi ke tabel enrichment_records
                 if ($enrichmentMatch && $isOfficialKhs && $r->grade_point !== null && $hasEnrichmentTable) {
                     $letter = Grades::pointToLetter((float) $r->grade_point);
+                    $isFailed = $letter === 'E';
                     $existingEnr = EnrichmentRecord::where('student_ref', $ref)
                         ->where('course_code', $enrichmentMatch['code'])
                         ->first();
@@ -86,12 +87,14 @@ class RiskService
                             'credits' => $enrichmentMatch['credits'],
                             'competency' => $enrichmentMatch['competency'],
                             'lecturer' => $enrichmentMatch['lecturer'],
-                            'activity_type' => $existingEnr?->activity_type ?: 'Terkonversi otomatis dari KHS',
+                            'activity_type' => $existingEnr?->activity_type ?: ($isFailed ? 'Belum lulus KHS (perlu mengulang)' : 'Terkonversi otomatis dari KHS'),
                             'activity_semester' => $existingEnr?->activity_semester ?? (int) $semester,
-                            'conversion_semester' => (int) $semester,
-                            'status' => EnrichmentRecord::STATUS_DIKONVERSI,
-                            'grade' => in_array($letter, ['A', 'B', 'E'], true) ? $letter : 'B',
-                            'evidence_notes' => $existingEnr?->evidence_notes ?: "Tersinkron otomatis dari KHS semester {$semester}.",
+                            'conversion_semester' => $isFailed ? null : (int) $semester,
+                            'status' => $isFailed ? EnrichmentRecord::STATUS_DICICIL : EnrichmentRecord::STATUS_DIKONVERSI,
+                            'grade' => $letter,
+                            'evidence_notes' => $existingEnr?->evidence_notes ?: ($isFailed
+                                ? "Nilai E pada KHS semester {$semester} (tidak dihitung sebagai konversi SKS, perlu mengulang)."
+                                : "Tersinkron otomatis dari KHS semester {$semester}."),
                         ]
                     );
                 }
@@ -342,7 +345,7 @@ class RiskService
         if ($settings->remind_email) {
             $hours = (int) config('mail.risk_throttle_hours', 24);
             $key = 'risk-email:'.$ref.':'.$result->level;
-            $throttled = $force && $hours > 0;
+            $throttled = $hours > 0;
 
             if ($throttled && Cache::has($key)) {
                 Log::info('Pengingat email dilewati: sudah terkirim dalam '.$hours.' jam terakhir untuk '.$ref);

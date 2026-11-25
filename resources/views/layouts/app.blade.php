@@ -79,6 +79,28 @@
     <main class="lg:pl-64">
         <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 lg:py-12">
             @include('partials.flash')
+
+            @if ($user->onboarding_seen_at === null)
+                <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-4 rounded-md border border-accent/30 bg-accent-soft px-5 py-4 text-sm text-ink">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-ink">Selamat datang di Cegah Sebelum Terlambat, {{ $user->name }}!</p>
+                        <p class="mt-1 text-xs text-ink-2">
+                            @if ($user->isStudent())
+                                Mulai dengan mengimpor KHS (CSV, XLSX, atau PDF) di menu <strong>Impor data</strong>, pantau target UAS minimal di <strong>Ringkasan risiko</strong>, dan catat progres 20 SKS di <strong>SKS Pengayaan</strong>.
+                            @elseif ($user->isDpa())
+                                Pantau mahasiswa bimbingan yang telah memberikan izin akses pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
+                            @else
+                                Kelola akun pengguna, proses <strong>Tiket pengajuan akun</strong>, unggah data historis, serta latih dan aktifkan versi model prediksi dari panel ini.
+                            @endif
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ route('onboarding.dismiss') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-quiet btn-sm shrink-0">Mengerti, sembunyikan</button>
+                    </form>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </main>

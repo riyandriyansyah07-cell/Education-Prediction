@@ -61,6 +61,15 @@ class RiskModelTest extends TestCase
         $this->assertFalse($ok['records'][0]['is_official_khs']);
         $this->assertSame('olu', $ok['records'][0]['assignment_source']);
         $this->assertEqualsWithDelta(36.25, $ok['records'][0]['min_uas_for_c'], 0.01);
+
+        // C1: Bobot numerik 0-4.0 di kolom "nilai" (skala 0-100) harus meminta konfirmasi (error), bukan diam-diam jadi E
+        $ambiguousBobot = SheetValidator::validate([$header, ['5', 'IF501', 'Big Data', '3', '3.5', '90', '', '', '']], '2303045009');
+        $this->assertNotEmpty($ambiguousBobot['errors']);
+        $this->assertStringContainsString('nilai_bobot', $ambiguousBobot['errors'][0]['message']);
+
+        // C2: Apostrof di awal sel di-strip saat neutralize()
+        $this->assertSame('IF601', SheetValidator::neutralize("'IF601"));
+        $this->assertSame("'=cmd|calc", SheetValidator::neutralize("'=cmd|calc"));
     }
 
     public function test_pelatihan_ambang_memakai_data_uji_terpisah(): void
@@ -104,7 +113,18 @@ class RiskModelTest extends TestCase
 
         $this->assertCount(70, $train);
         $this->assertCount(30, $test);
-        $this->assertSame([7, 8, 9], array_slice(array_column($test, 'i'), 0, 3));
+
+        // C3: Pastikan data di-shuffle secara deterministik dan tetap saling lepas
+        $trainIds = array_column($train, 'i');
+        $testIds = array_column($test, 'i');
+        $this->assertEmpty(array_intersect($trainIds, $testIds));
+        $merged = array_merge($trainIds, $testIds);
+        sort($merged);
+        $this->assertSame(range(0, 99), $merged);
+        $this->assertNotSame([7, 8, 9], array_slice($testIds, 0, 3));
+
+        [$train2, $test2] = ThresholdTrainer::split($rows);
+        $this->assertSame($testIds, array_column($test2, 'i'));
 
         $this->expectException(\InvalidArgumentException::class);
         ThresholdTrainer::split(array_slice($rows, 0, 20));

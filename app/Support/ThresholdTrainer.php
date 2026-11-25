@@ -6,20 +6,29 @@ use InvalidArgumentException;
 
 /**
  * Melatih model aturan: mencari ambang "sedang" dan "tinggi" terbaik pada data latih,
- * lalu menguji pada data uji yang terpisah (30% terakhir pada pola indeks 7 dari 10).
+ * lalu menguji pada data uji yang terpisah (30% setelah pengacakan deterministik).
  * Pembagian yang sama dikirim ke layanan model ML, sehingga kedua model diuji pada data uji yang sama.
  */
 final class ThresholdTrainer
 {
     /**
-     * @param list<array> $rows
+     * @param  list<array>  $rows
      * @return array{0:list<array>,1:list<array>} [data latih, data uji]
      */
-    public static function split(array $rows): array
+    public static function split(array $rows, ?int $seed = 2026): array
     {
+        $items = array_values($rows);
+
+        // C3: Acak secara deterministik sebelum pembagian 7-dari-10 agar urutan waktu tidak menimbulkan bias.
+        if ($seed !== null && count($items) > 1) {
+            mt_srand($seed);
+            shuffle($items);
+            mt_srand();
+        }
+
         $train = [];
         $test = [];
-        foreach (array_values($rows) as $i => $row) {
+        foreach ($items as $i => $row) {
             if ($i % 10 < 7) {
                 $train[] = $row;
             } else {
@@ -34,7 +43,7 @@ final class ThresholdTrainer
     }
 
     /**
-     * @param list<array{attendance:float,ips:float,failed_ratio:float,ips_delta:float,label:string}> $rows
+     * @param  list<array{attendance:float,ips:float,failed_ratio:float,ips_delta:float,label:string}>  $rows
      * @return array{params:array{sedang:float,tinggi:float},metrics:array,train_rows:int,test_rows:int}
      */
     public static function fit(array $rows): array

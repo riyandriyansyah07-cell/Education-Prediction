@@ -118,7 +118,14 @@ class HistoricalDataController extends Controller
             ])->deleteFileAfterSend(true);
         }
 
-        $csv = "\xEF\xBB\xBF".implode("\n", array_map(fn ($r) => implode(',', $r), $rows))."\n";
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, "\xEF\xBB\xBF");
+        foreach ($rows as $row) {
+            fputcsv($stream, $row);
+        }
+        rewind($stream);
+        $csv = (string) stream_get_contents($stream);
+        fclose($stream);
 
         return response()->streamDownload(fn () => print ($csv), 'templat-data-historis.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',

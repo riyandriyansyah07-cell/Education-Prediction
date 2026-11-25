@@ -90,7 +90,7 @@ final class SheetValidator
             }
 
             $code = self::neutralize($get('kode_mk'));
-            if (! preg_match('/^[\'A-Za-z0-9 .\-_]{2,20}$/', $code)) {
+            if (! preg_match('/^[A-Za-z0-9 .\-_]{2,20}$/', $code)) {
                 $rowErrors[] = 'Kode mata kuliah harus 2 sampai 20 karakter (huruf, angka, spasi, titik, strip).';
             }
 
@@ -133,12 +133,18 @@ final class SheetValidator
             $isOfficialKhs = false;
 
             if ($hasOfficialGrade) {
-                $point = Grades::toPoint($rawGrade, $gradeScale);
-                if ($point === null) {
-                    $rowErrors[] = 'Nilai "'.mb_substr($rawGrade, 0, 12).'" tidak dikenal. Pakai skala UHAMKA (A sampai E) atau angka 0 sampai 100.';
+                // C1: Heuristik deteksi bobot IP (0–4,0) pada kolom "nilai" (skala 0–100) agar tidak diam-diam terbaca sebagai E
+                $numericGrade = Grades::parseNumber($rawGrade);
+                if ($gradeScale === 'score100' && $numericGrade !== null && $numericGrade > 0.0 && $numericGrade <= 4.0) {
+                    $rowErrors[] = 'Nilai "'.mb_substr($rawGrade, 0, 12).'" berada di rentang 0–4,0 pada kolom "nilai" (skala 0–100). Jika ini bobot IP (0–4), ubah nama kolom menjadi "nilai_bobot" atau "bobot", atau pakai nilai huruf (A–E) / skor 0–100.';
                 } else {
-                    $gradeInput = mb_substr($rawGrade, 0, 12);
-                    $isOfficialKhs = true;
+                    $point = Grades::toPoint($rawGrade, $gradeScale);
+                    if ($point === null) {
+                        $rowErrors[] = 'Nilai "'.mb_substr($rawGrade, 0, 12).'" tidak dikenal. Pakai skala UHAMKA (A sampai E) atau angka 0 sampai 100.';
+                    } else {
+                        $gradeInput = mb_substr($rawGrade, 0, 12);
+                        $isOfficialKhs = true;
+                    }
                 }
             } elseif (! isset($col['nilai']) && $utsScore === null && $assignmentScore === null && $uasScore === null) {
                 $rowErrors[] = 'Kolom nilai tidak ditemukan.';
@@ -221,10 +227,12 @@ final class SheetValidator
         return self::ALIASES[$h] ?? $h;
     }
 
-    /** Sel teks yang diawali karakter rumus dinetralkan dengan tanda petik. */
+    /**
+     * Strip apostrof awal yang lolos (C2), lalu netralkan karakter rumus dengan satu tanda petik.
+     */
     public static function neutralize(string $text): string
     {
-        $text = trim($text);
+        $text = ltrim(trim($text), "'");
 
         return preg_match('/^[=+\-@\t\r]/', $text) ? "'".$text : $text;
     }

@@ -160,8 +160,11 @@
                 <div>
                     <label for="grade" class="label">Nilai Akhir</label>
                     <select id="grade" name="grade" class="input">
-                        <option value="A" @selected(old('grade', 'A') === 'A')>A</option>
+                        <option value="">-- Pilih nilai --</option>
+                        <option value="A" @selected(old('grade') === 'A')>A</option>
                         <option value="B" @selected(old('grade') === 'B')>B</option>
+                        <option value="C" @selected(old('grade') === 'C')>C</option>
+                        <option value="D" @selected(old('grade') === 'D')>D</option>
                         <option value="E" @selected(old('grade') === 'E')>E (tidak selesai)</option>
                     </select>
                     @error('grade')<p class="field-error">{{ $message }}</p>@enderror
@@ -202,7 +205,7 @@
                                     @elseif ($r->status === 'siap_rekognisi')
                                         <span class="rounded border border-accent/40 bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">Bukti siap rekognisi</span>
                                     @else
-                                        <span class="rounded border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium" style="color:var(--warn);">Sedang dicicil</span>
+                                        <span class="rounded border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium" style="color:var(--warn);">Sedang dicicil{{ $r->grade === 'E' ? ' · Nilai E (gagal)' : '' }}</span>
                                     @endif
                                 </div>
                                 <p class="mt-2 text-sm text-ink-2">{{ $r->activity_type }} &middot; Dicicil Sem {{ $r->activity_semester }}</p>
@@ -235,10 +238,13 @@
                                     @method('PATCH')
                                     <input type="hidden" name="status" value="dikonversi">
                                     <span class="text-xs text-ink-3">Konversi KRS:</span>
-                                    <input type="number" name="conversion_semester" min="5" max="14" value="{{ max(5, $progress['current_semester']) }}" class="input text-xs" style="width:4.5rem; padding:0.4rem 0.6rem;" aria-label="Semester konversi" title="Semester konversi (min. 5)">
-                                    <select name="grade" class="input text-xs" style="width:5.25rem; padding:0.4rem 0.6rem;" aria-label="Nilai">
+                                    <input type="number" name="conversion_semester" min="5" max="14" value="{{ max(5, $progress['current_semester']) }}" class="input text-xs" style="width:4.5rem; padding:0.4rem 0.6rem;" aria-label="Semester konversi" title="Semester konversi (min. 5)" required>
+                                    <select name="grade" class="input text-xs" style="width:6.25rem; padding:0.4rem 0.6rem;" aria-label="Nilai" required>
+                                        <option value="">Nilai...</option>
                                         <option value="A">Nilai A</option>
                                         <option value="B">Nilai B</option>
+                                        <option value="C">Nilai C</option>
+                                        <option value="D">Nilai D</option>
                                     </select>
                                     <button type="submit" class="btn btn-primary btn-sm">Tandai Sudah Konversi KRS</button>
                                 </form>
@@ -310,8 +316,13 @@ function updateCourseMeta() {
 
 function toggleConversionFields() {
     const status = document.getElementById('status').value;
+    const isConverted = status === 'dikonversi';
     const fields = document.getElementById('conversion-fields');
-    fields.classList.toggle('hidden', status !== 'dikonversi');
+    const semInput = document.getElementById('conversion_semester');
+    const gradeSelect = document.getElementById('grade');
+    fields.classList.toggle('hidden', !isConverted);
+    if (semInput) semInput.required = isConverted;
+    if (gradeSelect) gradeSelect.required = isConverted;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

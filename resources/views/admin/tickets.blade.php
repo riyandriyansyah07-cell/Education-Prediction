@@ -69,10 +69,6 @@
                     <div class="mt-4 grid items-end gap-4 border-t border-line pt-4 lg:grid-cols-12">
                         <form method="POST" action="{{ route('admin.tiket.setujui', $t) }}" class="flex flex-wrap items-end gap-2 lg:col-span-8">
                             @csrf
-                            <div class="flex-1" style="min-width: 8.5rem;">
-                                <label class="label text-xs">Sandi awal</label>
-                                <input type="text" name="password" value="password123" minlength="8" class="input h-9 w-full mono text-sm" required>
-                            </div>
                             @if ($t->request_type === 'akun_mahasiswa')
                                 <div class="flex-1" style="min-width: 11rem;">
                                     <label class="label text-xs">DPA</label>
@@ -84,11 +80,11 @@
                                     </select>
                                 </div>
                             @endif
-                            <div class="flex-1" style="min-width: 10rem;">
-                                <label class="label text-xs">Catatan</label>
-                                <input type="text" name="admin_note" placeholder="Opsional" class="input h-9 w-full text-sm">
+                            <div class="flex-1" style="min-width: 12rem;">
+                                <label class="label text-xs">Catatan persetujuan</label>
+                                <input type="text" name="admin_note" placeholder="Opsional — tautan set sandi dikirim otomatis ke email" class="input h-9 w-full text-sm">
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm h-9 shrink-0">Setujui</button>
+                            <button type="submit" class="btn btn-primary btn-sm h-9 shrink-0">Setujui &amp; Kirim Tautan Sandi</button>
                         </form>
 
                         <form method="POST" action="{{ route('admin.tiket.tolak', $t) }}" class="flex items-end gap-2 lg:col-span-4">

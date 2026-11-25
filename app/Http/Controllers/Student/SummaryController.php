@@ -90,6 +90,7 @@ class SummaryController extends Controller
     /**
      * Cek Berkala Langsung: Mahasiswa dapat langsung menambah mata kuliah semester berjalan
      * (atau memperbarui bila kode MK & semester sama) tanpa wajib mengimpor file CSV/XLSX dulu.
+     * C5: Mempertahankan grade_point, grade_input, dan is_official_khs lama bila mata kuliah sudah ada.
      */
     public function storeManualCourses(Request $request, RiskService $risk): RedirectResponse
     {
@@ -123,14 +124,25 @@ class SummaryController extends Controller
             $source = ($item['assignment_source'] ?? '') !== '' ? $item['assignment_source'] : ($tugas !== null ? 'mandiri' : null);
             $att = round((float) $item['attendance'], 2);
 
+            $existing = AcademicRecord::where('student_ref', $ref)
+                ->where('semester', $semester)
+                ->where('course_code', $code)
+                ->first();
+
+            $preservedGradePoint = $existing?->grade_point !== null ? (float) $existing->grade_point : null;
+            $preservedGradeInput = $existing?->grade_input;
+            $preservedOfficialKhs = (bool) ($existing?->is_official_khs ?? false);
+
             $proj = RiskModel::projectCourse([
                 'credits' => (int) $item['credits'],
                 'attendance' => $att,
+                'grade_point' => $preservedGradePoint,
+                'grade_input' => $preservedGradeInput,
                 'uts_score' => $uts,
                 'assignment_score' => $tugas,
                 'uas_score' => $uas,
                 'assignment_source' => $source,
-                'is_official_khs' => false,
+                'is_official_khs' => $preservedOfficialKhs,
             ]);
 
             AcademicRecord::updateOrCreate(
@@ -142,20 +154,20 @@ class SummaryController extends Controller
                 [
                     'course_name' => trim($item['course_name']),
                     'credits' => (int) $item['credits'],
-                    'grade_point' => null,
-                    'grade_input' => null,
+                    'grade_point' => $preservedGradePoint,
+                    'grade_input' => $preservedGradeInput,
                     'attendance' => $att,
                     'uts_score' => $uts,
                     'assignment_score' => $tugas,
                     'uas_score' => $uas,
                     'assignment_source' => $source,
-                    'assignment_recorded_at' => $tugas !== null ? $today : null,
+                    'assignment_recorded_at' => $tugas !== null ? ($existing?->assignment_recorded_at ?? $today) : null,
                     'projected_score' => $proj['projected_score'],
                     'min_uas_for_c' => $proj['min_uas_for_c'],
                     'min_uas_for_b' => $proj['min_uas_for_b'],
                     'course_risk_level' => $proj['course_risk_level'],
                     'data_trust_level' => $proj['data_trust_level'],
-                    'is_official_khs' => false,
+                    'is_official_khs' => $preservedOfficialKhs,
                 ]
             );
             $savedCount++;
@@ -175,6 +187,7 @@ class SummaryController extends Controller
     /**
      * Input cepat nilai UTS, Tugas, dan UAS per mata kuliah pada semester yang sedang dibuka
      * untuk memperbarui proyeksi nilai akhir (N) dan target UAS minimal (U_min).
+     * C4: Tidak menghitung ulang / menimpa flag is_official_khs yang sudah ditetapkan sebelumnya.
      */
     public function quickUpdate(Request $request, RiskService $risk): RedirectResponse
     {
@@ -219,7 +232,6 @@ class SummaryController extends Controller
                 'uas_score' => $uas !== null ? round($uas, 2) : null,
                 'assignment_source' => $source,
                 'assignment_recorded_at' => $tugas !== null ? ($record->assignment_recorded_at ?? $today) : null,
-                'is_official_khs' => ($uts === null && $tugas === null && $uas === null && $record->grade_point !== null),
             ]);
             $updatedCount++;
         }

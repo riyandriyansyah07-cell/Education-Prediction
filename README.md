@@ -15,7 +15,9 @@ php artisan key:generate
 ```
 
 Buat database di pgAdmin 4: klik kanan **Databases**, **Create**, **Database**, beri nama `peringatan_dini`.
-Lalu isi `DB_USERNAME` dan `DB_PASSWORD` di `.env` sesuai akun PostgreSQL-mu.
+Lalu isi `DB_USERNAME`, `DB_PASSWORD`, dan `PSEUDONYM_SALT` (string acak panjang, misalnya 32 karakter) di `.env` **sebelum** menjalankan migrasi dan seeder.
+Jangan mengubah `PSEUDONYM_SALT` setelah data nyata masuk karena mengubahnya membuat kode samar lama tidak cocok dengan NIM.
+(Pada lingkungan `APP_ENV=local`, bila `PSEUDONYM_SALT` dibiarkan kosong, seeder otomatis membangkitkan dan menyimpannya ke `.env`.)
 
 ```bash
 php artisan migrate --seed
@@ -29,9 +31,6 @@ Kata sandi semua akun contoh: `password123`. Akun admin: `admin`.
 
 Akun mahasiswa pertama (Riyan, 2303045009) sengaja kosong agar alur impor bisa dicoba dari awal.
 Pakai tombol **Unduh templat** di halaman Impor untuk berkas contoh.
-
-Sebelum data nyata masuk, isi `PSEUDONYM_SALT` di `.env` dengan string acak panjang dan jangan diubah lagi.
-Mengubahnya membuat kode samar lama tidak cocok dengan NIM.
 
 ## Alur dan peta ke dokumen
 
@@ -62,7 +61,7 @@ dan perubahan IPS dari semester sebelumnya. Dua model menghitungnya:
 
 Skor risiko 0 sampai 10 = 10 x (0,5 x P(sedang) + P(tinggi)). Dua ambang skor (sedang, tinggi) dikalibrasi pada
 prediksi out-of-fold data latih dengan tujuan macro-F1 + 0,5 x recall Tinggi, supaya kelas Tinggi yang jarang tidak
-terlewat. Data uji terpisah (30%, pola indeks 7 dari 10) hanya dipakai sekali untuk menilai versi.
+terlewat. Data uji terpisah (30% setelah pengacakan deterministik) hanya dipakai sekali untuk menilai versi.
 Versi hanya bisa diaktifkan bila macro-F1 >= 0,70 dan recall Tinggi >= 0,80 (`config/risk.php`).
 Halaman Model prediksi menampilkan matriks kebingungan, kedua kandidat, dan metrik model aturan pada data uji yang sama.
 
@@ -94,5 +93,6 @@ cd ml-service && python -m pytest   # layanan model: pelatihan, target NFR-02, S
 
 - Hak akses diperiksa di server pada setiap permintaan (`EnsureRole`, pemeriksaan izin di `GuidanceController`).
 - Kata sandi di-hash bcrypt. Login dibatasi 5 percobaan per menit. Sesi kedaluwarsa 30 menit.
-- Berkas impor dibaca dari folder sementara PHP dan tidak pernah disimpan. Sel berawalan `=`, `+`, `-`, `@` dinetralkan.
+- Persetujuan E-Ticket mengirim tautan pengaturan kata sandi sekali pakai bertoken (berlaku 24 jam), tanpa mengirim kata sandi plaintext melalui email.
+- Berkas impor dibaca dari folder sementara PHP dan tidak pernah disimpan. Sel berawalan `=`, `+`, `-`, `@` dinetralkan dan tanda petik awal dibersihkan.
 - Pakai HTTPS di produksi.

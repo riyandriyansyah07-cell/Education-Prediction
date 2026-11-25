@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountTicketController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dpa;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\Student;
@@ -17,9 +18,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/masuk', [AuthController::class, 'show'])->name('login');
     Route::post('/masuk', [AuthController::class, 'store'])->name('login.store');
 
-    // E-Ticket Pengajuan Akun Baru / Reset Sandi ke Sekretariat
+    // Pengaturan kata sandi awal / reset melalui tautan sekali pakai bertoken (S1)
+    Route::get('/atur-kata-sandi/{token}', [PasswordController::class, 'showSetup'])
+        ->middleware('throttle:10,1')
+        ->name('sandi.atur.form');
+    Route::post('/atur-kata-sandi', [PasswordController::class, 'completeSetup'])
+        ->middleware('throttle:10,1')
+        ->name('sandi.atur.store');
+
+    // E-Ticket Pengajuan Akun Baru / Reset Sandi ke Sekretariat (S2: rate limit diperketat)
     Route::get('/ajukan-akun', [AccountTicketController::class, 'showForm'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:10,1')
         ->name('tiket.form');
     Route::post('/ajukan-akun', [AccountTicketController::class, 'submit'])
         ->middleware('throttle:5,10')
@@ -29,6 +38,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/keluar', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/beranda', [PageController::class, 'home'])->name('beranda');
+    Route::post('/onboarding/tutup', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
     Route::get('/kata-sandi', [PasswordController::class, 'show'])->name('sandi.edit');
     Route::post('/kata-sandi', [PasswordController::class, 'update'])->name('sandi.update');
 
@@ -41,7 +51,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/impor', [Student\ImportController::class, 'show'])->name('impor');
         Route::post('/impor', [Student\ImportController::class, 'store'])->name('impor.store');
-        Route::post('/impor/konversi-pdf', [Student\ImportController::class, 'convertPdfToExcel'])->name('impor.konversi');
         Route::get('/impor/templat', [Student\ImportController::class, 'template'])->name('templat');
 
         Route::get('/pengayaan', [Student\EnrichmentController::class, 'index'])->name('pengayaan');

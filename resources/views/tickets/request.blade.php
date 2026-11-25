@@ -13,7 +13,7 @@
 <main class="mx-auto max-w-5xl px-4 py-10 sm:px-8">
     <h1 class="rise text-3xl sm:text-4xl">E-Ticket Pengajuan Akun</h1>
     <p class="rise mt-2 max-w-[62ch] text-ink-2" style="--i: 1">
-        Ajukan pembuatan akun atau reset kata sandi ke Admin Sekretariat FTII. Setelah disetujui, detail akun dikirim ke email aktifmu.
+        Ajukan pembuatan akun atau reset kata sandi ke Admin Sekretariat FTII. Setelah disetujui, tautan aman untuk mengatur kata sandi dikirim ke email aktifmu.
     </p>
 
     @if (session('status'))
@@ -65,7 +65,7 @@
                 <div>
                     <label for="email" class="label">Email aktif <span style="color:var(--bad);">*</span></label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input" required>
-                    <p class="mt-1 text-xs text-ink-3">Wajib diisi — detail akun dan kata sandi akan dikirim ke email ini setelah disetujui Admin.</p>
+                    <p class="mt-1 text-xs text-ink-3">Wajib diisi — tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
                     @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
@@ -81,15 +81,22 @@
 
         <aside class="lg:col-span-5" aria-labelledby="cek-tiket">
             <h2 id="cek-tiket" class="text-xl">Cek Status E-Ticket</h2>
-            <form method="GET" action="{{ route('tiket.form') }}" class="mt-5 flex gap-2">
-                <input name="kode" type="text" value="{{ $searchCode }}" placeholder="TKT-20261116-XXXX" class="input mono flex-1 uppercase" required>
-                <button type="submit" class="btn btn-quiet">Cek</button>
+            <form method="GET" action="{{ route('tiket.form') }}" class="mt-5 space-y-3 rounded-md border border-line bg-surface p-5">
+                <div>
+                    <label for="cek-kode" class="label text-xs">Kode tiket</label>
+                    <input id="cek-kode" name="kode" type="text" value="{{ $searchCode }}" placeholder="TKT-20261125-XXXXXXXXXX" class="input mono uppercase" required>
+                </div>
+                <div>
+                    <label for="cek-verifikasi" class="label text-xs">NIM / ID atau Email terdaftar</label>
+                    <input id="cek-verifikasi" name="verifikasi" type="text" value="{{ $searchVerification ?? '' }}" placeholder="2303045009 atau nama@uhamka.ac.id" class="input" required>
+                </div>
+                <button type="submit" class="btn btn-quiet w-full">Cek Status Tiket</button>
             </form>
 
-            @if ($searchCode !== '')
+            @if ($lookupAttempted ?? false)
                 <div class="mt-6 rounded-md border border-line bg-surface p-5">
                     @if (! $checkedTicket)
-                        <p class="text-sm text-bad">Kode tiket <span class="mono font-medium">{{ $searchCode }}</span> tidak ditemukan.</p>
+                        <p class="text-sm text-bad">{{ $lookupError ?? 'Tiket tidak ditemukan atau NIM/Email tidak cocok.' }}</p>
                     @else
                         <div class="flex items-center justify-between gap-2">
                             <span class="mono text-sm font-semibold">{{ $checkedTicket->ticket_code }}</span>
@@ -124,12 +131,13 @@
                             @endif
                         </dl>
                         @if ($checkedTicket->status === 'disetujui')
-                            <a href="{{ route('login') }}" class="btn btn-primary btn-sm mt-5 w-full">Masuk ke Akun Sekarang</a>
+                            <p class="mt-4 text-xs text-ink-2">Periksa kotak masuk emailmu untuk tautan pengaturan kata sandi sekali pakai, lalu masuk ke aplikasi.</p>
+                            <a href="{{ route('login') }}" class="btn btn-primary btn-sm mt-3 w-full">Masuk ke Akun Sekarang</a>
                         @endif
                     @endif
                 </div>
             @else
-                <p class="mt-4 text-sm text-ink-2">Masukkan kode tiket yang kamu dapatkan setelah mengirim formulir untuk melihat apakah akunmu sudah diaktifkan oleh sekretariat.</p>
+                <p class="mt-4 text-sm text-ink-2">Masukkan kode tiket beserta NIM/ID atau email terdaftar untuk memeriksa apakah pengajuanmu sudah diproses sekretariat.</p>
             @endif
         </aside>
     </div>

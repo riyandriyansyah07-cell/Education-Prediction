@@ -18,6 +18,7 @@ use App\Services\RiskService;
 use App\Support\Grades;
 use App\Support\RiskModel;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 /**
  * Data contoh sintetis (dilabeli dengan jelas bahwa data bersifat sintetis untuk demonstrasi).
@@ -30,6 +31,8 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        $this->ensureLocalPseudonymSalt();
+
         mt_srand(2026);
 
         $admin = User::create([
@@ -131,6 +134,39 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+    }
+
+    /**
+     * Pastikan PSEUDONYM_SALT terisi saat instalasi lokal agar `migrate --seed` tidak gagal.
+     * Di produksi, PSEUDONYM_SALT tetap wajib diisi secara eksplisit di .env.
+     */
+    private function ensureLocalPseudonymSalt(): void
+    {
+        if (trim((string) config('risk.pseudonym_salt')) !== '') {
+            return;
+        }
+
+        if (! app()->environment('local', 'testing')) {
+            return;
+        }
+
+        $salt = Str::random(32);
+        config(['risk.pseudonym_salt' => $salt]);
+
+        $envPath = base_path('.env');
+        if (app()->environment('local') && is_file($envPath) && is_writable($envPath)) {
+            $envContent = (string) file_get_contents($envPath);
+            if (preg_match('/^PSEUDONYM_SALT=.*$/m', $envContent)) {
+                $updated = preg_replace('/^PSEUDONYM_SALT=\s*$/m', 'PSEUDONYM_SALT='.$salt, $envContent);
+                if (is_string($updated)) {
+                    file_put_contents($envPath, $updated);
+                }
+            } else {
+                file_put_contents($envPath, rtrim($envContent).PHP_EOL.'PSEUDONYM_SALT='.$salt.PHP_EOL);
+            }
+        }
+
+        $this->command?->info('PSEUDONYM_SALT kosong pada environment local — garam acak otomatis dibuat dan disimpan ke .env.');
     }
 
     /** Dataset historis sintetis 10 variabel inti, ditandai jelas dengan is_synthetic = true. */

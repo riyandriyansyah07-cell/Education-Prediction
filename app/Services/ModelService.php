@@ -96,13 +96,9 @@ class ModelService
         $nextNumber = (int) ModelVersion::max('id') + 1;
         $name = (string) $nextNumber;
 
-        if ($nextNumber > 1 && count($rows) > 10) {
-            mt_srand(crc32('version-seed-'.$name.'-'.$dataset->id));
-            shuffle($rows);
-            mt_srand();
-        }
-
-        [$trainRows, $testRows] = ThresholdTrainer::split($rows);
+        // C3: Selalu lakukan pengacakan deterministik termasuk pada training pertama.
+        $seed = crc32('version-seed-'.$name.'-'.$dataset->id);
+        [$trainRows, $testRows] = ThresholdTrainer::split($rows, $seed);
         $rule = ThresholdTrainer::fitOn($trainRows, $testRows);
 
         $ml = config('risk.engine') === 'http' ? $this->trainRemote('ml-v'.$name, $trainRows, $testRows) : null;

@@ -15,7 +15,8 @@ class AccountTicketMail extends Mailable
 
     public function __construct(
         public readonly AccountTicket $ticket,
-        public readonly ?string $plainPassword = null,
+        public readonly ?string $setPasswordUrl = null,
+        public readonly int $expiresHours = 24,
     ) {}
 
     public function envelope(): Envelope
@@ -36,9 +37,10 @@ class AccountTicketMail extends Mailable
             text: 'emails.ticket-status-text',
             with: [
                 'ticket' => $this->ticket,
-                'plainPassword' => $this->plainPassword,
+                'setPasswordUrl' => $this->setPasswordUrl,
+                'expiresHours' => $this->expiresHours,
                 'loginUrl' => route('login'),
-                'ticketUrl' => route('tiket.form', ['kode' => $this->ticket->ticket_code]),
+                'ticketUrl' => route('tiket.form'),
             ],
         );
     }

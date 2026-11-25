@@ -54,11 +54,16 @@ class EnrichmentController extends Controller
                 'min:'.EnrichmentCatalog::MIN_CONVERSION_SEMESTER,
                 'max:14',
             ],
-            'grade' => ['nullable', Rule::in(['A', 'B', 'E'])],
+            'grade' => [
+                Rule::requiredIf($request->input('status') === EnrichmentRecord::STATUS_DIKONVERSI),
+                'nullable',
+                Rule::in(['A', 'B', 'C', 'D', 'E']),
+            ],
             'evidence_notes' => ['nullable', 'string', 'max:500'],
         ], [
             'conversion_semester.min' => 'Konversi SKS MK Pengayaan ke KRS hanya dapat dilakukan mulai semester 5 ke atas.',
             'conversion_semester.required' => 'Isi semester konversi KRS (minimal semester 5) untuk status Sudah dikonversi.',
+            'grade.required' => 'Pilih nilai akhir (A–E) untuk status Sudah dikonversi.',
         ]);
 
         $course = EnrichmentCatalog::find($data['course_code']);
@@ -79,7 +84,7 @@ class EnrichmentController extends Controller
                 'activity_semester' => (int) $data['activity_semester'],
                 'conversion_semester' => $isConverted ? (int) $data['conversion_semester'] : null,
                 'status' => $data['status'],
-                'grade' => $isConverted ? ($data['grade'] ?: 'A') : null,
+                'grade' => $isConverted ? $data['grade'] : null,
                 'evidence_notes' => ($data['evidence_notes'] ?? null) ? trim($data['evidence_notes']) : null,
             ]
         );
@@ -101,9 +106,14 @@ class EnrichmentController extends Controller
                 'min:'.EnrichmentCatalog::MIN_CONVERSION_SEMESTER,
                 'max:14',
             ],
-            'grade' => ['nullable', Rule::in(['A', 'B', 'E'])],
+            'grade' => [
+                Rule::requiredIf($request->input('status') === EnrichmentRecord::STATUS_DIKONVERSI),
+                'nullable',
+                Rule::in(['A', 'B', 'C', 'D', 'E']),
+            ],
         ], [
             'conversion_semester.min' => 'Konversi ke KRS minimal dilakukan pada semester 5.',
+            'grade.required' => 'Pilih nilai akhir (A–E) untuk status Sudah dikonversi.',
         ]);
 
         $isConverted = $data['status'] === EnrichmentRecord::STATUS_DIKONVERSI;
@@ -111,7 +121,7 @@ class EnrichmentController extends Controller
         $record->update([
             'status' => $data['status'],
             'conversion_semester' => $isConverted ? (int) $data['conversion_semester'] : null,
-            'grade' => $isConverted ? ($data['grade'] ?: 'A') : null,
+            'grade' => $isConverted ? $data['grade'] : null,
         ]);
 
         return redirect()->route('mhs.pengayaan')
