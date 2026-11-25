@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Consent;
+use App\Models\RiskResult;
 use App\Models\StudentSetting;
 use App\Models\User;
 use App\Support\EnrichmentCatalog;
@@ -40,7 +41,19 @@ class SkpiPkmTest extends TestCase
             'student_ref' => $student->student_ref,
             'dpa_id' => $dpa->id,
             'granted' => true,
+            'changed_at' => now(),
+        ]);
 
+        RiskResult::create([
+            'student_ref' => $student->student_ref,
+            'semester' => 7,
+            'level' => 'rendah',
+            'score' => 1.50,
+            'features' => ['attendance' => 95.0, 'ips' => 3.70, 'ipk' => 3.65, 'failed_ratio' => 0.0, 'ips_delta' => 0.0],
+            'factors' => [],
+            'suggestions' => ['Pertahankan performa.'],
+            'llm_generated' => false,
+            'data_as_of' => now()->toDateString(),
         ]);
 
         // 1. Tahap Fakultas belum diakui SKPI
