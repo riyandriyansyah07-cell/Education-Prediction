@@ -102,7 +102,7 @@
 
 <header class="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
     <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
-        <a href="{{ route('landing') }}" class="font-semibold tracking-tight">Cegah Sebelum Terlambat</a>
+        <a href="{{ route('landing') }}" class="inline-flex items-center gap-2.5 font-semibold tracking-tight"><x-brand-logo :size="28" /><span>Cegah Sebelum Terlambat</span></a>
         <div class="flex items-center gap-3">
             @auth
                 <a href="{{ route('beranda') }}" class="btn btn-primary btn-sm">Kembali ke Dasbor</a>
@@ -190,15 +190,26 @@
 
             <div class="mt-card">
                 <div class="flex items-center justify-between gap-2">
-                    <h3 class="font-medium text-ink">MK Pengayaan 20 SKS &amp; PKM</h3>
+                    <h3 class="font-medium text-ink">MK Pengayaan 20 SKS &amp; 4 Syarat SKPI</h3>
                     <span class="mt-badge mono">+0–2,0 poin</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
-                    <li>Khusus <strong>semester 5 ke atas</strong>: menambah poin peringatan jika cicilan wajib <strong>20 SKS Pengayaan</strong> tertinggal atau wajib <strong>PKM</strong> (batas semester 7) belum berjalan.</li>
-                    <li><strong>19 MK Pengayaan non-kelas</strong> bebas dari syarat absen 75% dan tersinkron otomatis dari KHS.</li>
-                    <li><strong>3 MK kelas coaching</strong> (<em>Keterampilan Komunikasi</em> &amp; 2 MK <em>Bahasa Jepang</em>) tetap mengikuti aturan absensi kelas.</li>
+                    <li>Khusus <strong>semester 5 ke atas</strong>: menambah poin peringatan jika cicilan wajib <strong>20 SKS Pengayaan</strong> tertinggal atau wajib <strong>PKM</strong> (diikuti tiap semester ganjil mulai Sem 1) belum lolos minimal <strong>tahap Universitas</strong> agar memperoleh Sertifikat PKM (SKPI); lolos tahap Fakultas saja belum diakui SKPI.</li>
+                    <li>Memantau kelengkapan <strong>4 Syarat Wajib SKPI FTII</strong>: Sertifikat Kompetensi IT (<em>Mahira / BNSP</em>), Baitul Arqam Purna Studi (<em>BAPS</em>), Sertifikat PKM (min. tahap Universitas), dan Sertifikat TOEFL khusus <em>UHAMKA</em>.</li>
+                    <li><strong>19 MK Pengayaan non-kelas</strong> bebas dari syarat absen 75% dan tersinkron otomatis dari KHS, sedangkan <strong>3 MK kelas coaching</strong> tetap mengikuti aturan absensi.</li>
                 </ul>
             </div>
+        </div>
+
+        <div class="mt-card mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="font-medium text-ink">Evaluasi Hibrida Gemini AI, Guardrail &amp; Audit Validator AI</h3>
+                <span class="mt-badge">Human-in-the-Loop</span>
+            </div>
+            <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
+                <li>Semester terbaru dievaluasi dengan <strong>Gemini AI</strong> (Structured JSON Output, Zero-PII) yang diperkuat <strong>guardrail anti-halusinasi</strong> (menyaring faktor yang bertentangan dengan angka KHS asli) serta cadangan otomatis ke rumus matematis <strong>RiskModel</strong>.</li>
+                <li>Peran khusus <strong>Validator AI</strong> membandingkan skor Gemini AI berdampingan dengan pembanding matematis <em>RiskModel</em> untuk mengaudit akurasi, mencatat koreksi, dan mengekspor laporan audit CSV.</li>
+            </ul>
         </div>
     </section>
 

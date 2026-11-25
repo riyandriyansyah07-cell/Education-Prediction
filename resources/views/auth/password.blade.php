@@ -3,12 +3,14 @@
 @section('title', 'Ubah kata sandi')
 
 @section('content')
-<h1 class="rise text-3xl sm:text-4xl">Ubah kata sandi</h1>
-<p class="rise mt-2 max-w-[60ch] text-ink-2" style="--i: 1">
-    Perbarui kata sandi akunmu secara mandiri setelah masuk menggunakan sandi awal dari sekretariat.
-</p>
+<div>
+    <h1 class="rise">Ubah kata sandi</h1>
+    <p class="rise mt-1.5 max-w-[60ch] text-sm text-ink-2" style="--i: 1">
+        Perbarui kata sandi akunmu secara mandiri setelah masuk menggunakan sandi awal dari sekretariat.
+    </p>
+</div>
 
-<form method="POST" action="{{ route('sandi.update') }}" class="mt-8 max-w-md space-y-5 rounded-md border border-line bg-surface p-6">
+<form method="POST" action="{{ route('sandi.update') }}" class="mt-6 max-w-md bg-surface" style="padding:1.5rem 1.65rem;display:flex;flex-direction:column;gap:1.1rem;">
     @csrf
 
     <div>
@@ -28,6 +30,6 @@
         <input id="password_confirmation" name="password_confirmation" type="password" minlength="8" autocomplete="new-password" class="input" required>
     </div>
 
-    <button type="submit" class="btn btn-primary w-full">Simpan Kata Sandi Baru</button>
+    <button type="submit" class="btn btn-primary w-full mt-1">Simpan Kata Sandi Baru</button>
 </form>
 @endsection

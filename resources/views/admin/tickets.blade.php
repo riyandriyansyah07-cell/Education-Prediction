@@ -5,11 +5,11 @@
 @section('content')
 <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-        <h1 class="rise text-3xl sm:text-4xl">Tiket akun</h1>
-        <p class="rise mt-1 text-ink-2" style="--i: 1">{{ $pendingCount }} menunggu verifikasi.</p>
+        <h1 class="rise">Tiket pengajuan akun</h1>
+        <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">{{ $pendingCount }} tiket menunggu verifikasi sekretariat.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-        <nav class="flex flex-wrap gap-2" aria-label="Saring status tiket">
+        <nav class="flex flex-wrap gap-1.5" aria-label="Saring status tiket">
             @foreach ([null => 'Semua', 'menunggu' => 'Menunggu', 'disetujui' => 'Disetujui', 'ditolak' => 'Ditolak'] as $k => $lbl)
                 <a href="{{ $k ? route('admin.tiket', ['status' => $k]) : route('admin.tiket') }}"
                    class="btn btn-sm {{ $status === $k ? 'btn-primary' : 'btn-quiet' }}">{{ $lbl }}</a>
@@ -26,22 +26,24 @@
 </div>
 
 @if ($errors->any())
-    <div class="mt-6 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
+    <div class="mt-5 rounded-xl border border-bad/40 bg-bad/10 px-4 py-3 text-sm text-bad">
         {{ $errors->first() }}
     </div>
 @endif
 
 @if ($tickets->isEmpty())
-    <p class="mt-10 text-sm text-ink-2">Belum ada tiket.</p>
+    <div class="mt-8 bg-surface text-center text-sm text-ink-2" style="padding:2.25rem;border-style:dashed;">
+        Belum ada tiket pengajuan akun pada filter ini.
+    </div>
 @else
-    <div class="mt-8 space-y-4">
+    <div class="mt-6 space-y-4">
         @foreach ($tickets as $t)
-            <div class="rounded-md border border-line bg-surface p-5">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div>
+            <article class="bg-surface" style="padding:1.3rem 1.45rem;">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">
+                    <div style="min-width:0;flex:1;">
                         <div class="flex flex-wrap items-center gap-2">
-                            <span class="mono font-semibold">{{ $t->ticket_code }}</span>
-                            <span class="rounded border border-line-strong bg-bg px-2 py-0.5 text-xs">{{ $t->typeLabel() }}</span>
+                            <span class="mono font-semibold text-ink">{{ $t->ticket_code }}</span>
+                            <span style="padding:0.16rem 0.55rem;border-radius:9999px;font-size:11px;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink-2);">{{ $t->typeLabel() }}</span>
                             @if ($t->status === 'disetujui')
                                 <span class="risk risk-chip risk-rendah">Disetujui</span>
                             @elseif ($t->status === 'ditolak')
@@ -50,29 +52,29 @@
                                 <span class="risk risk-chip risk-sedang">Menunggu</span>
                             @endif
                         </div>
-                        <p class="mt-2 font-medium">{{ $t->name }} <span class="mono text-sm text-ink-3">({{ $t->username }})</span></p>
+                        <p class="mt-2 font-semibold text-ink">{{ $t->name }} <span class="mono text-sm font-normal text-ink-3">({{ $t->username }})</span></p>
                         <p class="mt-0.5 text-xs text-ink-2">
                             {{ collect([$t->program_studi, $t->email, $t->created_at->translatedFormat('j M Y, H:i')])->filter()->implode(' · ') }}
                         </p>
                         @if ($t->notes)
-                            <p class="mt-1.5 text-xs text-ink-2">{{ $t->notes }}</p>
+                            <p class="mt-2 rounded-lg border border-line bg-bg px-3 py-2 text-xs text-ink-2">{{ $t->notes }}</p>
                         @endif
                     </div>
-                    <form method="POST" action="{{ route('admin.tiket.hapus', $t) }}" onsubmit="return confirm('Hapus tiket {{ $t->ticket_code }}?')">
+                    <form method="POST" action="{{ route('admin.tiket.hapus', $t) }}" style="flex-shrink:0;" onsubmit="return confirm('Hapus tiket {{ $t->ticket_code }}?')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-quiet btn-sm text-bad">Hapus</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
                     </form>
                 </div>
 
                 @if ($t->status === 'menunggu')
                     <div class="mt-4 grid items-end gap-4 border-t border-line pt-4 lg:grid-cols-12">
-                        <form method="POST" action="{{ route('admin.tiket.setujui', $t) }}" class="flex flex-wrap items-end gap-2 lg:col-span-8">
+                        <form method="POST" action="{{ route('admin.tiket.setujui', $t) }}" class="flex flex-wrap items-end gap-2.5 lg:col-span-8">
                             @csrf
                             @if ($t->request_type === 'akun_mahasiswa')
-                                <div class="flex-1" style="min-width: 11rem;">
-                                    <label class="label text-xs">DPA</label>
-                                    <select name="dpa_id" class="input h-9 w-full text-xs">
+                                <div style="flex:1;min-width:11rem;">
+                                    <label class="label text-xs">Tetapkan DPA</label>
+                                    <select name="dpa_id" class="input text-xs">
                                         <option value="">Belum ditetapkan</option>
                                         @foreach ($dpas as $d)
                                             <option value="{{ $d->id }}">{{ $d->name }}</option>
@@ -80,28 +82,28 @@
                                     </select>
                                 </div>
                             @endif
-                            <div class="flex-1" style="min-width: 12rem;">
+                            <div style="flex:1;min-width:12rem;">
                                 <label class="label text-xs">Catatan persetujuan</label>
-                                <input type="text" name="admin_note" placeholder="Opsional — tautan set sandi dikirim otomatis ke email" class="input h-9 w-full text-sm">
+                                <input type="text" name="admin_note" placeholder="Opsional — tautan set sandi dikirim ke email" class="input text-sm">
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm h-9 shrink-0">Setujui &amp; Kirim Tautan Sandi</button>
+                            <button type="submit" class="btn btn-primary btn-sm shrink-0">Setujui &amp; Kirim Tautan Sandi</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.tiket.tolak', $t) }}" class="flex items-end gap-2 lg:col-span-4">
+                        <form method="POST" action="{{ route('admin.tiket.tolak', $t) }}" class="flex flex-wrap items-end gap-2 lg:col-span-4">
                             @csrf
-                            <div class="min-w-0 flex-1">
+                            <div style="min-width:0;flex:1;">
                                 <label class="label text-xs">Alasan tolak</label>
-                                <input type="text" name="admin_note" placeholder="NIM tidak valid" class="input h-9 w-full text-sm" required>
+                                <input type="text" name="admin_note" placeholder="NIM tidak valid" class="input text-sm" required>
                             </div>
-                            <button type="submit" class="btn btn-danger btn-sm h-9 shrink-0">Tolak</button>
+                            <button type="submit" class="btn btn-danger btn-sm shrink-0">Tolak</button>
                         </form>
                     </div>
                 @elseif ($t->admin_note)
                     <p class="mt-3 border-t border-line pt-3 text-xs text-ink-2">
-                        {{ $t->processor?->name ?? 'Admin' }}: {{ $t->admin_note }}
+                        <strong>{{ $t->processor?->name ?? 'Admin' }}:</strong> {{ $t->admin_note }}
                     </p>
                 @endif
-            </div>
+            </article>
         @endforeach
     </div>
     @include('partials.pager', ['paginator' => $tickets])
