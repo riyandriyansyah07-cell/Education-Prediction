@@ -90,9 +90,9 @@
     </div>
 </section>
 
-<div class="mt-12 grid gap-10 lg:grid-cols-12">
+<div class="mt-12 grid gap-8 lg:grid-cols-12" style="align-items:start;">
     {{-- Form Tambah / Perbarui MK Pengayaan --}}
-    <section class="lg:col-span-5" aria-labelledby="form-pengayaan">
+    <section class="lg:col-span-5 enr-sticky-col" aria-labelledby="form-pengayaan">
         <h2 id="form-pengayaan" class="text-xl">Catat / Perbarui Kegiatan</h2>
         <p class="mt-1 text-sm text-ink-2">Pilih dari 22 MK Pengayaan resmi FTII UHAMKA. SKS dan Dosen Pengampu terisi otomatis.</p>
 
@@ -180,83 +180,9 @@
 
             <button type="submit" class="btn btn-primary w-full">Simpan ke Daftar Pengayaan</button>
         </form>
-    </section>
-
-    {{-- Daftar MK Pengayaan Mahasiswa --}}
-    <section class="lg:col-span-7" aria-labelledby="daftar-pengayaan">
-        <h2 id="daftar-pengayaan" class="text-xl">Daftar MK Pengayaan Kamu ({{ $records->count() }} MK)</h2>
-        <p class="mt-1 text-sm text-ink-2">Konsultasikan berkas persyaratan dan bukti kinerja ke Dosen Pengampu sebelum pengisian KRS.</p>
-
-        @if ($records->isEmpty())
-            <div class="mt-5 rounded-md border border-line-strong bg-surface text-center text-sm text-ink-2" style="padding:2rem; border-style:dashed;">
-                Belum ada kegiatan pengayaan yang dicatat. Mulai cicil dari formulir di samping agar target 20 SKS tidak menumpuk di semester akhir.
-            </div>
-        @else
-            <div class="mt-5 space-y-4">
-                @foreach ($records as $r)
-                    <article class="rounded-md border border-line bg-surface p-5">
-                        <div class="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <h3 class="text-base font-medium">{{ $r->course_name }}</h3>
-                                    <span class="mono rounded border border-line-strong bg-bg px-2 py-0.5 text-xs">{{ $r->credits }} SKS</span>
-                                    @if ($r->status === 'dikonversi')
-                                        <span class="rounded border border-ok/40 bg-ok/10 px-2 py-0.5 text-xs font-medium" style="color:var(--ok);">Terkonversi KRS &middot; Sem {{ $r->conversion_semester }} ({{ $r->grade }})</span>
-                                    @elseif ($r->status === 'siap_rekognisi')
-                                        <span class="rounded border border-accent/40 bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">Bukti siap rekognisi</span>
-                                    @else
-                                        <span class="rounded border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium" style="color:var(--warn);">Sedang dicicil{{ $r->grade === 'E' ? ' · Nilai E (gagal)' : '' }}</span>
-                                    @endif
-                                </div>
-                                <p class="mt-2 text-sm text-ink-2">{{ $r->activity_type }} &middot; Dicicil Sem {{ $r->activity_semester }}</p>
-                                <p class="mt-1 text-xs text-ink-3">Dosen Pengampu: {{ $r->lecturer }}</p>
-                                @if ($r->evidence_notes)
-                                    <p class="mt-1.5 text-xs text-ink-2">Bukti: {{ $r->evidence_notes }}</p>
-                                @endif
-                            </div>
-
-                            <form method="POST" action="{{ route('mhs.pengayaan.destroy', $r) }}" onsubmit="return confirm('Hapus catatan MK Pengayaan ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-quiet btn-sm text-ink-3">Hapus</button>
-                            </form>
-                        </div>
-
-                        @if ($r->status !== 'dikonversi')
-                            <div class="mt-4 border-t border-line pt-4" style="display:flex; flex-direction:column; gap:0.75rem;">
-                                @if ($r->status === 'dicicil')
-                                    <form method="POST" action="{{ route('mhs.pengayaan.status', $r) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="siap_rekognisi">
-                                        <button type="submit" class="btn btn-quiet btn-sm">Tandai Bukti Siap Rekognisi</button>
-                                    </form>
-                                @endif
-
-                                <form method="POST" action="{{ route('mhs.pengayaan.status', $r) }}" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="dikonversi">
-                                    <span class="text-xs text-ink-3">Konversi KRS:</span>
-                                    <input type="number" name="conversion_semester" min="5" max="14" value="{{ max(5, $progress['current_semester']) }}" class="input text-xs" style="width:4.5rem; padding:0.4rem 0.6rem;" aria-label="Semester konversi" title="Semester konversi (min. 5)" required>
-                                    <select name="grade" class="input text-xs" style="width:6.25rem; padding:0.4rem 0.6rem;" aria-label="Nilai" required>
-                                        <option value="">Nilai...</option>
-                                        <option value="A">Nilai A</option>
-                                        <option value="B">Nilai B</option>
-                                        <option value="C">Nilai C</option>
-                                        <option value="D">Nilai D</option>
-                                    </select>
-                                    <button type="submit" class="btn btn-primary btn-sm">Tandai Sudah Konversi KRS</button>
-                                </form>
-                            </div>
-                        @endif
-                    </article>
-                @endforeach
-            </div>
-        @endif
 
         {{-- Referensi Katalog & Jalur Rekognisi Khusus (Bab 2) --}}
-        <details class="mt-8 rounded-md border border-line bg-surface p-5">
+        <details class="mt-4 rounded-md border border-line bg-surface" style="padding:1.1rem 1.25rem;">
             <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">
                 Lihat Katalog Lengkap 22 MK Pengayaan &amp; Jalur Rekognisi Khusus (Hafiz / PKM / KRI)
             </summary>
@@ -297,6 +223,80 @@
                 </div>
             </div>
         </details>
+    </section>
+
+    {{-- Daftar MK Pengayaan Mahasiswa --}}
+    <section class="lg:col-span-7" aria-labelledby="daftar-pengayaan">
+        <h2 id="daftar-pengayaan" class="text-xl">Daftar MK Pengayaan Kamu ({{ $records->count() }} MK)</h2>
+        <p class="mt-1 text-sm text-ink-2">Konsultasikan berkas persyaratan dan bukti kinerja ke Dosen Pengampu sebelum pengisian KRS.</p>
+
+        @if ($records->isEmpty())
+            <div class="mt-5 rounded-md border border-line-strong bg-surface text-center text-sm text-ink-2" style="padding:2rem; border-style:dashed;">
+                Belum ada kegiatan pengayaan yang dicatat. Mulai cicil dari formulir di samping agar target 20 SKS tidak menumpuk di semester akhir.
+            </div>
+        @else
+            <div class="mt-5 space-y-4">
+                @foreach ($records as $r)
+                    <article class="rounded-md border border-line bg-surface" style="padding:1.1rem 1.25rem;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.85rem;">
+                            <div style="min-width:0;flex:1;">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-base font-medium">{{ $r->course_name }}</h3>
+                                    <span class="mono rounded border border-line-strong bg-bg px-2 py-0.5 text-xs">{{ $r->credits }} SKS</span>
+                                    @if ($r->status === 'dikonversi')
+                                        <span class="rounded border border-ok/40 bg-ok/10 px-2 py-0.5 text-xs font-medium" style="color:var(--ok);">Terkonversi KRS &middot; Sem {{ $r->conversion_semester }} ({{ $r->grade }})</span>
+                                    @elseif ($r->status === 'siap_rekognisi')
+                                        <span class="rounded border border-accent/40 bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">Bukti siap rekognisi</span>
+                                    @else
+                                        <span class="rounded border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium" style="color:var(--warn);">Sedang dicicil{{ $r->grade === 'E' ? ' · Nilai E (gagal)' : '' }}</span>
+                                    @endif
+                                </div>
+                                <p class="mt-2 text-sm text-ink-2">{{ $r->activity_type }} &middot; Dicicil Sem {{ $r->activity_semester }}</p>
+                                <p class="mt-1 text-xs text-ink-3">Dosen Pengampu: {{ $r->lecturer }}</p>
+                                @if ($r->evidence_notes)
+                                    <p class="mt-1.5 text-xs text-ink-2">Bukti: {{ $r->evidence_notes }}</p>
+                                @endif
+                            </div>
+
+                            <form method="POST" action="{{ route('mhs.pengayaan.destroy', $r) }}" style="flex-shrink:0;" onsubmit="return confirm('Hapus catatan MK Pengayaan ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-quiet btn-sm text-ink-3">Hapus</button>
+                            </form>
+                        </div>
+
+                        @if ($r->status !== 'dikonversi')
+                            <div class="mt-4 border-t border-line pt-4" style="display:flex; flex-direction:column; gap:0.75rem;">
+                                @if ($r->status === 'dicicil')
+                                    <form method="POST" action="{{ route('mhs.pengayaan.status', $r) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="siap_rekognisi">
+                                        <button type="submit" class="btn btn-quiet btn-sm">Tandai Bukti Siap Rekognisi</button>
+                                    </form>
+                                @endif
+
+                                <form method="POST" action="{{ route('mhs.pengayaan.status', $r) }}" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="dikonversi">
+                                    <span class="text-xs text-ink-3">Konversi KRS:</span>
+                                    <input type="number" name="conversion_semester" min="5" max="14" value="{{ max(5, $progress['current_semester']) }}" class="input text-xs" style="width:4.5rem; padding:0.4rem 0.6rem;" aria-label="Semester konversi" title="Semester konversi (min. 5)" required>
+                                    <select name="grade" class="input text-xs" style="width:6.25rem; padding:0.4rem 0.6rem;" aria-label="Nilai" required>
+                                        <option value="">Nilai...</option>
+                                        <option value="A">Nilai A</option>
+                                        <option value="B">Nilai B</option>
+                                        <option value="C">Nilai C</option>
+                                        <option value="D">Nilai D</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Tandai Sudah Konversi KRS</button>
+                                </form>
+                            </div>
+                        @endif
+                    </article>
+                @endforeach
+            </div>
+        @endif
     </section>
 </div>
 
@@ -353,9 +353,32 @@
         border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
         background: color-mix(in srgb, var(--warn) 12%, var(--surface));
     }
+    .skpi-item > div:last-child {
+        margin-top: auto;
+        padding-top: 0.2rem;
+    }
+    .skpi-subgrid-2 {
+        display: grid;
+        gap: 0.55rem;
+        grid-template-columns: 1fr 1fr;
+    }
+    .skpi-subgrid-toefl {
+        display: grid;
+        gap: 0.55rem;
+        grid-template-columns: 1.3fr 0.7fr;
+    }
+    @media (min-width: 1024px) {
+        .enr-sticky-col {
+            position: sticky;
+            top: 1.5rem;
+        }
+    }
     @media (max-width: 768px) {
         .skpi-grid { grid-template-columns: 1fr; }
         .skpi-card { padding: 1.15rem; }
+    }
+    @media (max-width: 520px) {
+        .skpi-subgrid-2, .skpi-subgrid-toefl { grid-template-columns: 1fr; }
     }
 </style>
 
@@ -389,7 +412,7 @@
                     </span>
                 </div>
                 <p class="text-xs text-ink-3">Wajib dari lembaga kredibel seperti <strong>Mahira</strong> atau <strong>BNSP</strong>.</p>
-                <div style="display:grid;gap:0.55rem;grid-template-columns:1fr 1fr;">
+                <div class="skpi-subgrid-2">
                     <div>
                         <label for="skpi_it_status" class="label text-xs">Status</label>
                         <select id="skpi_it_status" name="skpi_it_status" class="input text-sm">
@@ -466,7 +489,7 @@
                     </span>
                 </div>
                 <p class="text-xs text-ink-3">Sertifikat TOEFL <strong>harus diterbitkan oleh UHAMKA</strong>.</p>
-                <div style="display:grid;gap:0.55rem;grid-template-columns:1.3fr 0.7fr;">
+                <div class="skpi-subgrid-toefl">
                     <div>
                         <label for="skpi_toefl_status" class="label text-xs">Status TOEFL UHAMKA</label>
                         <select id="skpi_toefl_status" name="skpi_toefl_status" class="input text-sm">
