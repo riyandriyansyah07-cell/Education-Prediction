@@ -114,11 +114,7 @@
 <header class="px-nav">
     <div class="px-wrap px-nav-in">
         <a href="{{ route('landing') }}" class="px-brand">
-            <svg viewBox="0 0 32 32" width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <rect x="2" y="2" width="28" height="28" rx="8" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
-                <path d="M9 20L13.5 15.5L17 18L23 11.5" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="23" cy="11.5" r="2" fill="var(--ok)"/>
-            </svg>
+            <x-brand-logo :size="28" />
             <span style="font-size:0.95rem;white-space:nowrap;">Cegah Sebelum Terlambat</span>
         </a>
 

@@ -226,12 +226,7 @@
     <section class="lg-left">
         <div class="flex items-center justify-between gap-3">
             <a href="{{ route('landing') }}" class="lg-brand">
-                <span class="lg-brand-mark" aria-hidden="true">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"/>
-                        <path d="M9.5 12.2l1.8 1.8 3.7-3.8"/>
-                    </svg>
-                </span>
+                <x-brand-logo :size="36" />
                 <span>
                     <span class="lg-brand-title" style="display:block;">Cegah Sebelum Terlambat</span>
                     <span class="lg-brand-sub" style="display:block;">FTII UHAMKA</span>
