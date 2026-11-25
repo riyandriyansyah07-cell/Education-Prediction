@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\LlmAdvisor;
 use App\Models\AccountTicket;
 use App\Models\Consent;
 use App\Models\EnrichmentRecord;
@@ -27,6 +28,8 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $data = $this->buildDataset($request);
+
+        $data['aiHealth'] = LlmAdvisor::healthStatus();
 
         return view('admin.dashboard', $data);
     }

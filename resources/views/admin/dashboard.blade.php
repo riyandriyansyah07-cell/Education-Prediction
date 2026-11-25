@@ -147,6 +147,23 @@
             <div class="flex flex-wrap items-center gap-2">
                 <span class="adm-pill"><span class="adm-dot"></span> Monitoring Aktif &middot; FTII UHAMKA</span>
                 <span class="adm-pill">Model: {{ $activeModel ? $activeModel->version : 'Aturan bawaan' }}</span>
+                @php $aiH = $aiHealth ?? ['status' => 'ready', 'model' => 'gemini-3.1-flash-lite', 'consecutive_failures' => 0, 'last_error' => null]; @endphp
+                @if (($aiH['status'] ?? 'ready') === 'degraded')
+                    <span class="adm-pill" title="{{ $aiH['last_error'] ?? 'Panggilan AI terakhir gagal' }}" style="border-color:color-mix(in srgb, var(--bad) 45%, var(--line));color:var(--bad);">
+                        <span class="adm-dot" style="background:var(--bad);"></span>
+                        AI: Gagal {{ $aiH['consecutive_failures'] }}x (cadangan RiskModel)
+                    </span>
+                @elseif (($aiH['status'] ?? 'ready') === 'healthy')
+                    <span class="adm-pill" style="border-color:color-mix(in srgb, var(--ok) 40%, var(--line));">
+                        <span class="adm-dot" style="background:var(--ok);"></span>
+                        AI: {{ $aiH['model'] }} &middot; Sehat
+                    </span>
+                @else
+                    <span class="adm-pill">
+                        <span class="adm-dot" style="background:var(--accent);"></span>
+                        AI: {{ $aiH['model'] }} &middot; Siap
+                    </span>
+                @endif
             </div>
             <h1 class="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">Dasbor Ringkasan Akademik</h1>
             <p class="mt-2 text-sm text-ink-2" style="line-height: 1.6;">

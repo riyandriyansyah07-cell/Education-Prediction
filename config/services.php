@@ -16,9 +16,9 @@ return [
     'llm' => [
         'provider' => env('LLM_PROVIDER', ''),
         'api_key' => env('LLM_API_KEY', ''),
-        'model' => env('LLM_MODEL', 'gemini-2.5-flash'),
+        'model' => env('LLM_MODEL', 'gemini-3.1-flash-lite'),
         'base_url' => env('LLM_BASE_URL', 'https://api.deepseek.com'),
-        'timeout' => (int) env('LLM_TIMEOUT', 10),
+        'timeout' => (int) env('LLM_TIMEOUT', 25),
     ],
 
 ];

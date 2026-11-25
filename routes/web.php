@@ -48,15 +48,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/ringkasan', [Student\SummaryController::class, 'show'])->name('ringkasan');
         Route::post('/ringkasan/hitung', [Student\SummaryController::class, 'recalculate'])->name('hitung');
         Route::post('/ringkasan/tambah-mk', [Student\SummaryController::class, 'storeManualCourses'])->name('tambah-mk');
-        Route::post('/ringkasan/input-cepat', [Student\SummaryController::class, 'quickUpdate'])->name('input-cepat');
+        Route::post('/ringkasan/input-cepat', [Student\SummaryController::class, 'quickUpdate'])->middleware('throttle:10,1')->name('input-cepat');
 
         Route::get('/impor', [Student\ImportController::class, 'show'])->name('impor');
-        Route::post('/impor', [Student\ImportController::class, 'store'])->name('impor.store');
+        Route::post('/impor', [Student\ImportController::class, 'store'])->middleware('throttle:10,1')->name('impor.store');
         Route::get('/impor/templat', [Student\ImportController::class, 'template'])->name('templat');
 
         Route::get('/pengayaan', [Student\EnrichmentController::class, 'index'])->name('pengayaan');
         Route::post('/pengayaan', [Student\EnrichmentController::class, 'store'])->name('pengayaan.store');
-        Route::post('/pengayaan/skpi', [Student\EnrichmentController::class, 'updateSkpi'])->name('pengayaan.skpi');
+        Route::post('/pengayaan/skpi', [Student\EnrichmentController::class, 'updateSkpi'])->middleware('throttle:10,1')->name('pengayaan.skpi');
         Route::patch('/pengayaan/{record}/status', [Student\EnrichmentController::class, 'updateStatus'])
             ->whereNumber('record')
             ->name('pengayaan.status');

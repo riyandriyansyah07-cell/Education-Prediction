@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Support\Fmt;
 use App\Support\RiskModel;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -19,6 +20,60 @@ use Throwable;
  */
 class LlmAdvisor
 {
+    public const HEALTH_CACHE_KEY = 'llm:health';
+
+    /** @return array{status:string,model:string,consecutive_failures:int,last_success_at:?string,last_error_at:?string,last_error:?string} */
+    public static function healthStatus(): array
+    {
+        $model = trim((string) config('services.llm.model', 'gemini-3.1-flash-lite')) ?: 'gemini-3.1-flash-lite';
+        $cached = Cache::get(self::HEALTH_CACHE_KEY);
+
+        if (! is_array($cached)) {
+            return [
+                'status' => 'ready',
+                'model' => $model,
+                'consecutive_failures' => 0,
+                'last_success_at' => null,
+                'last_error_at' => null,
+                'last_error' => null,
+            ];
+        }
+
+        return [
+            'status' => (string) ($cached['status'] ?? 'ready'),
+            'model' => (string) ($cached['model'] ?? $model),
+            'consecutive_failures' => (int) ($cached['consecutive_failures'] ?? 0),
+            'last_success_at' => $cached['last_success_at'] ?? null,
+            'last_error_at' => $cached['last_error_at'] ?? null,
+            'last_error' => $cached['last_error'] ?? null,
+        ];
+    }
+
+    private static function recordHealth(bool $ok, string $model, ?string $error = null): void
+    {
+        $prev = Cache::get(self::HEALTH_CACHE_KEY);
+        $prevFailures = is_array($prev) ? (int) ($prev['consecutive_failures'] ?? 0) : 0;
+
+        $payload = $ok
+            ? [
+                'status' => 'healthy',
+                'model' => $model,
+                'consecutive_failures' => 0,
+                'last_success_at' => now()->toIso8601String(),
+                'last_error_at' => is_array($prev) ? ($prev['last_error_at'] ?? null) : null,
+                'last_error' => null,
+            ]
+            : [
+                'status' => 'degraded',
+                'model' => $model,
+                'consecutive_failures' => $prevFailures + 1,
+                'last_success_at' => is_array($prev) ? ($prev['last_success_at'] ?? null) : null,
+                'last_error_at' => now()->toIso8601String(),
+                'last_error' => mb_substr(trim((string) $error), 0, 180),
+            ];
+
+        Cache::put(self::HEALTH_CACHE_KEY, $payload, now()->addDays(7));
+    }
     /**
      * Evaluasi risiko utama oleh Gemini/DeepSeek menggunakan 10 variabel inti dan ringkasan proyeksi.
      *
@@ -37,7 +92,8 @@ class LlmAdvisor
     {
         $provider = strtolower(trim((string) config('services.llm.provider', 'gemini')));
         $apiKey = trim((string) config('services.llm.api_key', ''));
-        $timeout = max(3, min(15, (int) config('services.llm.timeout', 10)));
+        $timeout = max(3, min(30, (int) config('services.llm.timeout', 25)));
+        $model = trim((string) config('services.llm.model', 'gemini-3.1-flash-lite')) ?: 'gemini-3.1-flash-lite';
 
         if ($provider === '' || $provider === 'none' || $apiKey === '') {
             return null;
@@ -53,11 +109,16 @@ class LlmAdvisor
             };
 
             if (! is_array($rawJson)) {
+                self::recordHealth(false, $model, 'Respons JSON dari AI kosong atau terpotong.');
+
                 return null;
             }
 
+            self::recordHealth(true, $model);
+
             return $this->validateAndApplyGuardrails($rawJson, $features);
         } catch (Throwable $e) {
+            self::recordHealth(false, $model, $e->getMessage());
             Log::warning("LlmAdvisor::assessRisk ({$provider}) gagal, beralih ke cadangan RiskModel: ".$e->getMessage());
 
             return null;
@@ -237,7 +298,7 @@ PROMPT;
                     continue;
                 }
                 $pts = round(max(0.0, (float) ($item['points'] ?? 0.0)), 2);
-                if ($pts <= 0.0) {
+                if ($pts <= 0.0 || $this->isHallucinatedFactor($item, $features)) {
                     continue;
                 }
                 $factors[] = [
@@ -292,9 +353,54 @@ PROMPT;
         ];
     }
 
+    /**
+     * Saring faktor risiko halusinasi AI yang bertentangan dengan data numerik aktual mahasiswa.
+     *
+     * @param  array<string,mixed>  $item
+     * @param  array<string,mixed>  $features
+     */
+    private function isHallucinatedFactor(array $item, array $features): bool
+    {
+        $key = mb_strtolower(trim((string) ($item['key'] ?? '')));
+        $label = mb_strtolower(trim((string) ($item['label'] ?? '')));
+
+        if (($key === 'failed_ratio' || str_contains($label, 'kegagalan') || str_contains($label, 'gagal'))
+            && (float) ($features['failed_ratio'] ?? 0.0) <= 0.0) {
+            return true;
+        }
+
+        if (($key === 'ipk' || str_contains($label, 'kumulatif') || $label === 'ipk')
+            && isset($features['ipk']) && (float) $features['ipk'] >= 3.25) {
+            return true;
+        }
+
+        if (($key === 'ips' || (str_contains($label, 'prestasi semester') && ! str_contains($label, 'tren')))
+            && isset($features['ips']) && (float) $features['ips'] >= 3.25) {
+            return true;
+        }
+
+        if (($key === 'attendance' || str_contains($label, 'kehadiran') || str_contains($label, 'presensi'))
+            && isset($features['attendance']) && (float) $features['attendance'] >= 85.0
+            && (int) ($features['low_attendance_courses'] ?? 0) === 0) {
+            return true;
+        }
+
+        if (($key === 'ips_delta' || str_contains($label, 'tren'))
+            && isset($features['ips_delta']) && (float) $features['ips_delta'] >= 0.0) {
+            return true;
+        }
+
+        if (($key === 'enrichment' || str_contains($label, 'pengayaan'))
+            && (float) ($features['enrichment_risk_points'] ?? 0.0) <= 0.0) {
+            return true;
+        }
+
+        return false;
+    }
+
     private function callGeminiJson(string $apiKey, string $prompt, int $timeout): ?array
     {
-        $model = trim((string) config('services.llm.model', 'gemini-2.5-flash')) ?: 'gemini-2.5-flash';
+        $model = trim((string) config('services.llm.model', 'gemini-3.1-flash-lite')) ?: 'gemini-3.1-flash-lite';
         $endpoint = sprintf(
             'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
             urlencode($model),
@@ -389,7 +495,7 @@ PROMPT;
     /** @return list<string>|null */
     private function callGeminiText(string $apiKey, string $prompt, int $timeout): ?array
     {
-        $model = trim((string) config('services.llm.model', 'gemini-2.5-flash')) ?: 'gemini-2.5-flash';
+        $model = trim((string) config('services.llm.model', 'gemini-3.1-flash-lite')) ?: 'gemini-3.1-flash-lite';
         $endpoint = sprintf(
             'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
             urlencode($model),
