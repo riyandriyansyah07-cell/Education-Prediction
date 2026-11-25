@@ -6,7 +6,7 @@
 <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
         <h1 class="rise text-3xl sm:text-4xl">Akun dan peran</h1>
-        <p class="rise mt-2 text-ink-2 num" style="--i: 1">{{ $totals['mahasiswa'] ?? 0 }} mahasiswa, {{ $totals['dpa'] ?? 0 }} DPA, {{ $totals['admin'] ?? 0 }} admin.</p>
+        <p class="rise mt-2 text-ink-2 num" style="--i: 1">{{ $totals['mahasiswa'] ?? 0 }} mahasiswa, {{ $totals['dpa'] ?? 0 }} DPA, {{ $totals['validator'] ?? 0 }} validator AI, {{ $totals['admin'] ?? 0 }} admin.</p>
     </div>
     <a href="{{ route('admin.akun.baru') }}" class="btn btn-primary"><x-icon name="plus" /> Tambah akun</a>
 </div>
@@ -24,7 +24,7 @@
         <label for="peran" class="label">Peran</label>
         <select id="peran" name="peran" class="input">
             <option value="">Semua</option>
-            @foreach (['mahasiswa' => 'Mahasiswa', 'dpa' => 'DPA', 'admin' => 'Admin'] as $v => $l)
+            @foreach (['mahasiswa' => 'Mahasiswa', 'dpa' => 'DPA', 'validator' => 'Validator AI', 'admin' => 'Admin'] as $v => $l)
                 <option value="{{ $v }}" @selected($role === $v)>{{ $l }}</option>
             @endforeach
         </select>

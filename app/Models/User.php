@@ -16,6 +16,8 @@ class User extends Authenticatable
 
     public const ROLE_DPA = 'dpa';
 
+    public const ROLE_VALIDATOR = 'validator';
+
     public const ROLE_ADMIN = 'admin';
 
     protected function casts(): array
@@ -37,6 +39,11 @@ class User extends Authenticatable
         return $this->role === self::ROLE_DPA;
     }
 
+    public function isValidator(): bool
+    {
+        return $this->role === self::ROLE_VALIDATOR;
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
@@ -47,6 +54,7 @@ class User extends Authenticatable
         return match ($this->role) {
             self::ROLE_STUDENT => 'Mahasiswa',
             self::ROLE_DPA => 'Dosen pembimbing akademik',
+            self::ROLE_VALIDATOR => 'Validator AI',
             default => 'Admin sekretariat',
         };
     }

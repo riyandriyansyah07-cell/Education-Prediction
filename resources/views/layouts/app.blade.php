@@ -14,6 +14,9 @@
         'dpa' => [
             ['dpa.bimbingan', 'Mahasiswa bimbingan', 'users'],
         ],
+        'validator' => [
+            ['validator.audit', 'Audit & Validasi AI', 'shield-check'],
+        ],
         default => [
             ['admin.dasbor', 'Dasbor ringkasan', 'house'],
             ['admin.akun', 'Akun dan peran', 'identification-card'],
@@ -94,6 +97,8 @@
                                     Mulai dengan mengimpor KHS (CSV, XLSX, atau PDF) di menu <strong>Impor data</strong>, pantau target UAS minimal di <strong>Ringkasan risiko</strong>, dan catat progres 20 SKS di <strong>SKS Pengayaan</strong>.
                                 @elseif ($user->isDpa())
                                     Pantau mahasiswa bimbingan yang telah memberikan izin akses pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
+                                @elseif ($user->isValidator())
+                                    Periksa kesesuaian hasil evaluasi AI Gemini terhadap perhitungan matematis pada menu <strong>Audit &amp; Validasi AI</strong>, lalu simpan verifikasi dan unduh laporan akurasi CSV.
                                 @else
                                     Pantau ringkasan keseluruhan di <strong>Dasbor ringkasan</strong>, kelola akun dan <strong>Tiket pengajuan akun</strong>, unggah data historis, serta latih dan aktifkan model prediksi dari panel ini.
                                 @endif

@@ -9,6 +9,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\Student;
+use App\Http\Controllers\Validator;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PageController::class, 'landing'])->name('landing');
@@ -85,6 +86,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/bimbingan/{student}/catatan', [Dpa\GuidanceController::class, 'storeNote'])
             ->whereNumber('student')
             ->name('bimbingan.catatan');
+    });
+
+    // Validator AI: Human-in-the-Loop Audit & Verifikasi Hasil Perhitungan AI Gemini
+    Route::middleware('role:validator')->prefix('validator')->name('validator.')->group(function () {
+        Route::get('/audit', [Validator\AuditController::class, 'index'])->name('audit');
+        Route::post('/audit/{result}', [Validator\AuditController::class, 'store'])
+            ->whereNumber('result')
+            ->name('audit.store');
+        Route::get('/audit/ekspor', [Validator\AuditController::class, 'export'])->name('audit.ekspor');
     });
 
     // Admin: Dasbor Ringkasan + UC-07, UC-10 sampai UC-12 + Persetujuan E-Ticket Akun

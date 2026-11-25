@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Contracts\View\View;
-use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -20,6 +20,7 @@ class AuthController extends Controller
             $demo = $demo
                 ->concat(User::where('role', 'mahasiswa')->orderBy('id')->limit(3)->get())
                 ->concat(User::where('role', 'dpa')->orderBy('id')->limit(1)->get())
+                ->concat(User::where('role', 'validator')->orderBy('id')->limit(1)->get())
                 ->concat(User::where('role', 'admin')->orderBy('id')->limit(1)->get());
         }
 

@@ -43,6 +43,14 @@ class DatabaseSeeder extends Seeder
             'password' => self::PASSWORD,
         ]);
 
+        User::create([
+            'name' => 'Tim Penjamin Mutu AI',
+            'username' => 'validator',
+            'email' => 'validator@uhamka.test',
+            'role' => User::ROLE_VALIDATOR,
+            'password' => self::PASSWORD,
+        ]);
+
         $dpaA = User::create([
             'name' => 'Dr. Hanafi Rahmat, M.Kom.',
             'username' => '0312058801',

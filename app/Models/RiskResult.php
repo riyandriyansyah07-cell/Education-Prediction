@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RiskResult extends Model
 {
@@ -35,6 +36,11 @@ class RiskResult extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(User::class, 'student_ref', 'student_ref');
+    }
+
+    public function validation(): HasOne
+    {
+        return $this->hasOne(AiValidation::class);
     }
 
     public function snapshots(): HasMany

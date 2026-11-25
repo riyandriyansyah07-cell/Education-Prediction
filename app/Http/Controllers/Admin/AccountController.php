@@ -35,7 +35,7 @@ class AccountController extends Controller
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
                 ->whereRaw('LOWER(name) LIKE ?', [$like])
                 ->orWhereRaw('LOWER(username) LIKE ?', [$like])))
-            ->when(in_array($role, ['mahasiswa', 'dpa', 'admin'], true), fn ($query) => $query->where('role', $role))
+            ->when(in_array($role, ['mahasiswa', 'dpa', 'validator', 'admin'], true), fn ($query) => $query->where('role', $role))
             ->with('dpa')
             ->orderBy('role')->orderBy('name')
             ->paginate(15)->withQueryString();
@@ -43,7 +43,7 @@ class AccountController extends Controller
         return view('admin.accounts.index', [
             'users' => $users,
             'q' => $q,
-            'role' => in_array($role, ['mahasiswa', 'dpa', 'admin'], true) ? $role : null,
+            'role' => in_array($role, ['mahasiswa', 'dpa', 'validator', 'admin'], true) ? $role : null,
             'totals' => User::selectRaw('role, count(*) as n')->groupBy('role')->pluck('n', 'role'),
         ]);
     }
@@ -63,7 +63,7 @@ class AccountController extends Controller
             'username' => ['required', 'string', 'max:32', 'regex:/^[A-Za-z0-9.\-]+$/', 'unique:users,username'],
             'program_studi' => ['nullable', 'string', Rule::in(AccountTicket::PROGRAMS)],
             'email' => ['nullable', 'email', 'max:120', 'unique:users,email'],
-            'role' => ['required', Rule::in(['mahasiswa', 'dpa', 'admin'])],
+            'role' => ['required', Rule::in(['mahasiswa', 'dpa', 'validator', 'admin'])],
             'password' => ['required', 'string', 'min:8', 'max:72'],
             'dpa_id' => [
                 'nullable',

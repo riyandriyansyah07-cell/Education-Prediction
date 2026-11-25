@@ -31,7 +31,7 @@
             <input id="role" class="input" value="{{ $account->roleLabel() }}" readonly>
         @else
             <select id="role" name="role" class="input" data-role-select>
-                @foreach (['mahasiswa' => 'Mahasiswa', 'dpa' => 'Dosen pembimbing akademik', 'admin' => 'Admin sekretariat'] as $v => $l)
+                @foreach (['mahasiswa' => 'Mahasiswa', 'dpa' => 'Dosen pembimbing akademik', 'validator' => 'Validator AI', 'admin' => 'Admin sekretariat'] as $v => $l)
                     <option value="{{ $v }}" @selected(old('role', $account->role) === $v)>{{ $l }}</option>
                 @endforeach
             </select>
