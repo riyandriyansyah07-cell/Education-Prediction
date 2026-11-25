@@ -63,7 +63,7 @@
             </p>
         </div>
 
-        <p class="mt-2.5 max-w-[66ch] text-sm text-ink-2" style="line-height:1.6;">
+        <p class="max-w-[66ch] text-sm text-ink-2" style="margin-top:0.75rem;line-height:1.65;">
             {{ $audience === 'student' ? ($result->features['encouragement'] ?? $copy[$level]) : $copy[$level] }}
         </p>
 
@@ -97,7 +97,7 @@
             <a href="{{ route('metodologi') }}" class="text-xs font-medium text-accent hover:underline">Metodologi &rarr;</a>
         </div>
         @if ($explanationUnavailable)
-            <p class="mt-2.5 text-sm text-ink-2">Penjelasan belum tersedia. Klik Hitung ulang.</p>
+            <p class="text-sm text-ink-2" style="margin-top:0.75rem;">Penjelasan belum tersedia. Klik Hitung ulang.</p>
         @elseif (count($factors))
             <ul style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.9rem;">
                 @foreach ($factors as $f)
@@ -116,7 +116,7 @@
                 @endforeach
             </ul>
         @else
-            <p class="mt-2.5 text-sm text-ink-2" style="display:inline-flex;align-items:center;gap:0.45rem;padding:0.45rem 0.75rem;border-radius:9px;background:color-mix(in srgb, var(--ok) 10%, var(--bg));border:1px solid color-mix(in srgb, var(--ok) 28%, var(--line));color:var(--ok);font-size:0.82rem;">
+            <p class="text-sm text-ink-2" style="margin-top:0.75rem;display:inline-flex;align-items:center;gap:0.45rem;padding:0.5rem 0.85rem;border-radius:9px;background:color-mix(in srgb, var(--ok) 10%, var(--bg));border:1px solid color-mix(in srgb, var(--ok) 28%, var(--line));color:var(--ok);font-size:0.82rem;">
                 Tidak ada faktor risiko yang menonjol.
             </p>
         @endif
@@ -130,7 +130,7 @@
                 <span class="rp-badge" style="color:var(--accent);border-color:color-mix(in srgb, var(--accent) 40%, var(--line));background:color-mix(in srgb, var(--accent) 12%, var(--surface));font-weight:600;">AI (LLM)</span>
             @endif
         </div>
-        <ol style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.75rem;" class="text-sm">
+        <ol style="list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-direction:column;gap:0.95rem;" class="text-sm">
             @foreach ($suggestions as $s)
                 <li style="display:flex;align-items:flex-start;gap:0.75rem;line-height:1.6;">
                     <span class="mono" style="width:22px;height:22px;border-radius:9999px;background:var(--bg);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-2);flex-shrink:0;margin-top:2px;">{{ $loop->iteration }}</span>

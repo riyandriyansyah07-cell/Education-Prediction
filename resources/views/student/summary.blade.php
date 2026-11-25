@@ -44,9 +44,9 @@
         .sum-tbl tbody tr {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.55rem 0.5rem;
-            padding: 0.95rem;
-            margin-bottom: 0.85rem;
+            gap: 0.75rem 0.55rem;
+            padding: 1.05rem;
+            margin-bottom: 0.95rem;
             border-radius: 12px;
             border: 1px solid var(--line);
             background: var(--bg);
@@ -59,17 +59,18 @@
             padding: 0 !important;
             border: none !important;
             text-align: left !important;
+            min-width: 0;
         }
         .sum-tbl tbody td.sum-td-course {
-            grid-column: 1 / 4;
+            grid-column: 1 / -1;
             order: 1;
-            padding-bottom: 0.35rem !important;
+            line-height: 1.4;
         }
         .sum-tbl tbody td.sum-td-risk {
-            grid-column: 4 / 5;
+            grid-column: 1 / -1;
             order: 2;
-            justify-self: end;
-            align-self: start;
+            justify-self: start;
+            padding-bottom: 0.25rem !important;
         }
         .sum-tbl tbody td.sum-td-inp {
             order: 3;
@@ -82,20 +83,20 @@
             color: var(--ink-3);
             text-transform: uppercase;
             letter-spacing: 0.03em;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.32rem;
             text-align: center;
         }
         .sum-tbl tbody td.sum-td-inp .sum-inp {
             width: 100% !important;
-            min-height: 40px !important;
-            height: 40px;
+            min-height: 42px !important;
+            height: 42px;
             font-size: 15px !important;
         }
         .sum-tbl tbody td.sum-td-meta {
             order: 4;
             grid-column: span 1;
-            padding-top: 0.45rem !important;
-            margin-top: 0.2rem;
+            padding-top: 0.65rem !important;
+            margin-top: 0.25rem;
             border-top: 1px solid var(--line) !important;
             font-size: 12px !important;
         }
