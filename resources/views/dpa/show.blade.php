@@ -174,29 +174,38 @@
             </div>
             <p class="mt-2 text-sm text-ink-2">{{ $enrichment['status_message'] }}</p>
 
-            <div class="mt-4 grid gap-3 sm:grid-cols-3 text-xs">
-                <div class="rounded-md border border-line bg-bg p-3">
-                    <p class="text-ink-3">Terkonversi</p>
-                    <p class="mono mt-1 text-base font-semibold">{{ $enrichment['converted_sks'] }} SKS</p>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.75rem;margin-top:1.1rem;">
+                <div style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.85rem 1rem;">
+                    <p class="text-xs text-ink-3" style="margin:0;">Terkonversi</p>
+                    <p class="mono font-semibold text-ink" style="margin:0.35rem 0 0;font-size:1.05rem;">{{ $enrichment['converted_sks'] }} SKS</p>
                 </div>
-                <div class="rounded-md border border-line bg-bg p-3">
-                    <p class="text-ink-3">Siap Bukti</p>
-                    <p class="mono mt-1 text-base font-semibold">{{ $enrichment['ready_sks'] }} SKS</p>
+                <div style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.85rem 1rem;">
+                    <p class="text-xs text-ink-3" style="margin:0;">Siap Bukti</p>
+                    <p class="mono font-semibold text-ink" style="margin:0.35rem 0 0;font-size:1.05rem;">{{ $enrichment['ready_sks'] }} SKS</p>
                 </div>
-                <div class="rounded-md border border-line bg-bg p-3">
-                    <p class="text-ink-3">Dicicil</p>
-                    <p class="mono mt-1 text-base font-semibold">{{ $enrichment['in_progress_sks'] }} SKS</p>
+                <div style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.85rem 1rem;">
+                    <p class="text-xs text-ink-3" style="margin:0;">Dicicil</p>
+                    <p class="mono font-semibold text-ink" style="margin:0.35rem 0 0;font-size:1.05rem;">{{ $enrichment['in_progress_sks'] }} SKS</p>
                 </div>
             </div>
 
             @if (! empty($skpiDpa['items']))
-                <div class="mt-4 rounded-md border border-line bg-bg p-3.5">
-                    <p class="text-xs font-semibold text-ink">Checklist 4 Syarat Wajib SKPI FTII ({{ $skpiDpa['completed'] }}/{{ $skpiDpa['total'] }} tuntas)</p>
-                    <ul class="mt-2.5 space-y-2 text-xs">
-                        @foreach ($skpiDpa['items'] as $skItem)
-                            <li style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
-                                <span class="text-ink-2">{{ $skItem['title'] }}</span>
-                                <span class="mono" style="padding:0.12rem 0.5rem;border-radius:9999px;font-size:11px;white-space:nowrap;border:1px solid {{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, var(--line))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 40%, var(--line))' : 'var(--line)') }};color:{{ $skItem['tone'] === 'ok' ? 'var(--ok)' : ($skItem['tone'] === 'warn' ? 'var(--warn)' : 'var(--ink-3)') }};background:var(--surface);">
+                @php $skpiPctDpa = (int) ($skpiDpa['pct'] ?? round((($skpiDpa['completed'] ?? 0) / max(1, (int) ($skpiDpa['total'] ?? 4))) * 100)); @endphp
+                <div style="margin-top:1.15rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:1.05rem 1.15rem;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
+                        <p class="text-xs font-semibold text-ink" style="margin:0;">Checklist 4 Syarat Wajib SKPI FTII</p>
+                        <span class="mono text-xs" style="color:{{ ($skpiDpa['completed'] ?? 0) === 4 ? 'var(--ok)' : 'var(--ink-2)' }};font-weight:600;">
+                            {{ $skpiDpa['completed'] }}/{{ $skpiDpa['total'] }} tuntas
+                        </span>
+                    </div>
+                    <div style="margin-top:0.65rem;height:5px;width:100%;border-radius:9999px;background:var(--surface);overflow:hidden;">
+                        <div style="height:100%;width:{{ $skpiPctDpa }}%;background:var(--ok);border-radius:9999px;"></div>
+                    </div>
+                    <ul style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;">
+                        @foreach ($skpiDpa['items'] as $idx => $skItem)
+                            <li style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.45rem 0.75rem;padding:0.65rem 0;{{ $idx > 0 ? 'border-top:1px solid var(--line);' : '' }}">
+                                <span class="text-xs text-ink-2" style="line-height:1.4;">{{ $skItem['title'] }}</span>
+                                <span class="mono" style="padding:0.2rem 0.65rem;border-radius:9999px;font-size:11px;font-weight:500;line-height:1.3;white-space:nowrap;border:1px solid {{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, var(--line))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 40%, var(--line))' : 'var(--line)') }};color:{{ $skItem['tone'] === 'ok' ? 'var(--ok)' : ($skItem['tone'] === 'warn' ? 'var(--warn)' : 'var(--ink-3)') }};background:{{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 10%, var(--surface))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 10%, var(--surface))' : 'var(--surface)') }};">
                                     {{ $skItem['status_label'] }}
                                 </span>
                             </li>
@@ -206,11 +215,12 @@
             @endif
 
             @if ($enrichmentRecords->isNotEmpty())
-                <ul class="mt-4 divide-y divide-line rounded-md border border-line bg-bg px-4 text-xs">
-                    @foreach ($enrichmentRecords as $er)
-                        <li class="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                <ul style="list-style:none;margin:1.15rem 0 0;padding:0.25rem 1.15rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);">
+                    @foreach ($enrichmentRecords as $erIdx => $er)
+                        <li style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.35rem 0.75rem;padding:0.7rem 0;{{ $erIdx > 0 ? 'border-top:1px solid var(--line);' : '' }}" class="text-xs">
                             <span>
-                                <strong class="font-medium">{{ $er->course_name }}</strong> ({{ $er->credits }} SKS)
+                                <strong class="font-medium text-ink">{{ $er->course_name }}</strong>
+                                <span class="text-ink-3">({{ $er->credits }} SKS)</span>
                             </span>
                             <span class="text-ink-2">
                                 {{ $er->statusLabel() }}@if ($er->status === 'dikonversi') &middot; Sem {{ $er->conversion_semester }} ({{ $er->grade }})@endif
