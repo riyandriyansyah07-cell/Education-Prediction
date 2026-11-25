@@ -4,10 +4,10 @@
 
 @section('body')
 <style>
-    .px-wrap { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 1.25rem; }
+    .px-wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding: 0 1.25rem; }
     @media (min-width: 640px) { .px-wrap { padding: 0 2rem; } }
 
-    /* Ambient Architectural Backdrop (Subtle, Editorial, Anti-Slop) */
+    /* Ambient Architectural Backdrop (Strictly Absolute — Zero Layout Shift) */
     .px-stage {
         position: relative;
         overflow-x: clip;
@@ -15,28 +15,28 @@
     .px-stage::before {
         content: "";
         position: absolute;
-        inset: -120px 0 auto 0;
-        height: 540px;
+        top: -80px; left: 0; right: 0;
+        height: 560px;
         pointer-events: none;
         background:
-            radial-gradient(60% 55% at 22% 18%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 72%),
-            radial-gradient(50% 45% at 82% 24%, color-mix(in srgb, var(--ok) 12%, transparent) 0%, transparent 70%);
+            radial-gradient(52% 48% at 50% 10%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 72%),
+            radial-gradient(38% 36% at 78% 22%, color-mix(in srgb, var(--ok) 12%, transparent) 0%, transparent 70%);
         z-index: 0;
     }
     .px-grid-bg {
-        position: absolute;
-        inset: 0 0 auto 0;
-        height: 560px;
+        position: absolute !important;
+        top: 0; left: 0; right: 0;
+        height: 520px;
         pointer-events: none;
         background-image:
             linear-gradient(to right, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px),
             linear-gradient(to bottom, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px);
-        background-size: 48px 48px;
-        mask-image: radial-gradient(ellipse 75% 70% at 50% 20%, #000 10%, transparent 80%);
-        -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 20%, #000 10%, transparent 80%);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(ellipse 72% 65% at 50% 12%, #000 10%, transparent 78%);
+        -webkit-mask-image: radial-gradient(ellipse 72% 65% at 50% 12%, #000 10%, transparent 78%);
         z-index: 0;
     }
-    .px-stage > * { position: relative; z-index: 1; }
+    .px-stage > :not(.px-grid-bg) { position: relative; z-index: 1; }
 
     .px-nav {
         position: sticky; top: 0; z-index: 30;
@@ -52,27 +52,43 @@
     .px-links a:hover { color: var(--ink); }
     @media (min-width: 768px) { .px-links { display: flex; } }
 
-    .px-hero { padding-top: 2.5rem; padding-bottom: 2.75rem; }
-    @media (min-width: 768px) { .px-hero { padding-top: 4.25rem; padding-bottom: 3.5rem; } }
     .px-win-scale { display: none; }
     @media (min-width: 640px) { .px-win-scale { display: inline; } }
     .px-ticket-btn { display: none; }
     @media (min-width: 640px) { .px-ticket-btn { display: inline-flex; } }
+
+    /* Centered Editorial Hero */
+    .px-hero {
+        padding-top: 2.75rem;
+        padding-bottom: 3rem;
+    }
+    @media (min-width: 768px) {
+        .px-hero { padding-top: 4rem; padding-bottom: 3.75rem; }
+    }
+    .px-hero-center {
+        text-align: center;
+        max-width: 780px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
     /* Live Eyebrow Pill */
     .px-eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
-        padding: 0.32rem 0.85rem;
+        padding: 0.34rem 0.9rem;
         border-radius: 9999px;
         border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
         background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-        font-size: 0.74rem;
+        font-size: 0.72rem;
         font-weight: 600;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
         color: var(--ink);
+        box-shadow: 0 2px 10px -4px color-mix(in srgb, var(--accent) 30%, transparent);
     }
     .px-pulse-dot {
         width: 8px; height: 8px; border-radius: 9999px; background: var(--ok);
@@ -92,24 +108,25 @@
         100% { transform: scale(1.9); opacity: 0; }
     }
 
-    /* Kinetic Highlighted Headline */
+    /* Grand Display Headline with Kinetic Gradient & SVG Beam */
     .px-h1 {
-        font-size: clamp(2.15rem, 5.2vw, 3.75rem);
+        margin-top: 1.35rem;
+        font-size: clamp(2.25rem, 5.4vw, 4rem) !important;
         font-weight: 700;
         line-height: 1.08;
-        letter-spacing: -0.038em;
+        letter-spacing: -0.04em;
         color: var(--ink);
-        max-width: 17ch;
+        max-width: 15ch;
     }
     .px-h1-accent {
         position: relative;
         display: inline-block;
-        background: linear-gradient(115deg, var(--accent) 0%, #60a5fa 45%, var(--ok) 100%);
+        background: linear-gradient(115deg, var(--accent) 0%, #3b82f6 48%, var(--ok) 100%);
         background-size: 200% auto;
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-        animation: pxShimmer 7s ease-in-out infinite;
+        animation: pxShimmer 6.5s ease-in-out infinite;
     }
     @keyframes pxShimmer {
         0%, 100% { background-position: 0% 50%; }
@@ -119,9 +136,9 @@
         position: absolute;
         left: 0;
         right: 0;
-        bottom: -7px;
+        bottom: -8px;
         width: 100%;
-        height: 12px;
+        height: 13px;
         overflow: visible;
         pointer-events: none;
     }
@@ -130,57 +147,103 @@
         stroke-dashoffset: 280;
     }
 
-    /* Inline Tactile Highlights in Subheadline */
+    /* Clean High-Contrast Subheadline */
     .px-sub {
-        margin-top: 1.25rem;
-        font-size: 1.02rem;
-        line-height: 1.72;
+        margin-top: 1.35rem;
+        font-size: clamp(0.98rem, 1.4vw, 1.12rem);
+        line-height: 1.65;
         color: var(--ink-2);
-        max-width: 52ch;
+        max-width: 54ch;
     }
-    .px-hl {
+    .px-sub strong {
         color: var(--ink);
         font-weight: 600;
-        padding: 0.08rem 0.42rem;
-        border-radius: 6px;
-        background: color-mix(in srgb, var(--accent) 12%, var(--surface));
-        border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
-        white-space: nowrap;
     }
-    .px-hl-ok {
-        color: var(--ok);
+    .px-sub-accent {
+        color: var(--accent);
         font-weight: 600;
-        padding: 0.08rem 0.45rem;
-        border-radius: 6px;
-        background: color-mix(in srgb, var(--ok) 12%, var(--surface));
-        border: 1px solid color-mix(in srgb, var(--ok) 28%, var(--line));
-        white-space: nowrap;
     }
 
-    /* Section Highlight */
-    .px-sec-hl {
-        background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 18%, transparent) 0%, color-mix(in srgb, var(--ok) 16%, transparent) 100%);
-        padding: 0.05rem 0.45rem;
-        border-radius: 7px;
+    /* CTA Row */
+    .px-cta-row {
+        margin-top: 1.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    .px-cta-primary {
+        min-height: 46px !important;
+        padding: 0.65rem 1.5rem !important;
+        font-size: 0.92rem !important;
+        box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--accent) 55%, rgba(0, 0, 0, 0.35));
+    }
+    .px-cta-secondary {
+        min-height: 46px !important;
+        padding: 0.65rem 1.35rem !important;
+        font-size: 0.92rem !important;
+    }
+
+    /* 4-Column Metric Strip */
+    .px-metrics {
+        margin-top: 2.25rem;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+        .px-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    .px-metric-card {
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--surface) 88%, transparent);
+        backdrop-filter: blur(8px);
+        padding: 0.9rem 1rem;
+        text-align: center;
+        transition: border-color 180ms ease, transform 180ms ease;
+    }
+    .px-metric-card:hover {
+        border-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+        transform: translateY(-2px);
+    }
+    .px-metric-val {
+        font-size: 1.25rem;
+        font-weight: 700;
         color: var(--ink);
+        letter-spacing: -0.02em;
+    }
+    .px-metric-lbl {
+        margin-top: 0.2rem;
+        font-size: 0.75rem;
+        color: var(--ink-3);
     }
 
-    /* 3D Perspective Preview Window */
+    /* 3D Perspective Preview Window with Top Edge Beam */
     .px-window-wrap {
-        perspective: 1200px;
-        margin-top: 2.75rem;
+        perspective: 1400px;
+        margin-top: 2.5rem;
     }
     .px-window {
+        position: relative;
         background: var(--surface);
         border: 1px solid var(--line-strong);
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 24px 60px -24px rgba(2, 6, 23, 0.32), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+        box-shadow: 0 28px 65px -26px rgba(2, 6, 23, 0.34), 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
         transform-style: preserve-3d;
         transition: border-color 220ms ease, box-shadow 220ms ease;
     }
-    .px-window:hover {
-        border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+    .px-window::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 15%; right: 15%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent), var(--ok), transparent);
+        opacity: 0.8;
+        pointer-events: none;
     }
     .px-winbar {
         display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -190,13 +253,21 @@
     }
     .px-dots { display: flex; gap: 6px; }
     .px-dots span { width: 10px; height: 10px; border-radius: 999px; background: var(--line-strong); }
-    .px-dots span:nth-child(1) { background: color-mix(in srgb, var(--bad) 70%, var(--line-strong)); }
-    .px-dots span:nth-child(2) { background: color-mix(in srgb, var(--warn) 75%, var(--line-strong)); }
-    .px-dots span:nth-child(3) { background: color-mix(in srgb, var(--ok) 75%, var(--line-strong)); }
+    .px-dots span:nth-child(1) { background: color-mix(in srgb, var(--bad) 75%, var(--line-strong)); }
+    .px-dots span:nth-child(2) { background: color-mix(in srgb, var(--warn) 80%, var(--line-strong)); }
+    .px-dots span:nth-child(3) { background: color-mix(in srgb, var(--ok) 80%, var(--line-strong)); }
     .px-url {
         font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-3);
         background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
         padding: 0.22rem 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* Section Highlight */
+    .px-sec-hl {
+        background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 16%, transparent) 0%, color-mix(in srgb, var(--ok) 15%, transparent) 100%);
+        padding: 0.08rem 0.5rem;
+        border-radius: 8px;
+        color: var(--ink);
     }
 
     /* Bento Grid with Cursor-Tracking Spotlight */
@@ -228,7 +299,7 @@
         inset: 0;
         pointer-events: none;
         opacity: 0;
-        background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%);
+        background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 15%, transparent), transparent 65%);
         transition: opacity 220ms ease;
     }
     .px-tile:hover {
@@ -281,6 +352,8 @@
     @media (max-width: 640px) {
         .px-tile { padding: 1.25rem; }
         .px-h1 { max-width: 100%; }
+        .px-cta-row { width: 100%; }
+        .px-cta-row .btn { flex: 1; min-width: 140px; }
     }
     @media (prefers-reduced-motion: reduce) {
         .px-pulse-dot::after, .px-h1-accent { animation: none !important; }
@@ -318,44 +391,64 @@
     <div class="px-grid-bg" aria-hidden="true"></div>
 
     <section class="px-wrap px-hero">
-        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:2rem;">
-            <div>
-                <div class="px-eyebrow mono js-hero-item">
-                    <span class="px-pulse-dot" aria-hidden="true"></span>
-                    <span>FTII UHAMKA &middot; Peringatan Dini Berbasis Gemini AI</span>
-                </div>
-                <h1 class="px-h1 js-hero-item" style="margin-top:1.1rem;">
-                    Ketahui
-                    <span class="px-h1-accent">
-                        risiko nilaimu
-                        <svg class="px-h1-underline js-hero-beam" viewBox="0 0 260 14" preserveAspectRatio="none" fill="none" aria-hidden="true">
-                            <defs>
-                                <linearGradient id="pxBeamGrad" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0%" stop-color="#38bdf8"/>
-                                    <stop offset="100%" stop-color="#34d399"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M3 10.5C68 3.2 184 2.5 257 9.5" stroke="url(#pxBeamGrad)" stroke-width="3.2" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    lebih awal.
-                </h1>
-                <p class="px-sub js-hero-item">
-                    Pantau <span class="px-hl">proyeksi nilai</span>, <span class="px-hl">target UAS minimal</span>, progres <span class="px-hl">20 SKS &amp; 4 SKPI</span>, serta saran belajar adaptif bertenaga <span class="px-hl-ok">Gemini AI</span>.
-                </p>
+        <div class="px-hero-center">
+            <div class="px-eyebrow mono js-hero-item">
+                <span class="px-pulse-dot" aria-hidden="true"></span>
+                <span>FTII UHAMKA &middot; Peringatan Dini Berbasis Gemini AI</span>
             </div>
-            <div class="js-hero-item" style="display:flex;flex-wrap:wrap;gap:0.75rem;">
+
+            <h1 class="px-h1 js-hero-item">
+                Ketahui
+                <span class="px-h1-accent">
+                    risiko nilaimu
+                    <svg class="px-h1-underline js-hero-beam" viewBox="0 0 260 14" preserveAspectRatio="none" fill="none" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="pxBeamGrad" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#38bdf8"/>
+                                <stop offset="100%" stop-color="#34d399"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M3 10.5C68 3.2 184 2.5 257 9.5" stroke="url(#pxBeamGrad)" stroke-width="3.4" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                sebelum terlambat.
+            </h1>
+
+            <p class="px-sub js-hero-item">
+                Pantau <strong>proyeksi nilai</strong>, <strong>target UAS minimal</strong>, progres <strong>20 SKS pengayaan &amp; 4 syarat SKPI</strong>, hingga saran belajar adaptif bertenaga <span class="px-sub-accent">Gemini AI</span> dengan privasi Zero-PII.
+            </p>
+
+            <div class="px-cta-row js-hero-item">
                 @auth
-                    <a href="{{ route('beranda') }}" class="btn btn-primary" style="min-height:44px;padding:0.6rem 1.3rem;">Buka Beranda &rarr;</a>
+                    <a href="{{ route('beranda') }}" class="btn btn-primary px-cta-primary">Buka Beranda &rarr;</a>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-primary" style="min-height:44px;padding:0.6rem 1.35rem;">Masuk Sekarang &rarr;</a>
-                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet" style="min-height:44px;padding:0.6rem 1.2rem;">Ajukan Akun</a>
+                    <a href="{{ route('login') }}" class="btn btn-primary px-cta-primary">Masuk Sekarang &rarr;</a>
+                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet px-cta-secondary">Ajukan Akun</a>
                 @endauth
+            </div>
+
+            <div class="px-metrics js-hero-item">
+                <div class="px-metric-card">
+                    <div class="px-metric-val mono">10 Variabel</div>
+                    <div class="px-metric-lbl">Indikator Risiko Akademik</div>
+                </div>
+                <div class="px-metric-card">
+                    <div class="px-metric-val mono">4 Peran</div>
+                    <div class="px-metric-lbl">Mhs, DPA, Validator, Admin</div>
+                </div>
+                <div class="px-metric-card">
+                    <div class="px-metric-val mono">75% Hadir</div>
+                    <div class="px-metric-lbl">Guardrail Otomatis UHAMKA</div>
+                </div>
+                <div class="px-metric-card">
+                    <div class="px-metric-val mono" style="color:var(--ok);">Zero-PII</div>
+                    <div class="px-metric-lbl">HMAC-SHA256 ke Gemini AI</div>
+                </div>
             </div>
         </div>
 
         <div class="px-window-wrap">
-            <div class="px-window js-hero-window">
+            <div class="px-window js-hero-window" id="js-tilt-window">
                 <div class="px-winbar">
                     <div class="px-dots"><span></span><span></span><span></span></div>
                     <span class="px-url">peringatandini.online/mahasiswa/ringkasan</span>
@@ -506,7 +599,7 @@ window.addEventListener('DOMContentLoaded', function () {
     tabs.forEach(t => t.addEventListener('click', () => showRole(t.dataset.roleTab, true)));
     showRole('mhs', false);
 
-    // Cursor-tracking spotlight on Bento tiles (desktop pointer devices)
+    // Cursor-tracking spotlight on Bento tiles + subtle 3D tilt on preview window (desktop pointer)
     if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
         document.querySelectorAll('.px-tile').forEach(function (tile) {
             tile.addEventListener('pointermove', function (e) {
@@ -515,6 +608,19 @@ window.addEventListener('DOMContentLoaded', function () {
                 tile.style.setProperty('--my', (e.clientY - rect.top) + 'px');
             }, { passive: true });
         });
+
+        const win = document.getElementById('js-tilt-window');
+        if (win && typeof window.gsap !== 'undefined') {
+            win.addEventListener('pointermove', function (e) {
+                const r = win.getBoundingClientRect();
+                const rx = ((e.clientY - r.top) / r.height - 0.5) * -3.5;
+                const ry = ((e.clientX - r.left) / r.width - 0.5) * 3.5;
+                window.gsap.to(win, { rotateX: rx, rotateY: ry, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+            }, { passive: true });
+            win.addEventListener('pointerleave', function () {
+                window.gsap.to(win, { rotateX: 0, rotateY: 0, duration: 0.55, ease: 'power3.out' });
+            });
+        }
     }
 
     // Live sequential pulse on Zero-PII data pipeline
@@ -534,7 +640,7 @@ window.addEventListener('DOMContentLoaded', function () {
     const hasST = typeof window.ScrollTrigger !== 'undefined';
     if (hasST) gsap.registerPlugin(window.ScrollTrigger);
 
-    // 1. Staggered kinetic hero entrance + SVG beam draw
+    // 1. Staggered kinetic hero entrance + SVG beam draw + 3D preview reveal
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
     tl.from('.js-hero-item', {
         y: 22,
@@ -545,18 +651,18 @@ window.addEventListener('DOMContentLoaded', function () {
     })
     .to('.js-hero-beam path', {
         strokeDashoffset: 0,
-        duration: 0.75,
+        duration: 0.78,
         ease: 'power2.out'
     }, '-=0.35')
     .from('.js-hero-window', {
-        y: 28,
-        rotateX: 6,
-        scale: 0.975,
+        y: 30,
+        rotateX: 7,
+        scale: 0.97,
         opacity: 0,
-        duration: 0.7,
+        duration: 0.72,
         ease: 'power3.out',
         clearProps: 'transform,opacity'
-    }, '-=0.45');
+    }, '-=0.48');
 
     if (!hasST) return;
 
