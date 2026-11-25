@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\EnrichmentRecord;
+use App\Models\StudentSetting;
 use Illuminate\Support\Collection;
 
 /**
@@ -373,7 +374,7 @@ final class EnrichmentCatalog
      *   pkm_message:string
      * }
      */
-    public static function evaluateProgress(Collection $records, int $currentSemester): array
+    public static function evaluateProgress(Collection $records, int $currentSemester, ?StudentSetting $setting = null): array
     {
         $semester = max(1, min(14, $currentSemester));
 
@@ -404,25 +405,103 @@ final class EnrichmentCatalog
             && strtoupper((string) $r->grade) !== 'E');
         $hasOngoingPkm = $pkmRecords->contains(fn (EnrichmentRecord $r) => $r->status === EnrichmentRecord::STATUS_DICICIL);
 
-        if ($hasCompletedPkm) {
+        $explicitStage = (string) ($setting?->skpi_pkm_stage ?? StudentSetting::PKM_BELUM);
+
+        if ($explicitStage === StudentSetting::PKM_PENDANAAN) {
+            $pkmStatus = 'selesai';
+            $pkmLabel = 'PKM Tuntas (Lolos Pendanaan)';
+            $pkmMessage = 'Lolos tahap pendanaan PKM — memperoleh Sertifikat PKM yang diakui SKPI dan dapat diajukan rekognisi SKS.';
+        } elseif ($explicitStage === StudentSetting::PKM_UNIVERSITAS) {
+            $pkmStatus = 'selesai';
+            $pkmLabel = 'PKM Tuntas (Lolos Universitas)';
+            $pkmMessage = 'Lolos tahap Universitas — memperoleh Sertifikat PKM yang diakui sebagai syarat SKPI FTII.';
+        } elseif ($explicitStage === StudentSetting::PKM_FAKULTAS) {
+            $pkmStatus = 'proses';
+            $pkmLabel = 'Lolos Fakultas (Belum SKPI)';
+            $pkmMessage = 'Baru lolos tahap Fakultas (belum dapat dikonversi menjadi SKPI). Wajib lolos minimal tahap Universitas agar memperoleh Sertifikat PKM.';
+        } elseif ($hasCompletedPkm) {
+            $explicitStage = StudentSetting::PKM_UNIVERSITAS;
             $pkmStatus = 'selesai';
             $pkmLabel = 'PKM Tuntas';
-            $pkmMessage = 'Syarat wajib PKM sudah terpenuhi.';
+            $pkmMessage = 'Syarat wajib PKM sudah terpenuhi dan diakui SKPI.';
         } elseif ($hasOngoingPkm) {
+            $explicitStage = StudentSetting::PKM_FAKULTAS;
             $pkmStatus = 'proses';
             $pkmLabel = 'PKM Sedang Proses';
             $pkmMessage = $semester >= self::PKM_DEADLINE_SEMESTER
-                ? 'PKM masih berstatus dicicil di semester '.$semester.' — segera selesaikan laporan/sertifikat karena batas wajib PKM adalah semester 7.'
-                : 'PKM sedang berjalan; pastikan tuntas dan buktinya lengkap paling lambat semester 7.';
+                ? 'PKM masih berstatus proses di semester '.$semester.' — wajib lolos minimal tahap Universitas agar memperoleh Sertifikat PKM (SKPI).'
+                : 'PKM sedang berjalan (dibuka tiap semester ganjil mulai Sem 1); targetkan lolos minimal tahap Universitas agar diakui SKPI.';
         } else {
             $pkmStatus = 'belum';
             $pkmLabel = 'Belum Ikut PKM';
             $pkmMessage = $semester >= self::PKM_DEADLINE_SEMESTER
-                ? 'Syarat wajib PKM (batas akhir semester 7) belum tercatat. Segera koordinasi dengan DPA atau PKM Centre FTII.'
+                ? 'Syarat wajib PKM (minimal lolos tahap Universitas untuk SKPI) belum tercatat. Segera koordinasi dengan DPA atau PKM Centre FTII.'
                 : ($semester >= 5
-                    ? 'Belum ada catatan PKM. Segera ajukan proposal PKM sebelum batas akhir semester 7.'
-                    : 'Ingat syarat wajib mengikuti PKM paling lambat semester 7 (bisa mulai dicicil sejak sekarang).');
+                    ? 'Belum ada catatan PKM. Ikuti seleksi PKM di semester ganjil dan targetkan lolos minimal tahap Universitas untuk SKPI.'
+                    : 'Wajib PKM dapat diikuti sejak semester 1 setiap semester ganjil. Minimal lolos tahap Universitas agar mendapat Sertifikat PKM (SKPI).');
         }
+
+        // Ringkasan 4 Syarat Wajib SKPI FTII UHAMKA
+        $itStatus = (string) ($setting?->skpi_it_status ?? StudentSetting::SKPI_BELUM);
+        $itProvider = trim((string) ($setting?->skpi_it_provider ?? ''));
+        $itDone = $itStatus === StudentSetting::SKPI_SELESAI;
+
+        $bapsStatus = (string) ($setting?->skpi_baps_status ?? StudentSetting::SKPI_BELUM);
+        $bapsDone = $bapsStatus === StudentSetting::SKPI_SELESAI;
+
+        $pkmDone = $pkmStatus === 'selesai';
+
+        $toeflStatus = (string) ($setting?->skpi_toefl_status ?? StudentSetting::SKPI_BELUM);
+        $toeflScore = $setting?->skpi_toefl_score;
+        $toeflDone = $toeflStatus === StudentSetting::SKPI_SELESAI;
+
+        $skpiItems = [
+            [
+                'key' => 'kompetensi_it',
+                'title' => 'Sertifikat Kompetensi IT',
+                'done' => $itDone,
+                'tone' => $itDone ? 'ok' : ($itStatus === StudentSetting::SKPI_PROSES ? 'warn' : 'neutral'),
+                'status_label' => $itDone
+                    ? 'Tuntas'.($itProvider !== '' ? ' ('.$itProvider.')' : '')
+                    : ($itStatus === StudentSetting::SKPI_PROSES ? 'Proses'.($itProvider !== '' ? ' ('.$itProvider.')' : '') : 'Belum'),
+                'note' => 'Wajib dari lembaga kredibel seperti Mahira atau BNSP.',
+            ],
+            [
+                'key' => 'baps',
+                'title' => 'Baitul Arqam Purna Studi (BAPS)',
+                'done' => $bapsDone,
+                'tone' => $bapsDone ? 'ok' : ($bapsStatus === StudentSetting::BAPS_TERDAFTAR ? 'warn' : 'neutral'),
+                'status_label' => $bapsDone ? 'Selesai & Bersertifikat' : ($bapsStatus === StudentSetting::BAPS_TERDAFTAR ? 'Terdaftar' : 'Belum ikut'),
+                'note' => 'Wajib mengikuti kegiatan Baitul Arqam Purna Studi.',
+            ],
+            [
+                'key' => 'pkm',
+                'title' => 'Sertifikat PKM',
+                'done' => $pkmDone,
+                'tone' => $pkmDone ? 'ok' : ($pkmStatus === 'proses' ? 'warn' : 'neutral'),
+                'status_label' => $pkmLabel,
+                'note' => 'Tiap semester ganjil (mulai Sem 1). Minimal lolos tahap Universitas agar diakui SKPI; lolos Fakultas saja belum sah SKPI.',
+            ],
+            [
+                'key' => 'toefl',
+                'title' => 'Sertifikat TOEFL UHAMKA',
+                'done' => $toeflDone,
+                'tone' => $toeflDone ? 'ok' : ($toeflStatus === StudentSetting::SKPI_PROSES ? 'warn' : 'neutral'),
+                'status_label' => $toeflDone
+                    ? 'Tuntas'.($toeflScore ? ' (Skor '.$toeflScore.')' : '')
+                    : ($toeflStatus === StudentSetting::SKPI_PROSES ? 'Proses / Terdaftar' : 'Belum'),
+                'note' => 'Sertifikat TOEFL wajib diterbitkan oleh UHAMKA.',
+            ],
+        ];
+        $skpiCompleted = count(array_filter($skpiItems, fn ($i) => $i['done']));
+        $skpiSummary = [
+            'completed' => $skpiCompleted,
+            'total' => 4,
+            'pct' => (int) round(($skpiCompleted / 4) * 100),
+            'all_done' => $skpiCompleted === 4,
+            'pkm_stage' => $explicitStage,
+            'items' => $skpiItems,
+        ];
 
         if ($semester <= 4) {
             $phaseLabel = 'Fase Cicil Bukti (Semester 1–4)';
@@ -495,6 +574,7 @@ final class EnrichmentCatalog
             'pkm_status' => $pkmStatus,
             'pkm_label' => $pkmLabel,
             'pkm_message' => $pkmMessage,
+            'skpi' => $skpiSummary,
         ];
     }
 }

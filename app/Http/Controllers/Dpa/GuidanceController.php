@@ -236,7 +236,8 @@ class GuidanceController extends Controller
             : collect();
         $enrichment = EnrichmentCatalog::evaluateProgress(
             $enrichmentRecords,
-            (int) ($latestResult?->semester ?? max(1, (int) ($enrichmentRecords->max('activity_semester') ?? 1)))
+            (int) ($latestResult?->semester ?? max(1, (int) ($enrichmentRecords->max('activity_semester') ?? 1))),
+            $setting
         );
 
         AccessLogger::record($dpa, $ref, 'detail_faktor');

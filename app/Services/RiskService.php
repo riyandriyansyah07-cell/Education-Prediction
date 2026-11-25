@@ -155,7 +155,7 @@ class RiskService
         // Sisipkan ringkasan numerik progres 20 SKS MK Pengayaan FTII & bobot risikonya (mulai Sem 5+)
         if (isset($features[$lastSemesterKey]) && $hasEnrichmentTable) {
             $enrichmentRecords = EnrichmentRecord::where('student_ref', $ref)->get();
-            $enrichmentProgress = EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) $lastSemesterKey);
+            $enrichmentProgress = EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) $lastSemesterKey, $settings);
             $features[$lastSemesterKey]['enrichment_converted_sks'] = $enrichmentProgress['converted_sks'];
             $features[$lastSemesterKey]['enrichment_ready_sks'] = $enrichmentProgress['ready_sks'];
             $features[$lastSemesterKey]['enrichment_in_progress_sks'] = $enrichmentProgress['in_progress_sks'];

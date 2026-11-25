@@ -21,6 +21,29 @@ class StudentSetting extends Model
 
     public const ACTIVITY_KURANG = 'kurang';
 
+    public const PKM_BELUM = 'belum';
+
+    public const PKM_FAKULTAS = 'fakultas';
+
+    public const PKM_UNIVERSITAS = 'universitas';
+
+    public const PKM_PENDANAAN = 'pendanaan';
+
+    public const PKM_STAGES = [
+        self::PKM_BELUM,
+        self::PKM_FAKULTAS,
+        self::PKM_UNIVERSITAS,
+        self::PKM_PENDANAAN,
+    ];
+
+    public const SKPI_BELUM = 'belum';
+
+    public const SKPI_PROSES = 'proses';
+
+    public const SKPI_SELESAI = 'selesai';
+
+    public const BAPS_TERDAFTAR = 'terdaftar';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -30,6 +53,7 @@ class StudentSetting extends Model
             'remind_email' => 'boolean',
             'last_guidance_at' => 'date',
             'dpa_confirmed_tasks' => 'boolean',
+            'skpi_toefl_score' => 'integer',
         ];
     }
 
@@ -100,5 +124,15 @@ class StudentSetting extends Model
         }
 
         return $days <= 60 ? 0.5 : 1.0;
+    }
+
+    public static function pkmStageLabelFor(?string $stage): string
+    {
+        return match ($stage) {
+            self::PKM_FAKULTAS => 'Lolos Tahap Fakultas (Belum SKPI)',
+            self::PKM_UNIVERSITAS => 'Lolos Tahap Universitas (Sertifikat PKM / SKPI)',
+            self::PKM_PENDANAAN => 'Lolos Pendanaan / PIMNAS (SKPI)',
+            default => 'Belum Ikut PKM',
+        };
     }
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicRecord;
 use App\Models\EnrichmentRecord;
+use App\Models\StudentSetting;
+use App\Services\RiskService;
 use App\Support\EnrichmentCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -27,11 +29,13 @@ class EnrichmentController extends Controller
         $currentSemester = (int) $request->query('semester', max(1, $detectedSemester, $maxActivitySem));
         $currentSemester = max(1, min(14, $currentSemester));
 
-        $progress = EnrichmentCatalog::evaluateProgress($records, $currentSemester);
+        $setting = StudentSetting::firstOrCreate(['student_ref' => $ref]);
+        $progress = EnrichmentCatalog::evaluateProgress($records, $currentSemester, $setting);
         $catalog = EnrichmentCatalog::all();
 
         return view('student.enrichment', [
             'records' => $records,
+            'setting' => $setting,
             'progress' => $progress,
             'catalog' => $catalog,
             'takenCodes' => $records->pluck('course_code')->all(),
@@ -142,5 +146,35 @@ class EnrichmentController extends Controller
 
         return redirect()->route('mhs.pengayaan')
             ->with('status', "Catatan MK Pengayaan \"{$name}\" dihapus.");
+    }
+
+    public function updateSkpi(Request $request, RiskService $risk): RedirectResponse
+    {
+        $data = $request->validate([
+            'skpi_it_status' => ['required', Rule::in([StudentSetting::SKPI_BELUM, StudentSetting::SKPI_PROSES, StudentSetting::SKPI_SELESAI])],
+            'skpi_it_provider' => ['nullable', 'string', 'max:80'],
+            'skpi_baps_status' => ['required', Rule::in([StudentSetting::SKPI_BELUM, StudentSetting::BAPS_TERDAFTAR, StudentSetting::SKPI_SELESAI])],
+            'skpi_pkm_stage' => ['required', Rule::in(StudentSetting::PKM_STAGES)],
+            'skpi_toefl_status' => ['required', Rule::in([StudentSetting::SKPI_BELUM, StudentSetting::SKPI_PROSES, StudentSetting::SKPI_SELESAI])],
+            'skpi_toefl_score' => ['nullable', 'integer', 'min:200', 'max:677'],
+        ]);
+
+        $ref = $request->user()->student_ref;
+        StudentSetting::updateOrCreate(
+            ['student_ref' => $ref],
+            [
+                'skpi_it_status' => $data['skpi_it_status'],
+                'skpi_it_provider' => ($data['skpi_it_provider'] ?? null) ? trim($data['skpi_it_provider']) : null,
+                'skpi_baps_status' => $data['skpi_baps_status'],
+                'skpi_pkm_stage' => $data['skpi_pkm_stage'],
+                'skpi_toefl_status' => $data['skpi_toefl_status'],
+                'skpi_toefl_score' => $data['skpi_toefl_score'] ?? null,
+            ]
+        );
+
+        $risk->refresh($ref, false);
+
+        return redirect()->route('mhs.pengayaan')
+            ->with('status', 'Status 4 syarat wajib SKPI & tahap PKM berhasil diperbarui.');
     }
 }

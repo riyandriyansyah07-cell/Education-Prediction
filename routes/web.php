@@ -56,6 +56,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/pengayaan', [Student\EnrichmentController::class, 'index'])->name('pengayaan');
         Route::post('/pengayaan', [Student\EnrichmentController::class, 'store'])->name('pengayaan.store');
+        Route::post('/pengayaan/skpi', [Student\EnrichmentController::class, 'updateSkpi'])->name('pengayaan.skpi');
         Route::patch('/pengayaan/{record}/status', [Student\EnrichmentController::class, 'updateStatus'])
             ->whereNumber('record')
             ->name('pengayaan.status');

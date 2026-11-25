@@ -167,9 +167,10 @@
     {{-- Baris Bawah: Progres 20 SKS Pengayaan & Catatan Bimbingan --}}
     <div class="mt-8 grid gap-8 lg:grid-cols-12" style="align-items:start;">
         <section class="risk-{{ $enrichment['risk_level'] }} rounded-md border border-line bg-surface lg:col-span-5" style="padding:1.5rem;" aria-labelledby="pengayaan-dpa">
+            @php $skpiDpa = $enrichment['skpi'] ?? ['completed' => 0, 'total' => 4, 'items' => []]; @endphp
             <div class="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id="pengayaan-dpa" class="text-lg font-medium">20 SKS Pengayaan &amp; PKM</h2>
-                <span class="mono text-xs font-medium text-ink-2">{{ $enrichment['converted_sks'] }}/{{ $enrichment['target_sks'] }} SKS &middot; {{ $enrichment['pkm_label'] }}</span>
+                <h2 id="pengayaan-dpa" class="text-lg font-medium">20 SKS Pengayaan &amp; 4 Syarat SKPI</h2>
+                <span class="mono text-xs font-medium text-ink-2">{{ $enrichment['converted_sks'] }}/{{ $enrichment['target_sks'] }} SKS &middot; {{ $skpiDpa['completed'] }}/{{ $skpiDpa['total'] }} SKPI</span>
             </div>
             <p class="mt-2 text-sm text-ink-2">{{ $enrichment['status_message'] }}</p>
 
@@ -187,6 +188,22 @@
                     <p class="mono mt-1 text-base font-semibold">{{ $enrichment['in_progress_sks'] }} SKS</p>
                 </div>
             </div>
+
+            @if (! empty($skpiDpa['items']))
+                <div class="mt-4 rounded-md border border-line bg-bg p-3.5">
+                    <p class="text-xs font-semibold text-ink">Checklist 4 Syarat Wajib SKPI FTII ({{ $skpiDpa['completed'] }}/{{ $skpiDpa['total'] }} tuntas)</p>
+                    <ul class="mt-2.5 space-y-2 text-xs">
+                        @foreach ($skpiDpa['items'] as $skItem)
+                            <li style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                                <span class="text-ink-2">{{ $skItem['title'] }}</span>
+                                <span class="mono" style="padding:0.12rem 0.5rem;border-radius:9999px;font-size:11px;white-space:nowrap;border:1px solid {{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, var(--line))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 40%, var(--line))' : 'var(--line)') }};color:{{ $skItem['tone'] === 'ok' ? 'var(--ok)' : ($skItem['tone'] === 'warn' ? 'var(--warn)' : 'var(--ink-3)') }};background:var(--surface);">
+                                    {{ $skItem['status_label'] }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             @if ($enrichmentRecords->isNotEmpty())
                 <ul class="mt-4 divide-y divide-line rounded-md border border-line bg-bg px-4 text-xs">
