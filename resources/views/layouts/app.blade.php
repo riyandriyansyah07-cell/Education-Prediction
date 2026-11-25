@@ -8,8 +8,8 @@
             ['mhs.impor', 'Impor data', 'upload-simple'],
             ['mhs.riwayat', 'Riwayat semester', 'clock-counter-clockwise'],
             ['mhs.privasi', 'Privasi dan izin', 'shield-check'],
-            ['mhs.catatan', 'Catatan akses', 'eye'],
             ['mhs.pengayaan', 'Pengayaan & SKPI', 'graduation-cap'],
+            ['mhs.catatan', 'Catatan akses', 'eye'],
         ],
         'dpa' => [
             ['dpa.bimbingan', 'Mahasiswa bimbingan', 'users'],
