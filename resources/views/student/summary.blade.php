@@ -6,7 +6,7 @@
     $done = array_values(array_filter([
         $hasData ? 'impor' : null,
         $latest ? 'risiko' : null,
-        $consent?->granted ? 'privasi' : null,
+        $dpa ? 'privasi' : null,
     ]));
     $thresholds = $version?->params ?? \App\Support\RiskModel::DEFAULT_THRESHOLDS;
     $currentCourses = $currentCourses ?? collect();
@@ -289,19 +289,15 @@
 
             <section class="rounded-md border border-line bg-surface p-5" aria-labelledby="status-dpa">
                 <div class="flex items-center justify-between gap-2">
-                    <h2 id="status-dpa" class="text-base font-medium">Izin DPA</h2>
-                    <a href="{{ route('mhs.privasi') }}" class="text-xs font-medium text-accent hover:underline">Atur &rarr;</a>
+                    <h2 id="status-dpa" class="text-base font-medium">DPA Pendamping</h2>
+                    <a href="{{ route('mhs.privasi') }}" class="text-xs font-medium text-accent hover:underline">Privasi &rarr;</a>
                 </div>
                 @if (! $dpa)
                     <p class="mt-2 text-sm text-ink-2">DPA belum ditetapkan.</p>
                 @else
                     <p class="mt-2 text-sm font-medium">{{ $dpa->name }}</p>
                     <p class="mt-1 text-xs text-ink-2">
-                        @if ($consent?->granted)
-                            <span style="color:var(--ok);">Aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y') }}
-                        @else
-                            Belum diizinkan
-                        @endif
+                        <span style="color:var(--ok);font-weight:500;">Akses aktif otomatis</span> &middot; tercatat di log
                     </p>
                 @endif
             </section>

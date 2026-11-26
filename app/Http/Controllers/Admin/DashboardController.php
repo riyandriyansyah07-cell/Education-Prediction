@@ -210,7 +210,7 @@ class DashboardController extends Controller
                 'top_factor' => $factors !== [] ? ($factors[0]['label'] ?? null) : null,
                 'program_studi' => $prodi,
                 'angkatan' => $angkatan,
-                'consent_granted' => $ref !== '' && isset($grantedConsentRefs[$ref]),
+                'consent_granted' => $student->dpa_id !== null,
                 'follow_up_status' => $setting?->follow_up_status ?? StudentSetting::STATUS_BELUM,
                 'enrichment_converted_sks' => $ref !== '' ? (int) ($enrichmentSksByRef[$ref] ?? 0) : 0,
             ];

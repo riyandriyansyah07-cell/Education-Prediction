@@ -4,7 +4,7 @@
     $steps = [
         'impor' => ['Impor data', 'Unggah KRS, nilai, absensi', 'mhs.impor'],
         'risiko' => ['Lihat risiko', 'Baca penyebab dan saran', 'mhs.ringkasan'],
-        'privasi' => ['Atur izin DPA', 'Pilih siapa yang boleh melihat', 'mhs.privasi'],
+        'privasi' => ['Privasi & pengingat', 'Atur notifikasi & log akses', 'mhs.privasi'],
     ];
 @endphp
 <ol class="no-print grid gap-3 sm:grid-cols-3" aria-label="Alur penggunaan">

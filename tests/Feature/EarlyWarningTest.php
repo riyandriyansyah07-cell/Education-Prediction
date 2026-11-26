@@ -72,10 +72,17 @@ class EarlyWarningTest extends TestCase
         $this->actingAs($dpa)->get(route('admin.model'))->assertForbidden();
     }
 
-    public function test_impor_menghitung_risiko_dan_dpa_hanya_melihat_yang_menyetujui(): void
+    public function test_impor_menghitung_risiko_dan_dpa_resmi_otomatis_melihat_bimbingannya(): void
     {
         $this->ruleVersion();
         [$student, $dpa] = $this->users();
+        $otherDpa = User::create([
+            'username' => 'dpa-lain',
+            'name' => 'DPA Lain',
+            'password' => 'rahasia',
+            'role' => User::ROLE_DPA,
+            'is_active' => true,
+        ]);
 
         $this->actingAs($student)->post(route('mhs.impor.store'), ['file' => $this->csv()])
             ->assertRedirect(route('mhs.ringkasan'));
@@ -84,15 +91,12 @@ class EarlyWarningTest extends TestCase
         $this->assertSame('tinggi', $result->level);
         $this->assertNotNull($result->model_version_id);
 
-        $this->actingAs($dpa)->get(route('dpa.bimbingan.show', $student))->assertForbidden();
-
-        $this->actingAs($student)->post(route('mhs.privasi.izin'), ['granted' => 1]);
+        // DPA resmi langsung dapat melihat bimbingannya secara otomatis
         $this->actingAs($dpa)->get(route('dpa.bimbingan.show', $student))->assertOk();
         $this->actingAs($dpa)->get(route('dpa.bimbingan'))->assertOk()->assertSee('Mahasiswa Uji');
 
-        $this->actingAs($student)->post(route('mhs.privasi.izin'), ['granted' => 0]);
-        $this->actingAs($dpa)->get(route('dpa.bimbingan.show', $student))->assertForbidden();
-        $this->assertSame(1, Consent::where('granted', false)->count());
+        // DPA lain yang tidak ditetapkan tetap diblokir
+        $this->actingAs($otherDpa)->get(route('dpa.bimbingan.show', $student))->assertForbidden();
     }
 
     public function test_impor_tidak_valid_tidak_menyimpan_apa_pun(): void

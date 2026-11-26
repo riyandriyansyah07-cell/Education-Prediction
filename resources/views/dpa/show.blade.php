@@ -93,7 +93,7 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm w-full" style="margin-top:0.25rem;">Perbarui status</button>
                 </form>
-                <p class="mt-4 border-t border-line pt-3 text-xs text-ink-3">Akses aktif atas izin mahasiswa dan tercatat di log akses.</p>
+                <p class="mt-4 border-t border-line pt-3 text-xs text-ink-3">Akses resmi DPA bimbingan — setiap kunjungan tercatat di log akses.</p>
             </section>
         </aside>
     </div>

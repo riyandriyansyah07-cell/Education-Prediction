@@ -36,14 +36,8 @@ class GuidanceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $grantedRefs = Consent::where('dpa_id', $dpa->id)
-            ->where('granted', true)
-            ->pluck('student_ref')
-            ->all();
-
-        $visible = $students
-            ->filter(fn (User $s) => in_array($s->student_ref, $grantedRefs, true))
-            ->values();
+        // Akses DPA resmi aktif otomatis untuk seluruh mahasiswa bimbingan yang ditetapkan
+        $visible = $students->values();
         $visibleRefs = $visible->pluck('student_ref')->all();
 
         $allResults = $visibleRefs !== []
@@ -354,11 +348,6 @@ class GuidanceController extends Controller
             403
         );
 
-        $hasConsent = Consent::where('student_ref', $student->student_ref)
-            ->where('dpa_id', $dpa->id)
-            ->where('granted', true)
-            ->exists();
 
-        abort_unless($hasConsent, 403);
     }
 }

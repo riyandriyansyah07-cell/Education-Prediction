@@ -688,7 +688,7 @@
                             </td>
                             <td>
                                 <p>{{ $stu->dpa?->name ?? 'Belum ditetapkan' }}</p>
-                                <p class="text-ink-3">{{ $row['consent_granted'] ? 'Izin DPA aktif' : 'Belum memberi izin' }}</p>
+                                <p class="text-ink-3">{{ $row['consent_granted'] ? 'Akses DPA aktif' : 'Menunggu penetapan DPA' }}</p>
                             </td>
                             <td style="white-space:nowrap;">
                                 @if ($row['level'] === 'belum')

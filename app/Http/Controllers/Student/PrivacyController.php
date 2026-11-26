@@ -34,18 +34,8 @@ class PrivacyController extends Controller
 
     public function consent(Request $request): RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user->dpa_id, 422, 'Belum ada DPA yang ditetapkan untukmu.');
-
-        $granted = $request->boolean('granted');
-        Consent::updateOrCreate(
-            ['student_ref' => $user->student_ref, 'dpa_id' => $user->dpa_id],
-            ['granted' => $granted, 'changed_at' => now()]
-        );
-
-        return redirect()->route('mhs.privasi')->with('status', $granted
-            ? 'Izin disimpan. DPA kini bisa melihat hasil risikomu.'
-            : 'Izin dicabut. DPA langsung tidak bisa melihat hasilmu lagi.');
+        return redirect()->route('mhs.privasi')
+            ->with('status', 'Akses pendampingan DPA resmi aktif otomatis sesuai kebijakan akademik FTII UHAMKA.');
     }
 
     public function reminders(Request $request): RedirectResponse

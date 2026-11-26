@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Privasi dan izin')
+@section('title', 'Privasi dan pengingat')
 
 @section('content')
 <div>
-    <h1 class="rise">Privasi &amp; izin</h1>
-    <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">Atur akses Dosen Pembimbing Akademik (DPA) dan preferensi notifikasi pengingat.</p>
+    <h1 class="rise">Privasi &amp; pengingat</h1>
+    <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">Transparansi akses Dosen Pembimbing Akademik (DPA) resmi dan preferensi notifikasi pengingat.</p>
 </div>
 
 <div class="mt-6 grid gap-6 lg:grid-cols-12" style="align-items:start;">
     <section class="bg-surface lg:col-span-7" style="padding:1.4rem 1.5rem;" aria-labelledby="izin-dpa">
-        <h2 id="izin-dpa" class="text-base font-semibold">Izin akses untuk DPA</h2>
+        <h2 id="izin-dpa" class="text-base font-semibold">Akses Pendampingan DPA Resmi</h2>
         @if (! $dpa)
             <p class="mt-3 text-sm text-ink-2">DPA belum ditetapkan. Hubungi sekretariat FTII.</p>
         @else
@@ -18,26 +18,13 @@
                 <div>
                     <p class="font-semibold text-ink">{{ $dpa->name }}</p>
                     <p class="mt-0.5 text-xs text-ink-2">
-                        @if ($consent?->granted)
-                            <span style="color:var(--ok);font-weight:600;">Izin aktif</span> &middot; sejak {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
-                        @elseif ($consent)
-                            Izin dicabut &middot; {{ $consent->changed_at->translatedFormat('j M Y, H:i') }}
-                        @else
-                            Belum diizinkan
-                        @endif
+                        Dosen Pembimbing Akademik resmi &middot; akses pemantauan aktif otomatis
                     </p>
                 </div>
 
-                <form method="POST" action="{{ route('mhs.privasi.izin') }}">
-                    @csrf
-                    @if ($consent?->granted)
-                        <input type="hidden" name="granted" value="0">
-                        <button type="submit" class="btn btn-quiet btn-sm">Cabut izin</button>
-                    @else
-                        <input type="hidden" name="granted" value="1">
-                        <button type="submit" class="btn btn-primary btn-sm">Berikan izin</button>
-                    @endif
-                </form>
+                <span class="mono" style="padding:0.3rem 0.75rem;border-radius:9999px;font-size:11px;font-weight:600;color:var(--ok);border:1px solid color-mix(in srgb, var(--ok) 40%, var(--line));background:color-mix(in srgb, var(--ok) 10%, var(--surface));">
+                    Aktif otomatis
+                </span>
             </div>
 
             <div class="mt-4 grid gap-3 sm:grid-cols-2 text-xs text-ink-2">

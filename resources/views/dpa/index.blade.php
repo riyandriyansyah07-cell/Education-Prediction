@@ -274,11 +274,6 @@
         </div>
 
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.6rem;">
-            @if ($pending > 0)
-                <span class="rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs text-ink-2">
-                    {{ $pending }} dari {{ $totalAll }} belum memberi izin
-                </span>
-            @endif
             @if ($priorityCount > 0)
                 <button type="button" id="dpa-priority-cta" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem;">
                     <span>Prioritas Segera Dihubungi</span>
@@ -311,8 +306,8 @@
 
 @if ($visibleTotal === 0)
     <section class="mt-8 rounded-xl border border-dashed border-line-strong bg-surface p-8 text-center">
-        <h2 class="text-xl font-medium">Belum ada mahasiswa yang memberi izin</h2>
-        <p class="mt-2 text-sm text-ink-2">Daftar otomatis terisi saat mahasiswa mengaktifkan izin DPA di menu Privasi.</p>
+        <h2 class="text-xl font-medium">Belum ada mahasiswa bimbingan</h2>
+        <p class="mt-2 text-sm text-ink-2">Daftar otomatis terisi setelah Sekretariat FTII menetapkan mahasiswa bimbingan untuk Anda.</p>
     </section>
 @else
     {{-- 4 KPI Cards Khusus DPA --}}

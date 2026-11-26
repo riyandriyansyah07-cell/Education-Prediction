@@ -7,7 +7,7 @@
             ['mhs.ringkasan', 'Ringkasan risiko', 'chart-line-up'],
             ['mhs.impor', 'Impor data', 'upload-simple'],
             ['mhs.riwayat', 'Riwayat semester', 'clock-counter-clockwise'],
-            ['mhs.privasi', 'Privasi dan izin', 'shield-check'],
+            ['mhs.privasi', 'Privasi & pengingat', 'shield-check'],
             ['mhs.pengayaan', 'Pengayaan & SKPI', 'graduation-cap'],
             ['mhs.catatan', 'Catatan akses', 'eye'],
         ],
