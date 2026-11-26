@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SkpiDocument;
 use App\Models\User;
-use App\Support\AccessLogger;
+use App\Services\AccessLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
