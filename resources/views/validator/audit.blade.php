@@ -409,7 +409,7 @@
                     <button type="submit" class="btn btn-primary btn-sm h-9" style="white-space:nowrap;">Simpan Validasi</button>
                 </div>
 
-                <div id="override-wrap-{{ $res->id }}" class="mt-2.5" style="{{ $isKoreksi ? '' : 'display:none;' }}">
+                <div id="override-wrap-{{ $res->id }}" style="margin-top:0.85rem;{{ $isKoreksi ? '' : 'display:none;' }}">
                     <label class="inline-flex items-center gap-2 text-xs text-ink-2" style="cursor:pointer;">
                         <input type="checkbox" name="apply_override" value="1" @checked($val?->override_applied) class="size-4 accent-[var(--accent)]">
                         <span>Terapkan langsung koreksi level risiko ini ke halaman mahasiswa (opsional)</span>
@@ -417,7 +417,7 @@
                 </div>
 
                 @if ($val)
-                    <p class="mt-2.5 text-xs text-ink-3">
+                    <p class="text-xs text-ink-3" style="margin-top:0.75rem;">
                         Terakhir divalidasi oleh <strong>{{ $val->validator?->name ?? 'Validator' }}</strong> pada {{ $val->validated_at?->translatedFormat('j M Y, H:i') }}{{ $val->override_applied ? ' · Koreksi level telah diterapkan' : '' }}.
                     </p>
                 @endif
