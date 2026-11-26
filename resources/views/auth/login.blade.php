@@ -314,7 +314,7 @@
                 </span>
 
                 <h2 class="mt-4 text-3xl sm:text-4xl" style="letter-spacing:-0.03em; line-height:1.15;">
-                    Kendali tetap di tanganmu.
+                    Deteksi dini, lulus tepat waktu.
                 </h2>
                 <p class="mt-3 text-sm text-ink-2" style="max-width:46ch; line-height:1.65;">
                     Pantau risiko nilai semester lebih awal, hitung target UAS minimal, dan kawal progres 20 SKS Pengayaan dalam satu tempat.
@@ -344,8 +344,8 @@
                                 <p class="lg-metric-val">20 SKS + PKM</p>
                             </div>
                             <div class="lg-metric">
-                                <p class="lg-metric-label">Akses DPA</p>
-                                <p class="lg-metric-val" style="color:var(--ok);">Izin Penuhmu</p>
+                                <p class="lg-metric-label">Pendampingan</p>
+                                <p class="lg-metric-val" style="color:var(--ok);">Terhubung DPA</p>
                             </div>
                         </div>
                     </div>
@@ -360,7 +360,7 @@
                         </span>
                         <div>
                             <p class="text-sm font-medium text-ink">Privasi terjaga penuh</p>
-                            <p class="text-xs text-ink-2">DPA hanya bisa melihat hasilmu setelah kamu mengizinkan, dan izin bisa dicabut kapan saja.</p>
+                            <p class="text-xs text-ink-2">Identitas mahasiswa disamarkan saat analisis AI dan seluruh riwayat akses tersimpan rapi.</p>
                         </div>
                     </div>
                     <div class="lg-point">

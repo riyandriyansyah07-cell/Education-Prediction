@@ -297,7 +297,7 @@
                 @else
                     <p class="mt-2 text-sm font-medium">{{ $dpa->name }}</p>
                     <p class="mt-1 text-xs text-ink-2">
-                        <span style="color:var(--ok);font-weight:500;">Akses aktif otomatis</span> &middot; tercatat di log
+                        <span style="color:var(--ok);font-weight:500;">Aktif</span> &middot; Dosen Pembimbing Akademik
                     </p>
                 @endif
             </section>

@@ -560,7 +560,7 @@ window.addEventListener('DOMContentLoaded', function () {
         },
         dpa: {
             title: 'Dasbor visual bimbingan, antrean prioritas & catatan perwalian',
-            desc: 'Pantau grafik distribusi risiko anak bimbingan yang memberi izin, tindak lanjuti mahasiswa prioritas, dan dokumentasikan bimbingan.',
+            desc: 'Pantau grafik distribusi risiko mahasiswa bimbingan, tindak lanjuti mahasiswa prioritas, dan dokumentasikan bimbingan.',
             items: ['Grafik Risiko & Progres Tugas', 'Antrean Prioritas Segera Dihubungi', 'Checklist SKPI & Catatan Bimbingan']
         },
         validator: {

@@ -110,7 +110,7 @@
                                 @if ($user->isStudent())
                                     Mulai dengan mengimpor KHS (CSV, XLSX, atau PDF) di menu <strong>Impor data</strong>, pantau target UAS minimal di <strong>Ringkasan risiko</strong>, dan catat progres 20 SKS serta 4 syarat SKPI di <strong>Pengayaan &amp; SKPI</strong>.
                                 @elseif ($user->isDpa())
-                                    Pantau mahasiswa bimbingan yang telah memberikan izin akses pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
+                                    Pantau perkembangan risiko mahasiswa bimbingan Anda pada menu <strong>Mahasiswa bimbingan</strong>, lalu catat hasil konsultasi dan tindak lanjut secara berkala.
                                 @elseif ($user->isValidator())
                                     Periksa kesesuaian hasil evaluasi AI Gemini terhadap perhitungan matematis pada menu <strong>Audit &amp; Validasi AI</strong>, lalu simpan verifikasi dan unduh laporan akurasi CSV.
                                 @else

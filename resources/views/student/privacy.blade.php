@@ -5,12 +5,12 @@
 @section('content')
 <div>
     <h1 class="rise">Privasi &amp; pengingat</h1>
-    <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">Transparansi akses Dosen Pembimbing Akademik (DPA) resmi dan preferensi notifikasi pengingat.</p>
+    <p class="rise mt-1.5 text-sm text-ink-2" style="--i: 1">Informasi Dosen Pembimbing Akademik (DPA) dan preferensi notifikasi pengingat.</p>
 </div>
 
 <div class="mt-6 grid gap-6 lg:grid-cols-12" style="align-items:start;">
     <section class="bg-surface lg:col-span-7" style="padding:1.4rem 1.5rem;" aria-labelledby="izin-dpa">
-        <h2 id="izin-dpa" class="text-base font-semibold">Akses Pendampingan DPA Resmi</h2>
+        <h2 id="izin-dpa" class="text-base font-semibold">Dosen Pembimbing Akademik</h2>
         @if (! $dpa)
             <p class="mt-3 text-sm text-ink-2">DPA belum ditetapkan. Hubungi sekretariat FTII.</p>
         @else
@@ -18,12 +18,12 @@
                 <div>
                     <p class="font-semibold text-ink">{{ $dpa->name }}</p>
                     <p class="mt-0.5 text-xs text-ink-2">
-                        Dosen Pembimbing Akademik resmi &middot; akses pemantauan aktif otomatis
+                        Dosen Pembimbing Akademik pendamping
                     </p>
                 </div>
 
                 <span class="mono" style="padding:0.3rem 0.75rem;border-radius:9999px;font-size:11px;font-weight:600;color:var(--ok);border:1px solid color-mix(in srgb, var(--ok) 40%, var(--line));background:color-mix(in srgb, var(--ok) 10%, var(--surface));">
-                    Aktif otomatis
+                    Aktif
                 </span>
             </div>
 

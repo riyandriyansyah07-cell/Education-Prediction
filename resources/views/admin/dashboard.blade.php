@@ -245,8 +245,8 @@
     <div class="adm-kpi" style="border-top: 3px solid var(--warn);">
         <div class="flex items-start justify-between gap-2">
             <div>
-                <p class="text-xs font-medium text-ink-3">Izin DPA &amp; Tiket</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $totals['students_consented'] }} <span class="text-sm font-normal text-ink-3">izin</span></p>
+                <p class="text-xs font-medium text-ink-3">DPA &amp; Tiket Akun</p>
+                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $totals['students_consented'] }} <span class="text-sm font-normal text-ink-3">terhubung</span></p>
             </div>
             <span class="adm-kpi-icon" style="background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn);">
                 <x-icon name="shield-check" />
@@ -255,7 +255,7 @@
         <div>
             <div class="adm-mini-bar"><div class="adm-mini-fill" style="width:{{ $consentPct }}%; background:var(--warn);"></div></div>
             <p class="mt-2 text-xs text-ink-2">
-                {{ $consentPct }}% memberi izin &middot;
+                {{ $consentPct }}% punya DPA &middot;
                 <a href="{{ route('admin.tiket') }}" class="text-accent font-medium hover:underline">{{ $totals['pending_tickets'] }} tiket baru</a>
             </p>
         </div>
@@ -420,7 +420,7 @@
                     <div class="flex items-baseline justify-between gap-2 text-xs">
                         <span class="font-medium truncate">{{ $ds['dpa']->name }}</span>
                         <span class="mono text-ink-2" style="white-space:nowrap;">
-                            <strong>{{ $ds['total'] }} bimbingan</strong> ({{ $ds['consented'] }} izin)
+                            <strong>{{ $ds['total'] }} bimbingan</strong>
                         </span>
                     </div>
                     <div class="adm-bar-track mt-1.5">
@@ -519,7 +519,7 @@
     <div class="flex flex-wrap items-baseline justify-between gap-2">
         <div>
             <h2 id="rekap-dpa" class="text-base font-semibold">Rekap Dosen Pembimbing Akademik (DPA)</h2>
-            <p class="mt-0.5 text-xs text-ink-3">Beban bimbingan, cakupan izin akses mahasiswa, dan sebaran tingkat risiko per DPA.</p>
+            <p class="mt-0.5 text-xs text-ink-3">Beban bimbingan dan sebaran tingkat risiko per DPA.</p>
         </div>
         <span class="mono text-xs text-ink-2">{{ $totals['dpas'] }} DPA terdaftar</span>
     </div>
@@ -535,7 +535,7 @@
                         <th>NIDN / ID</th>
                         <th>Status</th>
                         <th class="num">Bimbingan</th>
-                        <th class="num">Izin Aktif</th>
+                        <th class="num">Terpantau</th>
                         <th class="num">Tinggi</th>
                         <th class="num">Sedang</th>
                         <th class="num">Rendah</th>
@@ -654,7 +654,7 @@
                     <tr>
                         <th>Mahasiswa</th>
                         <th>Prodi &amp; Angkatan</th>
-                        <th>DPA &amp; Izin</th>
+                        <th>DPA Pendamping</th>
                         <th>Risiko</th>
                         <th class="num">Skor</th>
                         <th class="num">Sem</th>

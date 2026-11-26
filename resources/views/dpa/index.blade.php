@@ -265,7 +265,7 @@
         <div>
             <span class="dpa-pill">
                 <span class="dpa-dot"></span>
-                Panel Perwalian DPA &middot; {{ $visibleTotal }}/{{ $totalAll }} memberi izin
+                Panel Perwalian DPA &middot; {{ $visibleTotal }} mahasiswa bimbingan
             </span>
             <h1 class="rise text-2xl sm:text-3xl" style="margin-top:0.65rem;">Mahasiswa bimbingan</h1>
             <p class="rise mt-1 text-sm text-ink-2" style="--i: 1">
@@ -328,7 +328,7 @@
                 <div class="dpa-mini-bar">
                     <div class="dpa-mini-fill" style="width:{{ $consentPct }}%;background:var(--accent);"></div>
                 </div>
-                <p class="mt-2 text-xs text-ink-3">{{ $consentPct }}% memberi izin akses data</p>
+                <p class="mt-2 text-xs text-ink-3">Seluruh mahasiswa bimbingan Anda</p>
             </div>
         </div>
 
