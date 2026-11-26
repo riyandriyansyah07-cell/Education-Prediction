@@ -27,35 +27,44 @@
     </div>
 
     @if (session('status'))
-        <div role="status" class="mt-6 rounded-xl border border-ok/40 bg-ok/10 px-4 py-3.5 text-ink">
-            <div class="flex items-start gap-3">
-                <x-icon name="check-circle" class="mt-0.5 shrink-0 text-ok" />
+        <div role="status" style="margin-top:1.5rem;padding:1.2rem 1.35rem;border-radius:14px;border:1px solid color-mix(in srgb, var(--ok) 35%, var(--line));border-left:4px solid var(--ok);background:var(--surface);box-shadow:var(--shadow-card);">
+            <div style="display:flex;align-items:flex-start;gap:0.9rem;">
+                <span style="width:32px;height:32px;border-radius:9px;background:color-mix(in srgb, var(--ok) 14%, transparent);color:var(--ok);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+                    <x-icon name="check-circle" />
+                </span>
                 <div style="min-width:0;flex:1;">
-                    <p class="text-sm">{{ session('status') }}</p>
-                    @if (session('created_ticket_code'))
-                        <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;align-items:center;gap:0.55rem;">
-                            <code id="created-ticket-code" class="mono" style="padding:0.32rem 0.7rem;border-radius:8px;background:var(--surface);border:1px solid var(--line-strong);font-size:0.86rem;font-weight:700;letter-spacing:0.02em;">{{ session('created_ticket_code') }}</code>
-                            <button type="button" id="copy-created-ticket" class="btn btn-primary btn-sm">Salin Kode Tiket</button>
-                            <button type="button" id="fill-created-ticket" class="btn btn-quiet btn-sm">Isi ke Cek Status &rarr;</button>
-                        </div>
-                    @endif
+                    <p class="text-sm font-semibold text-ink" style="margin:0;">{{ session('created_ticket_code') ? 'E-Ticket Berhasil Dibuat' : 'Informasi E-Ticket' }}</p>
+                    <p class="text-sm text-ink-2" style="margin:0.35rem 0 0;line-height:1.55;">{{ session('status') }}</p>
                 </div>
             </div>
+
+            @if (session('created_ticket_code'))
+                <div style="margin-top:1rem;padding:0.85rem 1rem;border-radius:10px;background:var(--sunken);border:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+                    <div style="min-width:0;">
+                        <span class="text-xs text-ink-3" style="display:block;margin-bottom:0.15rem;">Kode Tiket Kamu</span>
+                        <code id="created-ticket-code" class="mono text-ink" style="font-size:0.95rem;font-weight:700;letter-spacing:0.03em;word-break:break-all;">{{ session('created_ticket_code') }}</code>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+                        <button type="button" id="copy-created-ticket" class="btn btn-primary btn-sm">Salin Kode</button>
+                        <button type="button" id="fill-created-ticket" class="btn btn-quiet btn-sm">Cek Status &rarr;</button>
+                    </div>
+                </div>
+            @endif
         </div>
     @endif
 
     {{-- Banner otomatis dari localStorage perangkat jika user klik Kembali atau refresh --}}
-    <div id="saved-ticket-banner" style="display:none;margin-top:1.25rem;padding:0.9rem 1.15rem;border-radius:12px;border:1px solid color-mix(in srgb, var(--accent) 32%, var(--line));background:color-mix(in srgb, var(--accent) 8%, var(--surface));align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+    <div id="saved-ticket-banner" style="display:none;margin-top:1.5rem;padding:1rem 1.25rem;border-radius:14px;border:1px solid color-mix(in srgb, var(--accent) 30%, var(--line));border-left:4px solid var(--accent);background:var(--surface);box-shadow:var(--shadow-card);align-items:center;justify-content:space-between;gap:0.9rem;flex-wrap:wrap;">
         <div style="min-width:0;flex:1;">
-            <p class="text-xs font-semibold text-ink" style="margin:0;">Kode E-Ticket terakhir yang dibuat di perangkat ini:</p>
-            <p class="mt-1 text-xs text-ink-2" style="margin:0.2rem 0 0;">
-                <code id="saved-ticket-code" class="mono font-semibold text-ink"></code>
-                <span id="saved-ticket-verif-wrap" class="ml-1 text-ink-3"></span>
+            <p class="text-xs text-ink-3" style="margin:0;">E-Ticket terakhir di perangkat ini</p>
+            <p style="margin:0.25rem 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;">
+                <code id="saved-ticket-code" class="mono text-sm font-semibold text-ink" style="letter-spacing:0.02em;"></code>
+                <span id="saved-ticket-verif-wrap" class="text-xs text-ink-3"></span>
             </p>
         </div>
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;flex-shrink:0;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;flex-shrink:0;">
             <button type="button" id="copy-saved-ticket" class="btn btn-quiet btn-sm">Salin Kode</button>
-            <button type="button" id="fill-saved-ticket" class="btn btn-primary btn-sm">Cek Status</button>
+            <button type="button" id="fill-saved-ticket" class="btn btn-primary btn-sm">Cek Status &rarr;</button>
         </div>
     </div>
 
