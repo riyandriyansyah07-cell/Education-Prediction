@@ -110,6 +110,59 @@
             grid-column: span 2;
             text-align: right !important;
         }
+        /* Responsive Card untuk Tabel Tambah Mata Kuliah Baru di HP */
+        .addmk-box {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+        .addmk-tbl thead { display: none; }
+        .addmk-tbl, .addmk-tbl tbody { display: block; width: 100%; }
+        .addmk-tbl tbody tr {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem 0.55rem;
+            padding: 1rem;
+            margin-bottom: 0.9rem;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+        }
+        .addmk-tbl tbody tr:last-child { margin-bottom: 0; }
+        .addmk-tbl tbody td {
+            display: block;
+            padding: 0 !important;
+            border: none !important;
+            text-align: left !important;
+            min-width: 0;
+        }
+        .addmk-tbl tbody td[data-label]::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--ink-3);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.3rem;
+        }
+        .addmk-tbl tbody td .input {
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 42px !important;
+            height: 42px;
+            font-size: 15px !important;
+        }
+        .addmk-tbl tbody td.addmk-code { grid-column: 1 / 5; }
+        .addmk-tbl tbody td.addmk-name { grid-column: 1 / 5; }
+        .addmk-tbl tbody td.addmk-num { grid-column: span 2; }
+        .addmk-tbl tbody td.addmk-act {
+            grid-column: 1 / 5;
+            padding-top: 0.5rem !important;
+            border-top: 1px solid var(--line) !important;
+            text-align: right !important;
+        }
     }
 </style>
 
@@ -155,12 +208,12 @@
         <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-6">
             @csrf
             <div class="mb-5 flex flex-wrap items-center gap-3">
-                <label for="manual-semester" class="label m-0">Semester</label>
-                <input id="manual-semester" type="number" name="semester" min="1" max="14" value="{{ old('semester', 7) }}" class="input h-9 w-24 mono" required>
+                <label for="manual-semester" class="label" style="margin:0;">Semester</label>
+                <input id="manual-semester" type="number" name="semester" min="1" max="14" value="{{ old('semester', 7) }}" class="input mono text-center" style="width:5.5rem;" required>
             </div>
 
-            <div class="overflow-x-auto rounded-md border border-line bg-bg">
-                <table class="tbl w-full">
+            <div class="addmk-box overflow-x-auto rounded-md border border-line bg-bg">
+                <table class="tbl addmk-tbl w-full">
                     <thead>
                         <tr>
                             <th class="px-3 py-2.5">Kode</th>
@@ -174,16 +227,16 @@
                     </thead>
                     <tbody id="manual-courses-body">
                         <tr>
-                            <td class="px-3 py-2.5">
+                            <td class="addmk-code px-3 py-2.5" data-label="Kode MK">
                                 <input type="hidden" name="courses[0][assignment_source]" value="mandiri">
                                 <input type="text" name="courses[0][course_code]" value="{{ old('courses.0.course_code', 'IF701') }}" placeholder="IF701" class="input h-9 w-24 mono text-sm" required>
                             </td>
-                            <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" value="{{ old('courses.0.course_name') }}" placeholder="Seminar Capstone Project" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
-                            <td class="px-3 py-2.5 text-center"><input type="number" name="courses[0][credits]" min="1" max="6" value="{{ old('courses.0.credits', 3) }}" class="input h-9 w-16 mono text-center text-sm" required></td>
-                            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="{{ old('courses.0.attendance', 90) }}" class="input h-9 w-20 mono text-center text-sm" required></td>
-                            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" value="{{ old('courses.0.uts_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" value="{{ old('courses.0.assignment_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                            <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
+                            <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[0][course_name]" value="{{ old('courses.0.course_name') }}" placeholder="Seminar Capstone Project" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[0][credits]" min="1" max="6" value="{{ old('courses.0.credits', 3) }}" class="input h-9 w-16 mono text-center text-sm" required></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="{{ old('courses.0.attendance', 90) }}" class="input h-9 w-20 mono text-center text-sm" required></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" value="{{ old('courses.0.uts_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" value="{{ old('courses.0.assignment_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                            <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -364,16 +417,16 @@
                 </div>
             </form>
 
-            <details class="mt-6 rounded-md border border-line bg-bg p-5">
-                <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">+ Tambah Mata Kuliah Baru</summary>
+            <details class="mt-6 rounded-md border border-line bg-bg" style="padding:1.15rem 1.25rem;">
+                <summary class="cursor-pointer text-sm font-semibold text-accent hover:underline">+ Tambah Mata Kuliah Baru</summary>
                 <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-4">
                     @csrf
                     <div class="mb-4 flex items-center gap-3">
-                        <label for="add-semester" class="label m-0 text-sm">Semester</label>
-                        <input id="add-semester" type="number" name="semester" min="1" max="14" value="{{ $latest->semester }}" class="input h-9 w-20 mono text-center text-sm" required>
+                        <label for="add-semester" class="label text-sm" style="margin:0;">Semester</label>
+                        <input id="add-semester" type="number" name="semester" min="1" max="14" value="{{ $latest->semester }}" class="input mono text-center" style="width:5.5rem;" required>
                     </div>
-                    <div class="overflow-x-auto rounded-md border border-line bg-surface">
-                        <table class="tbl w-full">
+                    <div class="addmk-box overflow-x-auto rounded-md border border-line bg-surface">
+                        <table class="tbl addmk-tbl w-full">
                             <thead>
                                 <tr>
                                     <th class="px-3 py-2.5">Kode</th>
@@ -387,16 +440,16 @@
                             </thead>
                             <tbody id="manual-courses-body">
                                 <tr>
-                                    <td class="px-3 py-2.5">
+                                    <td class="addmk-code px-3 py-2.5" data-label="Kode MK">
                                         <input type="hidden" name="courses[0][assignment_source]" value="mandiri">
                                         <input type="text" name="courses[0][course_code]" placeholder="IF702" class="input h-9 w-24 mono text-sm" required>
                                     </td>
-                                    <td class="px-3 py-2.5"><input type="text" name="courses[0][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
-                                    <td class="px-3 py-2.5 text-center"><input type="number" name="courses[0][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
-                                    <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
-                                    <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                                    <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-                                    <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
+                                    <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[0][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[0][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                                    <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -419,16 +472,16 @@
         const idx = manualRowIdx++;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="px-3 py-2.5">
+            <td class="addmk-code px-3 py-2.5" data-label="Kode MK">
                 <input type="hidden" name="courses[${idx}][assignment_source]" value="mandiri">
                 <input type="text" name="courses[${idx}][course_code]" placeholder="IF70${idx + 1}" class="input h-9 w-24 mono text-sm" required>
             </td>
-            <td class="px-3 py-2.5"><input type="text" name="courses[${idx}][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
-            <td class="px-3 py-2.5 text-center"><input type="number" name="courses[${idx}][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
-            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
-            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-            <td class="px-3 py-2.5 text-center"><input type="number" step="0.1" name="courses[${idx}][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
-            <td class="px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
+            <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[${idx}][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[${idx}][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[${idx}][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[${idx}][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[${idx}][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+            <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
         `;
         tbody.appendChild(tr);
     }
