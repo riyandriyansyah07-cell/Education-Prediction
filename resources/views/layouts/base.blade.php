@@ -282,10 +282,109 @@
             .tbl thead th { padding: 0.7rem 0.75rem; }
             .tbl tbody td { padding: 0.75rem 0.75rem; font-size: 0.84rem; }
         }
+
+        /* Global Custom Confirm Modal (Menggantikan popup confirm() bawaan browser) */
+        .app-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(2, 6, 23, 0.65);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .app-modal-overlay.is-open { display: flex; }
+        .app-modal-card {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 16px;
+            border: 1px solid var(--line-strong);
+            background: var(--surface);
+            padding: 1.4rem 1.5rem;
+            box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.45);
+            animation: appModalPop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes appModalPop {
+            from { opacity: 0; transform: scale(0.96) translateY(6px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
     </style>
 </head>
 <body class="min-h-dvh">
     @yield('body')
+
+    {{-- Custom Confirm Modal Global (Pengganti dialog confirm() bawaan browser) --}}
+    <div id="app-confirm-modal" class="app-modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="app-confirm-title">
+        <div class="app-modal-card">
+            <div style="display:flex;align-items:flex-start;gap:0.9rem;">
+                <span style="width:38px;height:38px;border-radius:10px;background:color-mix(in srgb, var(--bad) 14%, transparent);color:var(--bad);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </span>
+                <div style="min-width:0;flex:1;">
+                    <h3 id="app-confirm-title" class="text-base font-semibold text-ink" style="margin:0;">Konfirmasi Tindakan</h3>
+                    <p id="app-confirm-msg" class="text-sm text-ink-2" style="margin:0.4rem 0 0;line-height:1.55;"></p>
+                </div>
+            </div>
+            <div style="margin-top:1.35rem;display:flex;justify-content:flex-end;gap:0.6rem;">
+                <button type="button" id="app-confirm-cancel" class="btn btn-quiet btn-sm">Batal</button>
+                <button type="button" id="app-confirm-ok" class="btn btn-danger btn-sm" style="background:var(--bad) !important;color:#ffffff !important;border-color:var(--bad) !important;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var modal = document.getElementById('app-confirm-modal');
+            var msgEl = document.getElementById('app-confirm-msg');
+            var btnCancel = document.getElementById('app-confirm-cancel');
+            var btnOk = document.getElementById('app-confirm-ok');
+            if (!modal || !msgEl || !btnCancel || !btnOk) return;
+
+            var pendingForm = null;
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                pendingForm = null;
+            }
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                var msg = form.getAttribute('data-confirm');
+                if (!msg || form.dataset.confirmed === '1') return;
+
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                pendingForm = form;
+                msgEl.textContent = msg;
+                modal.classList.add('is-open');
+                btnCancel.focus();
+            }, true);
+
+            btnCancel.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) closeModal();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+            });
+            btnOk.addEventListener('click', function () {
+                if (!pendingForm) return;
+                var f = pendingForm;
+                closeModal();
+                f.dataset.confirmed = '1';
+                f.submit();
+            });
+        })();
+    </script>
+
 
     {{-- GSAP + ScrollTrigger + Lenis (smoothWheel nonaktif agar scroll wheel/trackpad tetap native GPU 60fps) --}}
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>

@@ -258,7 +258,7 @@
                                 @endif
                             </div>
 
-                            <form method="POST" action="{{ route('mhs.pengayaan.destroy', $r) }}" style="flex-shrink:0;" onsubmit="return confirm('Hapus catatan MK Pengayaan ini?')">
+                            <form method="POST" action="{{ route('mhs.pengayaan.destroy', $r) }}" style="flex-shrink:0;" data-confirm="Hapus catatan MK Pengayaan ini?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-quiet btn-sm text-ink-3">Hapus</button>

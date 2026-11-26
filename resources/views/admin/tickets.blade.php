@@ -16,7 +16,7 @@
             @endforeach
         </nav>
         @if (($processedCount ?? 0) > 0)
-            <form method="POST" action="{{ route('admin.tiket.bersihkan') }}" onsubmit="return confirm('Hapus semua riwayat tiket selesai?')">
+            <form method="POST" action="{{ route('admin.tiket.bersihkan') }}" data-confirm="Hapus semua riwayat tiket selesai?">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger btn-sm">Bersihkan ({{ $processedCount }})</button>
@@ -60,7 +60,7 @@
                             <p class="mt-2 border border-line bg-bg text-xs text-ink-2" style="border-radius:8px;padding:0.55rem 0.85rem;">{{ $t->notes }}</p>
                         @endif
                     </div>
-                    <form method="POST" action="{{ route('admin.tiket.hapus', $t) }}" style="flex-shrink:0;" onsubmit="return confirm('Hapus tiket {{ $t->ticket_code }}?')">
+                    <form method="POST" action="{{ route('admin.tiket.hapus', $t) }}" style="flex-shrink:0;" data-confirm="Hapus tiket {{ $t->ticket_code }}?">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-sm">Hapus</button>

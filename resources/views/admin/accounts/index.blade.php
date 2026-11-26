@@ -71,7 +71,7 @@
                         <div style="display:inline-flex;align-items:center;gap:0.45rem;flex-wrap:nowrap;">
                             <a href="{{ route('admin.akun.ubah', $u) }}" class="btn btn-quiet btn-sm"><x-icon name="pencil-simple" /> Ubah</a>
                             @if ($u->id !== auth()->id())
-                                <form method="POST" action="{{ route('admin.akun.hapus', $u) }}" onsubmit="return confirm('Hapus akun {{ addslashes($u->name) }} ({{ addslashes($u->username) }}) secara permanen? Seluruh data akademik dan riwayat risiko akun ini juga akan dihapus.')">
+                                <form method="POST" action="{{ route('admin.akun.hapus', $u) }}" data-confirm="Hapus akun {{ $u->name }} ({{ $u->username }}) secara permanen? Seluruh data akademik dan riwayat risiko akun ini juga akan dihapus.">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
