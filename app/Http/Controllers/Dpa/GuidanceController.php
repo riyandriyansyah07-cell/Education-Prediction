@@ -446,7 +446,7 @@ class GuidanceController extends Controller
         $topic = $note->topic;
         $note->delete();
 
-        return back()->with('status', "Catatan bimbingan "{$topic}" berhasil dihapus.");
+        return back()->with('status', 'Catatan bimbingan berhasil dihapus.');
     }
 
     private function authorizeStudent(User $dpa, User $student): void
