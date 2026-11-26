@@ -88,7 +88,7 @@ class SkpiDocumentController extends Controller
             ->with('status', "Berkas bukti {$label} dihapus.");
     }
 
-    /** Halaman antrean Verifikasi Bukti SKPI untuk Admin Sekretariat. */
+    /** Halaman antrean Verifikasi Bukti SKPI untuk Admin Sekretariat (filter status & periode waktu). */
     public function adminIndex(Request $request): View
     {
         $statusFilter = (string) $request->query('status', 'semua');
@@ -96,12 +96,26 @@ class SkpiDocumentController extends Controller
             $statusFilter = 'semua';
         }
 
+        $periodFilter = (string) $request->query('period', 'semua');
+        if (! in_array($periodFilter, ['semua', 'hari', 'minggu', 'bulan'], true)) {
+            $periodFilter = 'semua';
+        }
+
         $docs = collect();
         $counts = ['semua' => 0, 'menunggu' => 0, 'terverifikasi' => 0, 'ditolak' => 0];
         $studentsByRef = collect();
 
         if (Schema::hasTable('skpi_documents')) {
-            $all = SkpiDocument::with('verifier')
+            $query = SkpiDocument::with('verifier');
+            if ($periodFilter === 'hari') {
+                $query->where('updated_at', '>=', now()->startOfDay());
+            } elseif ($periodFilter === 'minggu') {
+                $query->where('updated_at', '>=', now()->startOfWeek());
+            } elseif ($periodFilter === 'bulan') {
+                $query->where('updated_at', '>=', now()->startOfMonth());
+            }
+
+            $all = $query
                 ->orderByRaw("CASE verification_status WHEN 'menunggu' THEN 0 WHEN 'ditolak' THEN 1 ELSE 2 END")
                 ->orderByDesc('updated_at')
                 ->get();
@@ -129,6 +143,7 @@ class SkpiDocumentController extends Controller
             'docs' => $docs,
             'counts' => $counts,
             'statusFilter' => $statusFilter,
+            'periodFilter' => $periodFilter,
             'studentsByRef' => $studentsByRef,
         ]);
     }

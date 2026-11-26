@@ -145,18 +145,35 @@
         </p>
     </div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
-        @foreach ([
-            'semua' => 'Semua ('.$counts['semua'].')',
-            'menunggu' => 'Menunggu ('.$counts['menunggu'].')',
-            'terverifikasi' => 'Terverifikasi ('.$counts['terverifikasi'].')',
-            'ditolak' => 'Perlu diperbaiki ('.$counts['ditolak'].')',
-        ] as $key => $label)
-            <a href="{{ route('admin.skpi', ['status' => $key]) }}"
-               class="btn btn-sm {{ $statusFilter === $key ? 'btn-primary' : 'btn-quiet' }}">
-                {{ $label }}
-            </a>
-        @endforeach
+    @php $periodFilter = $periodFilter ?? 'semua'; @endphp
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.45rem;">
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+            @foreach ([
+                'semua' => 'Semua ('.$counts['semua'].')',
+                'menunggu' => 'Menunggu ('.$counts['menunggu'].')',
+                'terverifikasi' => 'Terverifikasi ('.$counts['terverifikasi'].')',
+                'ditolak' => 'Perlu diperbaiki ('.$counts['ditolak'].')',
+            ] as $key => $label)
+                <a href="{{ route('admin.skpi', ['status' => $key, 'period' => $periodFilter]) }}"
+                   class="btn btn-sm {{ $statusFilter === $key ? 'btn-primary' : 'btn-quiet' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </div>
+
+        <div style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:0.25rem;padding:0.22rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);">
+            @foreach ([
+                'semua' => 'Semua waktu',
+                'hari' => 'Hari ini',
+                'minggu' => 'Minggu ini',
+                'bulan' => 'Bulan ini',
+            ] as $pKey => $pLabel)
+                <a href="{{ route('admin.skpi', ['status' => $statusFilter, 'period' => $pKey]) }}"
+                   style="padding:0.28rem 0.65rem;border-radius:7px;font-size:12px;font-weight:{{ $periodFilter === $pKey ? '600' : '500' }};text-decoration:none;color:{{ $periodFilter === $pKey ? 'var(--accent)' : 'var(--ink-2)' }};background:{{ $periodFilter === $pKey ? 'var(--accent-soft)' : 'transparent' }};">
+                    {{ $pLabel }}
+                </a>
+            @endforeach
+        </div>
     </div>
 </div>
 
