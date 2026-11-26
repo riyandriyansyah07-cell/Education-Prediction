@@ -156,7 +156,7 @@
             <div class="mt-card">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-medium text-ink">Nilai &amp; Absensi Semester Ini</h3>
-                    <span class="mt-badge mono">70%</span>
+                    <span class="mt-badge mono">75%</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
                     <li>Tiap matkul memakai bobot <strong>UAS 40%</strong>, <strong>UTS 25%</strong>, <strong>Tugas 25%</strong>, dan <strong>Kehadiran 10%</strong>.</li>
@@ -169,22 +169,22 @@
             <div class="mt-card">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-medium text-ink">Riwayat Semester Lalu</h3>
-                    <span class="mt-badge mono">20%</span>
+                    <span class="mt-badge mono">25%</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
                     <li>Melihat <strong>IPK kumulatif</strong> (aman di 3,00 ke atas), penurunan <strong>IPS</strong>, jumlah matkul mengulang (D/E), dan lonjakan SKS.</li>
-                    <li>Di awal semester (saat nilai baru sedikit), porsi riwayat otomatis naik menjadi <strong>50%</strong> agar hasil tetap stabil dan tidak menebak-nebak.</li>
+                    <li>Di awal semester (saat nilai baru sedikit), bobot otomatis diseimbangkan menjadi <strong>50% : 50%</strong> agar hasil tetap stabil dan tidak menebak-nebak.</li>
                 </ul>
             </div>
 
             <div class="mt-card">
                 <div class="flex items-center justify-between gap-2">
                     <h3 class="font-medium text-ink">Pendampingan DPA</h3>
-                    <span class="mt-badge">Konsultasi &amp; Saran</span>
+                    <span class="mt-badge mono">+0–1,0 poin</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
                     <li>DPA berperan sebagai pendamping akademik dan pemberi saran (tidak mengubah nilai keaktifan kelas mahasiswa).</li>
-                    <li>Khusus <strong>semester 7 ke atas</strong>, ikut memantau status dan rutinitas bimbingan tugas akhir/skripsi.</li>
+                    <li>Khusus <strong>semester 7 ke atas</strong>, pemantauan bimbingan tugas akhir/skripsi dapat menambah <strong>+0,5 s.d. +1,0 poin</strong> peringatan bila belum mulai atau lama tidak bimbingan (&gt; 30 hari).</li>
                 </ul>
             </div>
 

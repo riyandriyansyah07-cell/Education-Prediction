@@ -9,8 +9,8 @@ use App\Models\AcademicRecord;
  * - Proyeksi per mata kuliah: UAS 40%, UTS 25%, Tugas 25%, Kehadiran/Keaktifan 10%
  * - Rumus nilai sementara (N) dengan pembagian ulang bobot komponen yang aktif
  * - Rumus nilai UAS minimal (U_min) untuk target C (56) dan B (68)
- * - Penggabungan skor mahasiswa (0-10): Semester berjalan 70%, Riwayat 20%, Input DPA 10%
- * - Tambahan faktor progres wajib 20 SKS MK Pengayaan khusus semester 5 ke atas
+ * - Penggabungan skor mahasiswa (0-10): Semester berjalan 75%, Riwayat 25% (total 100%)
+ * - Tambahan poin peringatan: Pemantauan Tugas Akhir DPA (+0–1,0 poin, Sem 7+) & MK Pengayaan 20 SKS (+0–2,0 poin, Sem 5+)
  */
 final class RiskModel
 {
@@ -47,9 +47,8 @@ final class RiskModel
 
     /** Bobot standar bagian skor risiko tingkat mahasiswa. */
     public const STUDENT_WEIGHTS = [
-        'current_semester' => 0.70,
-        'history' => 0.20,
-        'dpa' => 0.10,
+        'current_semester' => 0.75,
+        'history' => 0.25,
     ];
 
     /**
@@ -289,8 +288,8 @@ final class RiskModel
 
     /**
      * Hitung kontribusi poin tiap faktor menuju skor 0-10.
-     * Menggabungkan bagian Semester Berjalan (70%), Riwayat (20%), Input DPA (10%),
-     * serta faktor keterlambatan SKS Pengayaan (khusus semester 5+).
+     * Menggabungkan bagian Semester Berjalan (75%) dan Riwayat (25%) = 100%,
+     * ditambah poin peringatan pemantauan Tugas Akhir (Sem 7+) dan SKS Pengayaan (Sem 5+).
      */
     public static function parts(array $f): array
     {
@@ -331,25 +330,28 @@ final class RiskModel
         ], fn ($v) => $v !== null && is_numeric($v)));
         $dpaNorm = $dpaValues !== [] ? array_sum($dpaValues) / count($dpaValues) : null;
 
-        // 4. Pembagian ulang bobot bagian (Semester berjalan, Riwayat, DPA)
+        // 4. Penggabungan bobot dasar 100% (Semester berjalan 75% + Riwayat 25%)
         $wCurrent = self::STUDENT_WEIGHTS['current_semester'];
         $wHistory = self::STUDENT_WEIGHTS['history'];
-        $wDpa = $dpaNorm !== null ? self::STUDENT_WEIGHTS['dpa'] : 0.0;
 
         // Proteksi bias awal semester: bila baru ada 1 komponen (hanya kehadiran, belum UTS),
-        // seimbangkan bobot ke riwayat agar mahasiswa ber-IPK kritis tidak tampak "Rendah" palsu
+        // seimbangkan bobot 50% : 50% agar mahasiswa ber-IPK kritis tidak tampak "Rendah" palsu
         $componentsCount = (int) ($f['components_count'] ?? 4);
         if ($componentsCount <= 1 && ! empty($f['is_projection'])) {
-            $wCurrent = 0.40;
+            $wCurrent = 0.50;
             $wHistory = 0.50;
         }
 
-        $weightSum = max(0.01, $wCurrent + $wHistory + $wDpa);
+        $weightSum = max(0.01, $wCurrent + $wHistory);
         $totalScore = 10.0 * (
             ($wCurrent * $currentNorm) +
-            ($wHistory * $historyNorm) +
-            ($wDpa * ($dpaNorm ?? 0.0))
+            ($wHistory * $historyNorm)
         ) / $weightSum;
+
+        // Tambahkan poin peringatan bimbingan Tugas Akhir (khusus semester 7+, +0 s.d. +1,0 poin)
+        if ($dpaNorm !== null && $dpaNorm > 0.0) {
+            $totalScore = min(self::MAX_SCORE, $totalScore + $dpaNorm);
+        }
 
         // Tambahkan penalti keterlambatan 20 SKS MK Pengayaan (hanya aktif mulai semester 5+)
         if ($enrichmentPenalty > 0.0) {
