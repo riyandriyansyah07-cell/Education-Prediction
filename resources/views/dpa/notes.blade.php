@@ -149,11 +149,18 @@
                         </span>
                     </div>
 
-                    @if ($stu)
-                        <a href="{{ route('dpa.bimbingan.show', $stu) }}" class="btn btn-quiet btn-sm" style="flex-shrink:0;min-height:30px;padding:0.25rem 0.65rem;font-size:12px;">
-                            Detail &rarr;
-                        </a>
-                    @endif
+                    <div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0;">
+                        @if ($stu)
+                            <a href="{{ route('dpa.bimbingan.show', $stu) }}" class="btn btn-quiet btn-sm" style="min-height:30px;padding:0.25rem 0.65rem;font-size:12px;">
+                                Detail &rarr;
+                            </a>
+                        @endif
+                        <form method="POST" action="{{ route('dpa.riwayat.hapus', $note) }}" style="margin:0;" data-confirm="Hapus catatan bimbingan ini?">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm" style="min-height:30px;padding:0.25rem 0.65rem;font-size:12px;">Hapus</button>
+                        </form>
+                    </div>
                 </div>
 
                 <p class="mt-2 text-sm font-medium text-ink">{{ $note->topic }}</p>

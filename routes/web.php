@@ -89,6 +89,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:dpa')->prefix('dpa')->name('dpa.')->group(function () {
         Route::get('/bimbingan', [Dpa\GuidanceController::class, 'index'])->name('bimbingan');
         Route::get('/riwayat-bimbingan', [Dpa\GuidanceController::class, 'notesHistory'])->name('riwayat');
+        Route::delete('/riwayat-bimbingan/{note}', [Dpa\GuidanceController::class, 'destroyNote'])
+            ->whereNumber('note')
+            ->name('riwayat.hapus');
         Route::get('/bimbingan/{student}', [Dpa\GuidanceController::class, 'show'])
             ->whereNumber('student')
             ->name('bimbingan.show');

@@ -308,7 +308,14 @@
                         <li class="rounded-md border border-line bg-bg p-4">
                             <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
                                 <span class="font-medium">{{ $note->topic }}</span>
-                                <span class="mono text-xs text-ink-3">{{ $note->guidance_date?->translatedFormat('j M Y') }} &middot; {{ $note->followUpLabel() }}</span>
+                                <div style="display:flex;align-items:center;gap:0.5rem;">
+                                    <span class="mono text-xs text-ink-3">{{ $note->guidance_date?->translatedFormat('j M Y') }} &middot; {{ $note->followUpLabel() }}</span>
+                                    <form method="POST" action="{{ route('dpa.riwayat.hapus', $note) }}" style="margin:0;" data-confirm="Hapus catatan bimbingan ini?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" style="min-height:26px;padding:0.18rem 0.55rem;font-size:11px;">Hapus</button>
+                                    </form>
+                                </div>
                             </div>
                             <p class="mt-1.5 text-sm text-ink-2">{{ $note->follow_up_action }}</p>
                         </li>

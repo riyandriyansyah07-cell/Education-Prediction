@@ -431,6 +431,24 @@ class GuidanceController extends Controller
         ]);
     }
 
+    /** Hapus catatan bimbingan milik DPA (termasuk catatan yatim bila akun mahasiswa sudah dihapus). */
+    public function destroyNote(Request $request, GuidanceNote $note): RedirectResponse
+    {
+        $dpa = $request->user();
+        $isOwner = (int) $note->dpa_id === (int) $dpa->id;
+        $isAdviseeNote = User::where('dpa_id', $dpa->id)
+            ->where('role', User::ROLE_STUDENT)
+            ->where('student_ref', $note->student_ref)
+            ->exists();
+
+        abort_unless($isOwner || $isAdviseeNote, 403);
+
+        $topic = $note->topic;
+        $note->delete();
+
+        return back()->with('status', "Catatan bimbingan "{$topic}" berhasil dihapus.");
+    }
+
     private function authorizeStudent(User $dpa, User $student): void
     {
         abort_unless(
