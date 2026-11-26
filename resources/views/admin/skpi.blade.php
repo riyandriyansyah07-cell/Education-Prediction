@@ -8,14 +8,42 @@
         border-radius: 10px;
         border: 1px solid var(--line);
         background: var(--surface);
-        padding: 0.9rem 1.15rem;
+        padding: 0.85rem 1.1rem;
     }
     .skpi-adm-top {
         display: flex;
         flex-wrap: wrap;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        gap: 0.65rem 1rem;
+        gap: 0.6rem 1rem;
+    }
+    .skpi-adm-title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem 0.55rem;
+    }
+    .skpi-adm-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+    }
+    .skpi-adm-nim {
+        font-size: 12px;
+        color: var(--ink-3);
+    }
+    .skpi-adm-type {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.14rem 0.55rem;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent);
+        border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+        background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+        white-space: nowrap;
     }
     .skpi-adm-meta {
         margin-top: 0.25rem;
@@ -26,8 +54,8 @@
     .skpi-adm-actions-bar {
         display: grid;
         gap: 0.6rem;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
+        margin-top: 0.7rem;
+        padding-top: 0.7rem;
         border-top: 1px solid var(--line);
     }
     @media (min-width: 900px) {
@@ -99,7 +127,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
-        margin-top: 0.55rem;
+        margin-top: 0.4rem;
     }
     .skpi-adm-toggle > summary::-webkit-details-marker {
         display: none;
@@ -138,7 +166,7 @@
         <p class="mt-1.5 text-sm text-ink-2">Berkas yang diunggah mahasiswa pada menu Pengayaan &amp; SKPI akan muncul di sini.</p>
     </section>
 @else
-    <div class="mt-5" style="display:flex;flex-direction:column;gap:0.65rem;">
+    <div class="mt-5" style="display:flex;flex-direction:column;gap:0.6rem;">
         @foreach ($docs as $doc)
             @php
                 $stu = $studentsByRef->get($doc->student_ref);
@@ -146,35 +174,29 @@
                 $badgeCls = $doc->verification_status === 'terverifikasi'
                     ? 'is-ok'
                     : ($doc->verification_status === 'ditolak' ? 'is-bad' : 'is-warn');
+                $extLabel = strtoupper(pathinfo((string) $doc->original_name, PATHINFO_EXTENSION) ?: 'FILE');
             @endphp
             <article class="skpi-adm-card">
                 <div class="skpi-adm-top">
                     <div style="min-width:0;flex:1 1 280px;">
-                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem 0.6rem;">
-                            <span class="font-semibold text-sm text-ink">{{ $doc->typeLabel() }}</span>
+                        <div class="skpi-adm-title-row">
+                            <span class="skpi-adm-name">{{ $stu?->name ?? 'Mahasiswa' }}</span>
+                            @if ($stu?->username)
+                                <span class="mono skpi-adm-nim">{{ $stu->username }}</span>
+                            @endif
+                            <span class="skpi-adm-type">{{ $doc->typeLabel() }}</span>
                             <span class="skpi-adm-badge {{ $badgeCls }}">{{ $doc->statusLabel() }}</span>
-                            <span class="text-xs text-ink-2">
-                                &middot; <strong>{{ $stu?->name ?? 'Mahasiswa' }}</strong>
-                                @if ($stu?->username)
-                                    <span class="mono text-ink-3">({{ $stu->username }})</span>
-                                @endif
-                            </span>
                         </div>
 
                         <p class="skpi-adm-meta">
-                            {{ $stu?->program_studi ?: 'Prodi belum diisi' }}
-                            @if ($stu?->dpa) &middot; DPA: {{ $stu->dpa->name }} @endif
-                            &middot; <span class="mono">{{ $doc->original_name }}</span> ({{ $doc->formattedSize() }})
-                            &middot; {{ $doc->updated_at?->translatedFormat('j M Y, H:i') }}
+                            {{ $stu?->program_studi ?: 'Prodi -' }}
+                            @if ($stu?->dpa) &middot; DPA {{ $stu->dpa->name }} @endif
+                            &middot; <span class="mono" title="{{ $doc->original_name }}">{{ $extLabel }} {{ $doc->formattedSize() }}</span>
+                            &middot; {{ $doc->updated_at?->translatedFormat('j M, H:i') }}
+                            @if ($doc->verifier)
+                                &middot; {{ $doc->verification_status === 'terverifikasi' ? 'ACC' : 'Ditinjau' }} <strong class="text-ink-2">{{ $doc->verifier->name }}</strong>@if ($doc->verification_note) ("{{ $doc->verification_note }}")@endif
+                            @endif
                         </p>
-
-                        @if ($doc->verifier)
-                            <p class="skpi-adm-meta" style="margin-top:0.15rem;">
-                                {{ $doc->verification_status === 'terverifikasi' ? 'Diverifikasi' : 'Ditinjau' }} oleh <strong class="text-ink-2">{{ $doc->verifier->name }}</strong>
-                                @if ($doc->verified_at) &middot; {{ $doc->verified_at->translatedFormat('j M Y, H:i') }} @endif
-                                @if ($doc->verification_note) &mdash; "{{ $doc->verification_note }}" @endif
-                            </p>
-                        @endif
                     </div>
 
                     <a href="{{ route('skpi.dokumen.show', $doc) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" style="flex-shrink:0;min-height:32px;padding:0.3rem 0.7rem;font-size:12px;">
@@ -200,7 +222,7 @@
                     </div>
                 @else
                     <details class="skpi-adm-toggle">
-                        <summary>Ubah keputusan verifikasi &#9662;</summary>
+                        <summary>Ubah keputusan &#9662;</summary>
                         <div class="skpi-adm-actions-bar">
                             <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-inline-form">
                                 @csrf
