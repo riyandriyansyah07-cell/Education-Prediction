@@ -47,6 +47,7 @@ class SkpiDocumentTest extends TestCase
             'password' => 'rahasia',
             'role' => User::ROLE_STUDENT,
             'dpa_id' => $dpa->id,
+            'student_ref' => hash('sha256', 'skpi-doc-test-ref'),
             'is_active' => true,
         ]);
 
