@@ -311,10 +311,121 @@
             from { opacity: 0; transform: scale(0.96) translateY(6px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
+
+        /* Custom Inline Form Validation (Menggantikan tooltip "Please fill out this field." bawaan browser) */
+        .input.is-invalid {
+            border-color: var(--bad) !important;
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--bad) 16%, transparent) !important;
+        }
+        .app-field-msg {
+            margin-top: 0.35rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--bad);
+            display: flex;
+            align-items: center;
+            gap: 0.38rem;
+            line-height: 1.4;
+            animation: appModalPop 140ms ease;
+        }
+        .app-field-msg::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: var(--bad);
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body class="min-h-dvh">
     @yield('body')
+
+
+    <script>
+        (function () {
+            function getIndonesianMsg(el) {
+                var v = el.validity;
+                if (!v) return 'Periksa kembali isian ini.';
+                if (v.valueMissing) {
+                    if (el.tagName === 'SELECT') return 'Pilih salah satu opsi terlebih dahulu.';
+                    if (el.type === 'file') return 'Pilih berkas yang akan diunggah.';
+                    if (el.type === 'checkbox') return 'Centang kotak ini untuk melanjutkan.';
+                    return 'Kolom ini wajib diisi.';
+                }
+                if (v.typeMismatch && el.type === 'email') return 'Masukkan alamat email yang valid (contoh: nama@uhamka.ac.id).';
+                if (v.tooShort) return 'Minimal ' + el.getAttribute('minlength') + ' karakter.';
+                if (v.tooLong) return 'Maksimal ' + el.getAttribute('maxlength') + ' karakter.';
+                if (v.rangeUnderflow) return 'Nilai minimal ' + el.getAttribute('min') + '.';
+                if (v.rangeOverflow) return 'Nilai maksimal ' + el.getAttribute('max') + '.';
+                if (v.patternMismatch) return 'Format isian belum sesuai.';
+                return 'Periksa kembali isian ini.';
+            }
+
+            function clearFieldError(el) {
+                el.classList.remove('is-invalid');
+                el.removeAttribute('aria-invalid');
+                var next = el.nextElementSibling;
+                if (next && next.classList.contains('app-field-msg')) {
+                    next.remove();
+                }
+            }
+
+            function showFieldError(el) {
+                clearFieldError(el);
+                el.classList.add('is-invalid');
+                el.setAttribute('aria-invalid', 'true');
+                var p = document.createElement('p');
+                p.className = 'app-field-msg';
+                p.setAttribute('role', 'alert');
+                p.textContent = getIndonesianMsg(el);
+                el.insertAdjacentElement('afterend', p);
+            }
+
+            function disableNativeBubbles() {
+                document.querySelectorAll('form').forEach(function (f) {
+                    if (!f.hasAttribute('novalidate')) f.setAttribute('novalidate', 'novalidate');
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', disableNativeBubbles);
+            } else {
+                disableNativeBubbles();
+            }
+
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                var fields = Array.from(form.querySelectorAll('input, select, textarea')).filter(function (el) {
+                    return !el.disabled && el.type !== 'hidden' && el.offsetParent !== null;
+                });
+                var firstInvalid = null;
+                fields.forEach(function (el) {
+                    if (!el.checkValidity()) {
+                        showFieldError(el);
+                        if (!firstInvalid) firstInvalid = el;
+                    } else {
+                        clearFieldError(el);
+                    }
+                });
+                if (firstInvalid) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, true);
+
+            ['input', 'change'].forEach(function (evt) {
+                document.addEventListener(evt, function (e) {
+                    var el = e.target;
+                    if (el && el.classList && el.classList.contains('is-invalid') && el.checkValidity()) {
+                        clearFieldError(el);
+                    }
+                }, true);
+            });
+        })();
+    </script>
 
     {{-- Custom Confirm Modal Global (Pengganti dialog confirm() bawaan browser) --}}
     <div id="app-confirm-modal" class="app-modal-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="app-confirm-title">
