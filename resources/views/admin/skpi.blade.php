@@ -5,39 +5,68 @@
 @section('content')
 <style>
     .skpi-adm-card {
-        border-radius: 12px;
+        border-radius: 10px;
         border: 1px solid var(--line);
         background: var(--surface);
-        padding: 1.25rem 1.4rem;
+        padding: 0.9rem 1.15rem;
     }
-    .skpi-adm-panels {
+    .skpi-adm-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.65rem 1rem;
+    }
+    .skpi-adm-meta {
+        margin-top: 0.25rem;
+        font-size: 12px;
+        color: var(--ink-3);
+        line-height: 1.45;
+    }
+    .skpi-adm-actions-bar {
         display: grid;
-        gap: 0.9rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
+        gap: 0.6rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
         border-top: 1px solid var(--line);
     }
     @media (min-width: 900px) {
-        .skpi-adm-panels {
-            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        .skpi-adm-actions-bar {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         }
     }
-    .skpi-adm-box {
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: var(--bg);
-        padding: 0.9rem 1rem;
+    .skpi-adm-inline-form {
         display: flex;
-        flex-direction: column;
-        gap: 0.7rem;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.45rem;
     }
-    .skpi-adm-box.is-reject {
-        border-color: color-mix(in srgb, var(--bad) 26%, var(--line));
+    .skpi-adm-inline-form .input {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 0.4rem 0.65rem;
+        font-size: 12.5px;
+        min-height: 34px;
+    }
+    .skpi-adm-inline-form .btn {
+        flex-shrink: 0;
+        padding: 0.4rem 0.75rem;
+        font-size: 12px;
+        min-height: 34px;
+        white-space: nowrap;
+    }
+    @media (max-width: 560px) {
+        .skpi-adm-inline-form {
+            flex-wrap: wrap;
+        }
+        .skpi-adm-inline-form .btn {
+            width: 100%;
+        }
     }
     .skpi-adm-badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.2rem 0.65rem;
+        padding: 0.14rem 0.55rem;
         border-radius: 9999px;
         font-size: 11px;
         font-weight: 600;
@@ -60,6 +89,23 @@
         color: var(--bad);
         border-color: color-mix(in srgb, var(--bad) 40%, var(--line));
         background: color-mix(in srgb, var(--bad) 12%, var(--surface));
+    }
+    .skpi-adm-toggle > summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        font-size: 11.5px;
+        color: var(--ink-3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.55rem;
+    }
+    .skpi-adm-toggle > summary::-webkit-details-marker {
+        display: none;
+    }
+    .skpi-adm-toggle > summary:hover {
+        color: var(--ink);
     }
 </style>
 
@@ -92,74 +138,86 @@
         <p class="mt-1.5 text-sm text-ink-2">Berkas yang diunggah mahasiswa pada menu Pengayaan &amp; SKPI akan muncul di sini.</p>
     </section>
 @else
-    <div class="mt-6" style="display:flex;flex-direction:column;gap:1rem;">
+    <div class="mt-5" style="display:flex;flex-direction:column;gap:0.65rem;">
         @foreach ($docs as $doc)
             @php
                 $stu = $studentsByRef->get($doc->student_ref);
+                $isPending = $doc->verification_status === 'menunggu';
                 $badgeCls = $doc->verification_status === 'terverifikasi'
                     ? 'is-ok'
                     : ($doc->verification_status === 'ditolak' ? 'is-bad' : 'is-warn');
             @endphp
             <article class="skpi-adm-card">
-                <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:0.85rem;">
-                    <div style="min-width:0;">
-                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+                <div class="skpi-adm-top">
+                    <div style="min-width:0;flex:1 1 280px;">
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem 0.6rem;">
                             <span class="font-semibold text-sm text-ink">{{ $doc->typeLabel() }}</span>
                             <span class="skpi-adm-badge {{ $badgeCls }}">{{ $doc->statusLabel() }}</span>
+                            <span class="text-xs text-ink-2">
+                                &middot; <strong>{{ $stu?->name ?? 'Mahasiswa' }}</strong>
+                                @if ($stu?->username)
+                                    <span class="mono text-ink-3">({{ $stu->username }})</span>
+                                @endif
+                            </span>
                         </div>
-                        <p class="mt-1.5 text-sm font-medium text-ink">
-                            {{ $stu?->name ?? 'Mahasiswa' }}
-                            @if ($stu?->username)
-                                <span class="mono text-xs text-ink-3">({{ $stu->username }})</span>
-                            @endif
-                        </p>
-                        <p class="mt-0.5 text-xs text-ink-3">
+
+                        <p class="skpi-adm-meta">
                             {{ $stu?->program_studi ?: 'Prodi belum diisi' }}
                             @if ($stu?->dpa) &middot; DPA: {{ $stu->dpa->name }} @endif
-                            &middot; Diunggah {{ $doc->updated_at?->translatedFormat('j M Y, H:i') }}
+                            &middot; <span class="mono">{{ $doc->original_name }}</span> ({{ $doc->formattedSize() }})
+                            &middot; {{ $doc->updated_at?->translatedFormat('j M Y, H:i') }}
                         </p>
-                        <p class="mt-1.5 mono text-xs text-ink-2">
-                            Berkas: {{ $doc->original_name }} ({{ $doc->formattedSize() }})
-                        </p>
+
                         @if ($doc->verifier)
-                            <p class="mt-1 text-xs text-ink-3">
-                                {{ $doc->verification_status === 'terverifikasi' ? 'Diverifikasi' : 'Ditinjau' }} oleh <strong>{{ $doc->verifier->name }}</strong>
+                            <p class="skpi-adm-meta" style="margin-top:0.15rem;">
+                                {{ $doc->verification_status === 'terverifikasi' ? 'Diverifikasi' : 'Ditinjau' }} oleh <strong class="text-ink-2">{{ $doc->verifier->name }}</strong>
                                 @if ($doc->verified_at) &middot; {{ $doc->verified_at->translatedFormat('j M Y, H:i') }} @endif
-                                @if ($doc->verification_note) — "{{ $doc->verification_note }}" @endif
+                                @if ($doc->verification_note) &mdash; "{{ $doc->verification_note }}" @endif
                             </p>
                         @endif
                     </div>
 
-                    <a href="{{ route('skpi.dokumen.show', $doc) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" style="flex-shrink:0;">
+                    <a href="{{ route('skpi.dokumen.show', $doc) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" style="flex-shrink:0;min-height:32px;padding:0.3rem 0.7rem;font-size:12px;">
                         Lihat Bukti &rarr;
                     </a>
                 </div>
 
-                <div class="skpi-adm-panels">
-                    <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-box">
-                        @csrf
-                        <input type="hidden" name="decision" value="terverifikasi">
-                        <div>
-                            <label class="label text-xs" for="note-ok-{{ $doc->id }}">Catatan verifikasi (opsional)</label>
-                            <input id="note-ok-{{ $doc->id }}" type="text" name="verification_note" maxlength="255" class="input text-sm" placeholder="Contoh: Sertifikat sesuai ketentuan FTII">
-                        </div>
-                        <div style="display:flex;justify-content:flex-end;">
-                            <button type="submit" class="btn btn-primary btn-sm">Verifikasi Bukti</button>
-                        </div>
-                    </form>
+                @if ($isPending)
+                    <div class="skpi-adm-actions-bar">
+                        <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-inline-form">
+                            @csrf
+                            <input type="hidden" name="decision" value="terverifikasi">
+                            <input type="text" name="verification_note" maxlength="255" class="input" aria-label="Catatan verifikasi" placeholder="Catatan verifikasi (opsional)">
+                            <button type="submit" class="btn btn-primary">Verifikasi</button>
+                        </form>
 
-                    <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-box is-reject">
-                        @csrf
-                        <input type="hidden" name="decision" value="ditolak">
-                        <div>
-                            <label class="label text-xs" for="note-no-{{ $doc->id }}">Alasan minta perbaiki</label>
-                            <input id="note-no-{{ $doc->id }}" type="text" name="verification_note" maxlength="255" class="input text-sm" placeholder="Contoh: Sertifikat buram / bukan TOEFL UHAMKA" required>
+                        <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-inline-form">
+                            @csrf
+                            <input type="hidden" name="decision" value="ditolak">
+                            <input type="text" name="verification_note" maxlength="255" class="input" aria-label="Alasan perbaikan" placeholder="Alasan minta perbaiki..." required>
+                            <button type="submit" class="btn btn-danger">Minta Perbaiki</button>
+                        </form>
+                    </div>
+                @else
+                    <details class="skpi-adm-toggle">
+                        <summary>Ubah keputusan verifikasi &#9662;</summary>
+                        <div class="skpi-adm-actions-bar">
+                            <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-inline-form">
+                                @csrf
+                                <input type="hidden" name="decision" value="terverifikasi">
+                                <input type="text" name="verification_note" maxlength="255" class="input" aria-label="Catatan verifikasi" placeholder="Catatan verifikasi (opsional)">
+                                <button type="submit" class="btn btn-primary">Verifikasi</button>
+                            </form>
+
+                            <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $doc) }}" class="skpi-adm-inline-form">
+                                @csrf
+                                <input type="hidden" name="decision" value="ditolak">
+                                <input type="text" name="verification_note" maxlength="255" class="input" aria-label="Alasan perbaikan" placeholder="Alasan minta perbaiki..." required>
+                                <button type="submit" class="btn btn-danger">Minta Perbaiki</button>
+                            </form>
                         </div>
-                        <div style="display:flex;justify-content:flex-end;">
-                            <button type="submit" class="btn btn-danger btn-sm">Minta Perbaiki</button>
-                        </div>
-                    </form>
-                </div>
+                    </details>
+                @endif
             </article>
         @endforeach
     </div>
