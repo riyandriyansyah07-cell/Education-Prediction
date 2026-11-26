@@ -13,6 +13,7 @@
         ],
         'dpa' => [
             ['dpa.bimbingan', 'Mahasiswa bimbingan', 'users'],
+            ['dpa.riwayat', 'Riwayat bimbingan', 'clock-counter-clockwise'],
         ],
         'validator' => [
             ['validator.audit', 'Audit & Validasi AI', 'shield-check'],

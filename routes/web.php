@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     // DPA: UC-08, UC-09, UC-14 + Monitoring Bimbingan & Penilaian DPA
     Route::middleware('role:dpa')->prefix('dpa')->name('dpa.')->group(function () {
         Route::get('/bimbingan', [Dpa\GuidanceController::class, 'index'])->name('bimbingan');
+        Route::get('/riwayat-bimbingan', [Dpa\GuidanceController::class, 'notesHistory'])->name('riwayat');
         Route::get('/bimbingan/{student}', [Dpa\GuidanceController::class, 'show'])
             ->whereNumber('student')
             ->name('bimbingan.show');

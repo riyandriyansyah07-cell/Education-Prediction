@@ -347,6 +347,90 @@ class GuidanceController extends Controller
             ->with('status', 'Catatan bimbingan disimpan dan riwayat tindak lanjut diperbarui.');
     }
 
+    /** Riwayat seluruh catatan bimbingan yang pernah dicatat DPA (pencarian, status, periode, & paginasi). */
+    public function notesHistory(Request $request): View
+    {
+        $dpa = $request->user();
+
+        $statusFilter = (string) $request->query('status', 'semua');
+        if (! in_array($statusFilter, ['semua', StudentSetting::STATUS_BELUM, StudentSetting::STATUS_DIJADWALKAN, StudentSetting::STATUS_SUDAH, StudentSetting::STATUS_SELESAI], true)) {
+            $statusFilter = 'semua';
+        }
+
+        $periodFilter = (string) $request->query('period', 'semua');
+        if (! in_array($periodFilter, ['semua', 'hari', 'minggu', 'bulan'], true)) {
+            $periodFilter = 'semua';
+        }
+
+        $search = trim((string) $request->query('q', ''));
+
+        $advisees = User::where('dpa_id', $dpa->id)
+            ->where('role', User::ROLE_STUDENT)
+            ->get()
+            ->keyBy('student_ref');
+        $adviseeRefs = $advisees->keys()->filter()->all();
+
+        $query = GuidanceNote::query()
+            ->where(function ($q) use ($dpa, $adviseeRefs) {
+                $q->where('dpa_id', $dpa->id);
+                if ($adviseeRefs !== []) {
+                    $q->orWhereIn('student_ref', $adviseeRefs);
+                }
+            });
+
+        if ($periodFilter === 'hari') {
+            $query->where('guidance_date', '>=', now()->startOfDay());
+        } elseif ($periodFilter === 'minggu') {
+            $query->where('guidance_date', '>=', now()->startOfWeek());
+        } elseif ($periodFilter === 'bulan') {
+            $query->where('guidance_date', '>=', now()->startOfMonth());
+        }
+
+        if ($search !== '') {
+            $term = mb_strtolower($search);
+            $matchedRefs = $advisees
+                ->filter(fn (User $s) => str_contains(mb_strtolower((string) $s->name), $term)
+                    || str_contains(mb_strtolower((string) $s->username), $term))
+                ->keys()
+                ->all();
+
+            $query->where(function ($q) use ($term, $matchedRefs) {
+                $q->whereRaw('LOWER(topic) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(follow_up_action) LIKE ?', ['%'.$term.'%']);
+                if ($matchedRefs !== []) {
+                    $q->orWhereIn('student_ref', $matchedRefs);
+                }
+            });
+        }
+
+        $statusRows = (clone $query)->pluck('follow_up_status');
+        $counts = [
+            'semua' => $statusRows->count(),
+            StudentSetting::STATUS_DIJADWALKAN => $statusRows->filter(fn ($st) => $st === StudentSetting::STATUS_DIJADWALKAN)->count(),
+            StudentSetting::STATUS_SUDAH => $statusRows->filter(fn ($st) => $st === StudentSetting::STATUS_SUDAH)->count(),
+            StudentSetting::STATUS_SELESAI => $statusRows->filter(fn ($st) => $st === StudentSetting::STATUS_SELESAI)->count(),
+        ];
+
+        if ($statusFilter !== 'semua') {
+            $query->where('follow_up_status', $statusFilter);
+        }
+
+        $notes = $query
+            ->orderByDesc('guidance_date')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('dpa.notes', [
+            'notes' => $notes,
+            'advisees' => $advisees,
+            'counts' => $counts,
+            'statusFilter' => $statusFilter,
+            'periodFilter' => $periodFilter,
+            'search' => $search,
+        ]);
+    }
+
     private function authorizeStudent(User $dpa, User $student): void
     {
         abort_unless(
