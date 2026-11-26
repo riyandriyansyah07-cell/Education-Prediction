@@ -68,34 +68,42 @@
                 </div>
 
                 @if ($t->status === 'menunggu')
-                    <div class="mt-4 grid items-end gap-4 border-t border-line pt-4 lg:grid-cols-12">
-                        <form method="POST" action="{{ route('admin.tiket.setujui', $t) }}" class="lg:col-span-8" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:0.65rem;">
+                    <div class="mt-4 grid gap-4 border-t border-line pt-4 lg:grid-cols-12" style="align-items:stretch;">
+                        {{-- Panel Setujui --}}
+                        <form method="POST" action="{{ route('admin.tiket.setujui', $t) }}" class="lg:col-span-8" style="border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0.95rem 1.05rem;display:flex;flex-direction:column;justify-content:space-between;gap:0.85rem;">
                             @csrf
-                            @if ($t->request_type === 'akun_mahasiswa')
-                                <div style="flex:1;min-width:11rem;">
-                                    <label class="label text-xs">Tetapkan DPA</label>
-                                    <select name="dpa_id" class="input text-xs">
-                                        <option value="">Belum ditetapkan</option>
-                                        @foreach ($dpas as $d)
-                                            <option value="{{ $d->id }}">{{ $d->name }}</option>
-                                        @endforeach
-                                    </select>
+                            <div class="grid gap-3 {{ $t->request_type === 'akun_mahasiswa' ? 'sm:grid-cols-2' : '' }}">
+                                @if ($t->request_type === 'akun_mahasiswa')
+                                    <div>
+                                        <label class="label text-xs">Tetapkan DPA</label>
+                                        <select name="dpa_id" class="input text-sm">
+                                            <option value="">Belum ditetapkan</option>
+                                            @foreach ($dpas as $d)
+                                                <option value="{{ $d->id }}">{{ $d->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                                <div>
+                                    <label class="label text-xs">Catatan persetujuan (opsional)</label>
+                                    <input type="text" name="admin_note" placeholder="Tautan set sandi dikirim otomatis ke email" class="input text-sm">
                                 </div>
-                            @endif
-                            <div style="flex:1;min-width:12rem;">
-                                <label class="label text-xs">Catatan persetujuan</label>
-                                <input type="text" name="admin_note" placeholder="Opsional — tautan set sandi dikirim ke email" class="input text-sm">
                             </div>
-                            <button type="submit" class="btn btn-primary shrink-0" style="min-height:42px;white-space:nowrap;">Setujui &amp; Kirim Tautan Sandi</button>
+                            <div style="display:flex;justify-content:flex-end;">
+                                <button type="submit" class="btn btn-primary btn-sm" style="min-height:38px;padding:0.45rem 1rem;">Setujui &amp; Kirim Tautan Sandi</button>
+                            </div>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.tiket.tolak', $t) }}" class="lg:col-span-4" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:0.65rem;">
+                        {{-- Panel Tolak --}}
+                        <form method="POST" action="{{ route('admin.tiket.tolak', $t) }}" class="lg:col-span-4" style="border-radius:10px;border:1px solid color-mix(in srgb, var(--bad) 26%, var(--line));background:var(--bg);padding:0.95rem 1.05rem;display:flex;flex-direction:column;justify-content:space-between;gap:0.85rem;">
                             @csrf
-                            <div style="min-width:0;flex:1;">
-                                <label class="label text-xs">Alasan tolak</label>
-                                <input type="text" name="admin_note" placeholder="NIM tidak valid" class="input text-sm" required>
+                            <div>
+                                <label class="label text-xs">Alasan penolakan</label>
+                                <input type="text" name="admin_note" placeholder="Contoh: NIM tidak valid" class="input text-sm" required>
                             </div>
-                            <button type="submit" class="btn btn-danger shrink-0" style="min-height:42px;white-space:nowrap;">Tolak</button>
+                            <div style="display:flex;justify-content:flex-end;">
+                                <button type="submit" class="btn btn-danger btn-sm" style="min-height:38px;padding:0.45rem 1rem;">Tolak Tiket</button>
+                            </div>
                         </form>
                     </div>
                 @elseif ($t->admin_note)
