@@ -141,6 +141,27 @@
             </div>
         </div>
     </div>
+
+    <details style="margin-top:0.9rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0.7rem 0.95rem;">
+        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;font-size:12.5px;font-weight:600;color:var(--ink);user-select:none;">
+            <span>Aturan &amp; Kriteria Koreksi Validasi AI</span>
+            <span class="mono text-xs text-ink-3">Lihat panduan &#9662;</span>
+        </summary>
+        <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line);display:grid;gap:0.7rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));font-size:12px;line-height:1.5;color:var(--ink-2);">
+            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--ok) 35%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
+                <p style="font-weight:600;color:var(--ok);margin:0;">1. Pilih &ldquo;Sesuai&rdquo;</p>
+                <p style="margin:0.3rem 0 0;">Level risiko AI sama dengan Rumus Matematis (&Delta; &lt; 1,5), serta faktor utama dan saran belajar selaras dengan data IPS, IPK, kehadiran, dan progres SKPI mahasiswa.</p>
+            </div>
+            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--warn) 40%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
+                <p style="font-weight:600;color:var(--warn);margin:0;">2. Pilih &ldquo;Perlu Koreksi&rdquo;</p>
+                <p style="margin:0.3rem 0 0;">Beda level risiko atau selisih skor &Delta; &ge; 1,5, melanggar aturan keras FTII (mis. kehadiran &lt; 75% dilabeli Rendah), atau AI menyebut faktor yang tidak sesuai angka asli.</p>
+            </div>
+            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
+                <p style="font-weight:600;color:var(--accent);margin:0;">3. Centang &ldquo;Terapkan Langsung&rdquo;</p>
+                <p style="margin:0.3rem 0 0;">Gunakan hanya bila level risiko yang tampil di halaman mahasiswa &amp; DPA keliru kategori sehingga perlu langsung disesuaikan ke <em>Level Seharusnya</em>, dan wajib isi catatan evaluasi.</p>
+            </div>
+        </div>
+    </details>
 </section>
 
 {{-- 4 KARTU KPI AKURASI & VALIDASI --}}
