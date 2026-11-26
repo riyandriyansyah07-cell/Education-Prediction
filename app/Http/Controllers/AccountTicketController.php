@@ -108,7 +108,9 @@ class AccountTicketController extends Controller
         ]);
 
         return redirect()->route('tiket.form')
-            ->with('status', "E-Ticket {$ticket->ticket_code} berhasil dibuat! Simpan kode ini. Setelah disetujui Admin Sekretariat, tautan aman untuk mengatur kata sandi akan dikirim ke {$ticket->email}.");
+            ->with('status', "E-Ticket {$ticket->ticket_code} berhasil dibuat! Simpan kode ini. Setelah disetujui Admin Sekretariat, tautan aman untuk mengatur kata sandi akan dikirim ke {$ticket->email}.")
+            ->with('created_ticket_code', $ticket->ticket_code)
+            ->with('created_ticket_verif', $ticket->username);
     }
 
     /** Daftar tiket pengajuan akun di panel Admin Sekretariat. */

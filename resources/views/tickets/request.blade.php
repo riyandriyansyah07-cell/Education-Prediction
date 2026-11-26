@@ -5,28 +5,64 @@
 @section('body')
 <header class="sticky top-0 z-30 border-b border-line bg-bg/90 backdrop-blur">
     <div class="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-8">
-        <a href="{{ route('landing') }}" class="font-semibold tracking-tight">Cegah Sebelum Terlambat</a>
-        <a href="{{ route('login') }}" class="btn btn-quiet btn-sm">Kembali ke Masuk</a>
+        <a href="{{ route('landing') }}" class="inline-flex items-center gap-2.5 font-semibold tracking-tight">
+            <x-brand-logo :size="28" />
+            <span>Cegah Sebelum Terlambat</span>
+        </a>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap">
+                <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
+            </button>
+            <a href="{{ route('login') }}" class="btn btn-quiet btn-sm">Kembali ke Masuk</a>
+        </div>
     </div>
 </header>
 
-<main class="mx-auto max-w-5xl px-4 py-10 sm:px-8">
-    <h1 class="rise text-3xl sm:text-4xl">E-Ticket Pengajuan Akun</h1>
-    <p class="rise mt-2 max-w-[62ch] text-ink-2" style="--i: 1">
-        Ajukan pembuatan akun atau reset kata sandi ke Admin Sekretariat FTII. Setelah disetujui, tautan aman untuk mengatur kata sandi dikirim ke email aktifmu.
-    </p>
+<main class="mx-auto max-w-5xl px-4 py-8 sm:px-8 lg:py-10">
+    <div>
+        <h1 class="rise">E-Ticket Pengajuan Akun</h1>
+        <p class="rise mt-1.5 max-w-[62ch] text-sm text-ink-2" style="--i: 1">
+            Ajukan pembuatan akun atau reset kata sandi ke Admin Sekretariat FTII. Setelah disetujui, tautan aman untuk mengatur kata sandi dikirim ke email aktifmu.
+        </p>
+    </div>
 
     @if (session('status'))
-        <div role="status" class="mt-6 flex items-start gap-3 rounded-md border border-ok/40 bg-ok/10 px-4 py-3 text-ink">
-            <x-icon name="check-circle" class="mt-0.5 text-ok" />
-            <p>{{ session('status') }}</p>
+        <div role="status" class="mt-6 rounded-xl border border-ok/40 bg-ok/10 px-4 py-3.5 text-ink">
+            <div class="flex items-start gap-3">
+                <x-icon name="check-circle" class="mt-0.5 shrink-0 text-ok" />
+                <div style="min-width:0;flex:1;">
+                    <p class="text-sm">{{ session('status') }}</p>
+                    @if (session('created_ticket_code'))
+                        <div style="margin-top:0.75rem;display:flex;flex-wrap:wrap;align-items:center;gap:0.55rem;">
+                            <code id="created-ticket-code" class="mono" style="padding:0.32rem 0.7rem;border-radius:8px;background:var(--surface);border:1px solid var(--line-strong);font-size:0.86rem;font-weight:700;letter-spacing:0.02em;">{{ session('created_ticket_code') }}</code>
+                            <button type="button" id="copy-created-ticket" class="btn btn-primary btn-sm">Salin Kode Tiket</button>
+                            <button type="button" id="fill-created-ticket" class="btn btn-quiet btn-sm">Isi ke Cek Status &rarr;</button>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     @endif
 
-    <div class="mt-10 grid gap-12 lg:grid-cols-12">
+    {{-- Banner otomatis dari localStorage perangkat jika user klik Kembali atau refresh --}}
+    <div id="saved-ticket-banner" style="display:none;margin-top:1.25rem;padding:0.9rem 1.15rem;border-radius:12px;border:1px solid color-mix(in srgb, var(--accent) 32%, var(--line));background:color-mix(in srgb, var(--accent) 8%, var(--surface));align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+        <div style="min-width:0;flex:1;">
+            <p class="text-xs font-semibold text-ink" style="margin:0;">Kode E-Ticket terakhir yang dibuat di perangkat ini:</p>
+            <p class="mt-1 text-xs text-ink-2" style="margin:0.2rem 0 0;">
+                <code id="saved-ticket-code" class="mono font-semibold text-ink"></code>
+                <span id="saved-ticket-verif-wrap" class="ml-1 text-ink-3"></span>
+            </p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;flex-shrink:0;">
+            <button type="button" id="copy-saved-ticket" class="btn btn-quiet btn-sm">Salin Kode</button>
+            <button type="button" id="fill-saved-ticket" class="btn btn-primary btn-sm">Cek Status</button>
+        </div>
+    </div>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-12" style="align-items:start;">
         <section class="lg:col-span-7" aria-labelledby="form-tiket">
-            <h2 id="form-tiket" class="text-xl">Buat Tiket Baru</h2>
-            <form method="POST" action="{{ route('tiket.submit') }}" class="mt-5 space-y-5 rounded-md border border-line bg-surface p-6">
+            <h2 id="form-tiket" class="text-lg font-semibold">Buat Tiket Baru</h2>
+            <form method="POST" action="{{ route('tiket.submit') }}" class="mt-4 space-y-4 bg-surface" style="padding:1.4rem 1.5rem;">
                 @csrf
                 <div>
                     <label for="request_type" class="label">Jenis pengajuan</label>
@@ -65,13 +101,13 @@
                 <div>
                     <label for="email" class="label">Email aktif <span style="color:var(--bad);">*</span></label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input" required>
-                    <p class="mt-1 text-xs text-ink-3">Wajib diisi — tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
+                    <p class="mt-1.5 text-xs text-ink-3">Wajib diisi — tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
                     @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label for="notes" class="label">Keterangan tambahan <span class="font-normal text-ink-3">(Angkatan / Nama DPA)</span></label>
-                    <textarea id="notes" name="notes" rows="3" class="input py-2" placeholder="Contoh: Angkatan 2023, DPA Erizal, S.Kom., M.Kom.">{{ old('notes') }}</textarea>
+                    <label for="notes" class="label">Keterangan tambahan <span class="font-normal text-ink-3">(Nama DPA / Catatan)</span></label>
+                    <textarea id="notes" name="notes" rows="3" class="input" placeholder="Contoh: DPA Erizal, S.Kom., M.Kom.">{{ old('notes') }}</textarea>
                     @error('notes')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
@@ -80,8 +116,8 @@
         </section>
 
         <aside class="lg:col-span-5" aria-labelledby="cek-tiket">
-            <h2 id="cek-tiket" class="text-xl">Cek Status E-Ticket</h2>
-            <form method="GET" action="{{ route('tiket.form') }}" class="mt-5 space-y-3 rounded-md border border-line bg-surface p-5">
+            <h2 id="cek-tiket" class="text-lg font-semibold">Cek Status E-Ticket</h2>
+            <form method="GET" action="{{ route('tiket.form') }}" id="cek-tiket-form" class="mt-4 space-y-3.5 bg-surface" style="padding:1.35rem 1.4rem;">
                 <div>
                     <label for="cek-kode" class="label text-xs">Kode tiket</label>
                     <input id="cek-kode" name="kode" type="text" value="{{ $searchCode }}" placeholder="TKT-20261125-XXXXXXXXXX" class="input mono uppercase" required>
@@ -94,7 +130,7 @@
             </form>
 
             @if ($lookupAttempted ?? false)
-                <div class="mt-6 rounded-md border border-line bg-surface p-5">
+                <div class="mt-5 bg-surface" style="padding:1.25rem 1.4rem;">
                     @if (! $checkedTicket)
                         <p class="text-sm text-bad">{{ $lookupError ?? 'Tiket tidak ditemukan atau NIM/Email tidak cocok.' }}</p>
                     @else
@@ -108,7 +144,7 @@
                                 <span class="risk risk-chip risk-sedang">Menunggu</span>
                             @endif
                         </div>
-                        <dl class="mt-4 space-y-2 text-sm">
+                        <dl class="mt-4 space-y-2.5 text-sm">
                             <div>
                                 <dt class="text-xs text-ink-3">Pemohon</dt>
                                 <dd class="font-medium">{{ $checkedTicket->name }} (<span class="mono">{{ $checkedTicket->username }}</span>)</dd>
@@ -143,6 +179,103 @@
     </div>
 </main>
 <script>
-document.addEventListener("DOMContentLoaded",function(){var t=document.getElementById("request_type"),g=document.getElementById("prodi-group"),p=document.getElementById("program_studi");if(!t||!g||!p)return;function syncProdi(){var m=t.value==="akun_mahasiswa";g.style.display=m?"":"none";p.required=m;if(!m)p.value="";}t.addEventListener("change",syncProdi);syncProdi();});
+document.addEventListener("DOMContentLoaded", function () {
+    var t = document.getElementById("request_type");
+    var g = document.getElementById("prodi-group");
+    var p = document.getElementById("program_studi");
+    if (t && g && p) {
+        function syncProdi() {
+            var m = t.value === "akun_mahasiswa";
+            g.style.display = m ? "" : "none";
+            p.required = m;
+            if (!m) p.value = "";
+        }
+        t.addEventListener("change", syncProdi);
+        syncProdi();
+    }
+
+    var KEY_CODE = "cst_last_ticket_code";
+    var KEY_VERIF = "cst_last_ticket_verif";
+    var createdCode = @json(session('created_ticket_code'));
+    var createdVerif = @json(session('created_ticket_verif'));
+
+    if (createdCode) {
+        try {
+            localStorage.setItem(KEY_CODE, createdCode);
+            if (createdVerif) localStorage.setItem(KEY_VERIF, createdVerif);
+        } catch (e) {}
+    }
+
+    function copyText(text, btn) {
+        if (!text) return;
+        var done = function () {
+            if (!btn) return;
+            var orig = btn.textContent;
+            btn.textContent = "Tersalin!";
+            setTimeout(function () { btn.textContent = orig; }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () {
+                try {
+                    var ta = document.createElement("textarea");
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    done();
+                } catch (e) {}
+            });
+        }
+    }
+
+    function fillLookup(code, verif, autoSubmit) {
+        var inpCode = document.getElementById("cek-kode");
+        var inpVerif = document.getElementById("cek-verifikasi");
+        var form = document.getElementById("cek-tiket-form");
+        if (inpCode && code) inpCode.value = code;
+        if (inpVerif && verif) inpVerif.value = verif;
+        if (autoSubmit && form && code && verif) {
+            form.submit();
+        } else if (inpCode) {
+            inpCode.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+
+    var copyCreatedBtn = document.getElementById("copy-created-ticket");
+    if (copyCreatedBtn) {
+        copyCreatedBtn.addEventListener("click", function () { copyText(createdCode, copyCreatedBtn); });
+    }
+    var fillCreatedBtn = document.getElementById("fill-created-ticket");
+    if (fillCreatedBtn) {
+        fillCreatedBtn.addEventListener("click", function () { fillLookup(createdCode, createdVerif, true); });
+    }
+
+    // Jika tidak baru saja membuat tiket, tampilkan kode tersimpan di perangkat ini
+    if (!createdCode) {
+        try {
+            var savedCode = localStorage.getItem(KEY_CODE);
+            var savedVerif = localStorage.getItem(KEY_VERIF) || "";
+            if (savedCode) {
+                var banner = document.getElementById("saved-ticket-banner");
+                var codeEl = document.getElementById("saved-ticket-code");
+                var verifEl = document.getElementById("saved-ticket-verif-wrap");
+                if (banner && codeEl) {
+                    codeEl.textContent = savedCode;
+                    if (verifEl && savedVerif) verifEl.textContent = "(" + savedVerif + ")";
+                    banner.style.display = "flex";
+                }
+                var copySavedBtn = document.getElementById("copy-saved-ticket");
+                if (copySavedBtn) {
+                    copySavedBtn.addEventListener("click", function () { copyText(savedCode, copySavedBtn); });
+                }
+                var fillSavedBtn = document.getElementById("fill-saved-ticket");
+                if (fillSavedBtn) {
+                    fillSavedBtn.addEventListener("click", function () { fillLookup(savedCode, savedVerif, true); });
+                }
+            }
+        } catch (e) {}
+    }
+});
 </script>
 @endsection
