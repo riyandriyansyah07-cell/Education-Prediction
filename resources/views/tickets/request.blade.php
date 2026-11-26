@@ -65,6 +65,7 @@
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;flex-shrink:0;">
             <button type="button" id="copy-saved-ticket" class="btn btn-quiet btn-sm">Salin Kode</button>
             <button type="button" id="fill-saved-ticket" class="btn btn-primary btn-sm">Cek Status &rarr;</button>
+            <button type="button" id="dismiss-saved-ticket" class="btn btn-quiet btn-sm" aria-label="Hapus pengingat tiket" title="Tutup &amp; hapus dari perangkat">&times;</button>
         </div>
     </div>
 
@@ -260,31 +261,56 @@ document.addEventListener("DOMContentLoaded", function () {
         fillCreatedBtn.addEventListener("click", function () { fillLookup(createdCode, createdVerif, true); });
     }
 
-    // Jika tidak baru saja membuat tiket, tampilkan kode tersimpan di perangkat ini
-    if (!createdCode) {
-        try {
-            var savedCode = localStorage.getItem(KEY_CODE);
-            var savedVerif = localStorage.getItem(KEY_VERIF) || "";
-            if (savedCode) {
-                var banner = document.getElementById("saved-ticket-banner");
-                var codeEl = document.getElementById("saved-ticket-code");
-                var verifEl = document.getElementById("saved-ticket-verif-wrap");
-                if (banner && codeEl) {
-                    codeEl.textContent = savedCode;
-                    if (verifEl && savedVerif) verifEl.textContent = "(" + savedVerif + ")";
-                    banner.style.display = "flex";
-                }
-                var copySavedBtn = document.getElementById("copy-saved-ticket");
-                if (copySavedBtn) {
-                    copySavedBtn.addEventListener("click", function () { copyText(savedCode, copySavedBtn); });
-                }
-                var fillSavedBtn = document.getElementById("fill-saved-ticket");
-                if (fillSavedBtn) {
-                    fillSavedBtn.addEventListener("click", function () { fillLookup(savedCode, savedVerif, true); });
-                }
+    var checkedCode = @json($checkedTicket?->ticket_code);
+    var checkedStatus = @json($checkedTicket?->status);
+    var searchedCode = @json($searchCode ?? '');
+    var lookupFailed = @json(($lookupAttempted ?? false) && ! $checkedTicket);
+
+    // 1. Otomatis hapus dari perangkat jika tiket sudah selesai (disetujui/ditolak) atau sudah dihapus Admin
+    try {
+        var currentSaved = localStorage.getItem(KEY_CODE);
+        if (currentSaved) {
+            var isDoneTicket = checkedCode && checkedCode === currentSaved && (checkedStatus === "disetujui" || checkedStatus === "ditolak");
+            var isDeletedTicket = lookupFailed && searchedCode && searchedCode === currentSaved;
+            if (isDoneTicket || isDeletedTicket) {
+                localStorage.removeItem(KEY_CODE);
+                localStorage.removeItem(KEY_VERIF);
+                currentSaved = null;
             }
-        } catch (e) {}
-    }
+        }
+
+        // 2. Hanya tampilkan banner jika bukan baru membuat tiket DAN tidak sedang membuka hasil cek tiket yang sama
+        var viewingSameTicket = checkedCode && currentSaved && checkedCode === currentSaved;
+        if (!createdCode && currentSaved && !viewingSameTicket) {
+            var savedVerif = localStorage.getItem(KEY_VERIF) || "";
+            var banner = document.getElementById("saved-ticket-banner");
+            var codeEl = document.getElementById("saved-ticket-code");
+            var verifEl = document.getElementById("saved-ticket-verif-wrap");
+            if (banner && codeEl) {
+                codeEl.textContent = currentSaved;
+                if (verifEl && savedVerif) verifEl.textContent = "(" + savedVerif + ")";
+                banner.style.display = "flex";
+            }
+            var copySavedBtn = document.getElementById("copy-saved-ticket");
+            if (copySavedBtn) {
+                copySavedBtn.addEventListener("click", function () { copyText(currentSaved, copySavedBtn); });
+            }
+            var fillSavedBtn = document.getElementById("fill-saved-ticket");
+            if (fillSavedBtn) {
+                fillSavedBtn.addEventListener("click", function () { fillLookup(currentSaved, savedVerif, true); });
+            }
+            var dismissSavedBtn = document.getElementById("dismiss-saved-ticket");
+            if (dismissSavedBtn) {
+                dismissSavedBtn.addEventListener("click", function () {
+                    try {
+                        localStorage.removeItem(KEY_CODE);
+                        localStorage.removeItem(KEY_VERIF);
+                    } catch (e) {}
+                    if (banner) banner.style.display = "none";
+                });
+            }
+        }
+    } catch (e) {}
 });
 </script>
 @endsection
