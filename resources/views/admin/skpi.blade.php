@@ -179,14 +179,11 @@
 
     @php
         $periodFilter = $periodFilter ?? 'semua';
-        $yearFilter = $yearFilter ?? 0;
         $typeFilter = $typeFilter ?? 'semua';
         $search = $search ?? '';
-        $availableYears = $availableYears ?? [];
-        $hasActiveFilter = $periodFilter !== 'semua' || $yearFilter > 0 || $typeFilter !== 'semua' || $search !== '';
+        $hasActiveFilter = $periodFilter !== 'semua' || $typeFilter !== 'semua' || $search !== '';
         $baseQuery = array_filter([
             'period' => $periodFilter !== 'semua' ? $periodFilter : null,
-            'year' => $yearFilter > 0 ? $yearFilter : null,
             'type' => $typeFilter !== 'semua' ? $typeFilter : null,
             'q' => $search !== '' ? $search : null,
         ]);
@@ -218,12 +215,6 @@
         <option value="bulan" @selected($periodFilter === 'bulan')>Bulan ini</option>
     </select>
 
-    <select name="year" class="input skpi-filter-select" aria-label="Filter tahun" onchange="this.form.submit()">
-        <option value="0" @selected($yearFilter === 0)>Semua tahun</option>
-        @foreach ($availableYears as $yr)
-            <option value="{{ $yr }}" @selected($yearFilter === (int) $yr)>Tahun {{ $yr }}</option>
-        @endforeach
-    </select>
 
     <select name="type" class="input skpi-filter-select" aria-label="Filter jenis SKPI" onchange="this.form.submit()">
         <option value="semua" @selected($typeFilter === 'semua')>Semua jenis SKPI</option>
