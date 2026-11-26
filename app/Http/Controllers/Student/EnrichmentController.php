@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicRecord;
 use App\Models\EnrichmentRecord;
+use App\Models\SkpiDocument;
 use App\Models\StudentSetting;
 use App\Services\RiskService;
 use App\Support\EnrichmentCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class EnrichmentController extends Controller
@@ -33,12 +36,17 @@ class EnrichmentController extends Controller
         $progress = EnrichmentCatalog::evaluateProgress($records, $currentSemester, $setting);
         $catalog = EnrichmentCatalog::all();
 
+        $skpiDocs = Schema::hasTable('skpi_documents')
+            ? SkpiDocument::with('verifier')->where('student_ref', $ref)->get()->keyBy('type')
+            : collect();
+
         return view('student.enrichment', [
             'records' => $records,
             'setting' => $setting,
             'progress' => $progress,
             'catalog' => $catalog,
             'takenCodes' => $records->pluck('course_code')->all(),
+            'skpiDocs' => $skpiDocs,
         ]);
     }
 
@@ -157,6 +165,19 @@ class EnrichmentController extends Controller
             'skpi_pkm_stage' => ['required', Rule::in(StudentSetting::PKM_STAGES)],
             'skpi_toefl_status' => ['required', Rule::in([StudentSetting::SKPI_BELUM, StudentSetting::SKPI_PROSES, StudentSetting::SKPI_SELESAI])],
             'skpi_toefl_score' => ['nullable', 'integer', 'min:200', 'max:677'],
+            'proof_it' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'proof_baps' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'proof_pkm' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+            'proof_toefl' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
+        ], [
+            'proof_it.mimes' => 'Bukti Sertifikat IT harus berformat PDF, JPG, atau PNG.',
+            'proof_it.max' => 'Ukuran bukti Sertifikat IT maksimal 2 MB.',
+            'proof_baps.mimes' => 'Bukti BAPS harus berformat PDF, JPG, atau PNG.',
+            'proof_baps.max' => 'Ukuran bukti BAPS maksimal 2 MB.',
+            'proof_pkm.mimes' => 'Bukti Sertifikat PKM harus berformat PDF, JPG, atau PNG.',
+            'proof_pkm.max' => 'Ukuran bukti Sertifikat PKM maksimal 2 MB.',
+            'proof_toefl.mimes' => 'Bukti TOEFL UHAMKA harus berformat PDF, JPG, atau PNG.',
+            'proof_toefl.max' => 'Ukuran bukti TOEFL UHAMKA maksimal 2 MB.',
         ]);
 
         $ref = $request->user()->student_ref;
@@ -172,9 +193,45 @@ class EnrichmentController extends Controller
             ]
         );
 
+        $uploadedCount = 0;
+        if (Schema::hasTable('skpi_documents')) {
+            $disk = Storage::disk('local');
+            foreach (SkpiDocument::TYPES as $type) {
+                $field = 'proof_'.$type;
+                if (! $request->hasFile($field)) {
+                    continue;
+                }
+                $file = $request->file($field);
+                $existing = SkpiDocument::where('student_ref', $ref)->where('type', $type)->first();
+                if ($existing && $existing->file_path && $disk->exists($existing->file_path)) {
+                    $disk->delete($existing->file_path);
+                }
+                $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
+                $storedPath = $file->storeAs("skpi_proofs/{$ref}", "{$type}_".time().".{$ext}", 'local');
+
+                SkpiDocument::updateOrCreate(
+                    ['student_ref' => $ref, 'type' => $type],
+                    [
+                        'file_path' => $storedPath,
+                        'original_name' => mb_substr((string) $file->getClientOriginalName(), 0, 180),
+                        'mime_type' => (string) ($file->getMimeType() ?: 'application/octet-stream'),
+                        'file_size' => (int) ($file->getSize() ?: 0),
+                        'verification_status' => SkpiDocument::STATUS_MENUNGGU,
+                        'verified_by' => null,
+                        'verified_at' => null,
+                        'verification_note' => null,
+                    ]
+                );
+                $uploadedCount++;
+            }
+        }
+
         $risk->refresh($ref, false);
 
-        return redirect()->route('mhs.pengayaan')
-            ->with('status', 'Status 4 syarat wajib SKPI & tahap PKM berhasil diperbarui.');
+        $msg = $uploadedCount > 0
+            ? "Status SKPI & {$uploadedCount} berkas bukti berhasil disimpan (menunggu verifikasi DPA/Sekretariat)."
+            : 'Status 4 syarat wajib SKPI & tahap PKM berhasil diperbarui.';
+
+        return redirect()->route('mhs.pengayaan')->with('status', $msg);
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessLogController;
 use App\Http\Controllers\AccountTicketController;
+use App\Http\Controllers\SkpiDocumentController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dpa;
@@ -57,6 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengayaan', [Student\EnrichmentController::class, 'index'])->name('pengayaan');
         Route::post('/pengayaan', [Student\EnrichmentController::class, 'store'])->name('pengayaan.store');
         Route::post('/pengayaan/skpi', [Student\EnrichmentController::class, 'updateSkpi'])->middleware('throttle:10,1')->name('pengayaan.skpi');
+        Route::delete('/pengayaan/skpi-dokumen/{document}', [SkpiDocumentController::class, 'destroy'])->whereNumber('document')->name('pengayaan.skpi.hapus');
         Route::patch('/pengayaan/{record}/status', [Student\EnrichmentController::class, 'updateStatus'])
             ->whereNumber('record')
             ->name('pengayaan.status');
@@ -74,6 +76,14 @@ Route::middleware('auth')->group(function () {
             ->name('riwayat.hapus');
         Route::get('/catatan-akses', [AccessLogController::class, 'student'])->name('catatan');
     });
+
+    // Bukti Sertifikat SKPI (privat: pemilik, DPA pembimbing, atau Admin; verifikasi oleh DPA/Admin)
+    Route::get('/skpi-dokumen/{document}', [SkpiDocumentController::class, 'show'])
+        ->whereNumber('document')
+        ->name('skpi.dokumen.show');
+    Route::post('/skpi-dokumen/{document}/verifikasi', [SkpiDocumentController::class, 'verify'])
+        ->whereNumber('document')
+        ->name('skpi.dokumen.verifikasi');
 
     // DPA: UC-08, UC-09, UC-14 + Monitoring Bimbingan & Penilaian DPA
     Route::middleware('role:dpa')->prefix('dpa')->name('dpa.')->group(function () {
@@ -121,6 +131,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/tiket-akun/{ticket}/tolak', [AccountTicketController::class, 'reject'])->whereNumber('ticket')->name('tiket.tolak');
         Route::delete('/tiket-akun/{ticket}', [AccountTicketController::class, 'destroy'])->whereNumber('ticket')->name('tiket.hapus');
         Route::delete('/tiket-akun-riwayat', [AccountTicketController::class, 'clearProcessed'])->name('tiket.bersihkan');
+
+        Route::get('/verifikasi-skpi', [SkpiDocumentController::class, 'adminIndex'])->name('skpi');
 
         Route::get('/data-historis', [Admin\HistoricalDataController::class, 'index'])->name('historis');
         Route::post('/data-historis', [Admin\HistoricalDataController::class, 'store'])->name('historis.store');

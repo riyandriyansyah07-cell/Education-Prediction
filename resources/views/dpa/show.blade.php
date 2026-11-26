@@ -8,6 +8,7 @@
     $notes = $notes ?? collect();
     $snapshots = $snapshots ?? collect();
     $enrichmentRecords = $enrichmentRecords ?? collect();
+    $skpiDocs = $skpiDocs ?? collect();
     $latestSemester = $latestSemester ?? $results->last()?->semester;
     $enrichment = $enrichment ?? \App\Support\EnrichmentCatalog::evaluateProgress($enrichmentRecords, (int) ($latestSemester ?? 1));
 @endphp
@@ -190,11 +191,48 @@
                     </div>
                     <ul style="list-style:none;margin:0.9rem 0 0;padding:0;display:flex;flex-direction:column;">
                         @foreach ($skpiDpa['items'] as $idx => $skItem)
-                            <li style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.45rem 0.75rem;padding:0.65rem 0;{{ $idx > 0 ? 'border-top:1px solid var(--line);' : '' }}">
-                                <span class="text-xs text-ink-2" style="line-height:1.4;">{{ $skItem['title'] }}</span>
-                                <span class="mono" style="padding:0.2rem 0.65rem;border-radius:9999px;font-size:11px;font-weight:500;line-height:1.3;white-space:nowrap;border:1px solid {{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, var(--line))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 40%, var(--line))' : 'var(--line)') }};color:{{ $skItem['tone'] === 'ok' ? 'var(--ok)' : ($skItem['tone'] === 'warn' ? 'var(--warn)' : 'var(--ink-3)') }};background:{{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 10%, var(--surface))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 10%, var(--surface))' : 'var(--surface)') }};">
-                                    {{ $skItem['status_label'] }}
-                                </span>
+                            @php $skDoc = $skpiDocs->get($skItem['key'] ?? ''); @endphp
+                            <li style="display:flex;flex-direction:column;gap:0.45rem;padding:0.7rem 0;{{ $idx > 0 ? 'border-top:1px solid var(--line);' : '' }}">
+                                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.45rem 0.75rem;">
+                                    <span class="text-xs text-ink-2" style="line-height:1.4;font-weight:500;">{{ $skItem['title'] }}</span>
+                                    <span class="mono" style="padding:0.2rem 0.65rem;border-radius:9999px;font-size:11px;font-weight:500;line-height:1.3;white-space:nowrap;border:1px solid {{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, var(--line))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 40%, var(--line))' : 'var(--line)') }};color:{{ $skItem['tone'] === 'ok' ? 'var(--ok)' : ($skItem['tone'] === 'warn' ? 'var(--warn)' : 'var(--ink-3)') }};background:{{ $skItem['tone'] === 'ok' ? 'color-mix(in srgb, var(--ok) 10%, var(--surface))' : ($skItem['tone'] === 'warn' ? 'color-mix(in srgb, var(--warn) 10%, var(--surface))' : 'var(--surface)') }};">
+                                        {{ $skItem['status_label'] }}
+                                    </span>
+                                </div>
+                                @if ($skDoc)
+                                    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.45rem;padding:0.5rem 0.65rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);">
+                                        <div style="font-size:11px;line-height:1.4;min-width:0;">
+                                            <span style="font-weight:600;color:{{ $skDoc->verification_status === 'terverifikasi' ? 'var(--ok)' : ($skDoc->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
+                                                {{ $skDoc->statusLabel() }}
+                                            </span>
+                                            @if ($skDoc->verifier)
+                                                <span class="text-ink-3">&middot; {{ $skDoc->verifier->name }}</span>
+                                            @endif
+                                            @if ($skDoc->verification_note)
+                                                <span class="block text-ink-3" style="margin-top:2px;">"{{ $skDoc->verification_note }}"</span>
+                                            @endif
+                                        </div>
+                                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;">
+                                            <a href="{{ route('skpi.dokumen.show', $skDoc) }}" target="_blank" rel="noopener" class="btn btn-quiet" style="padding:0.25rem 0.55rem;font-size:11px;min-height:28px;">Lihat Bukti</a>
+                                            @if ($skDoc->verification_status !== 'terverifikasi')
+                                                <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $skDoc) }}" style="margin:0;">
+                                                    @csrf
+                                                    <input type="hidden" name="decision" value="terverifikasi">
+                                                    <button type="submit" class="btn btn-primary" style="padding:0.25rem 0.55rem;font-size:11px;min-height:28px;">Verifikasi</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <details style="font-size:11px;">
+                                        <summary class="text-ink-3 cursor-pointer" style="list-style:none;user-select:none;">Minta perbaiki bukti&hellip;</summary>
+                                        <form method="POST" action="{{ route('skpi.dokumen.verifikasi', $skDoc) }}" style="margin-top:0.4rem;display:flex;flex-wrap:wrap;gap:0.4rem;">
+                                            @csrf
+                                            <input type="hidden" name="decision" value="ditolak">
+                                            <input type="text" name="verification_note" maxlength="255" class="input" style="flex:1 1 160px;padding:0.35rem 0.6rem;font-size:12px;" placeholder="Alasan perbaikan..." required>
+                                            <button type="submit" class="btn btn-danger" style="padding:0.3rem 0.65rem;font-size:11px;min-height:30px;">Kirim</button>
+                                        </form>
+                                    </details>
+                                @endif
                             </li>
                         @endforeach
                     </ul>

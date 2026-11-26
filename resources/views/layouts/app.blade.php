@@ -21,6 +21,7 @@
             ['admin.dasbor', 'Dasbor ringkasan', 'house'],
             ['admin.akun', 'Akun dan peran', 'identification-card'],
             ['admin.tiket', 'Tiket pengajuan akun', 'list-checks'],
+            ['admin.skpi', 'Verifikasi SKPI', 'graduation-cap'],
             ['admin.historis', 'Data historis', 'database'],
             ['admin.model', 'Model prediksi', 'brain'],
             ['admin.catatan', 'Catatan akses', 'eye'],
@@ -29,6 +30,10 @@
 
     $pendingTicketsCount = $user->isAdmin()
         ? \App\Models\AccountTicket::where('status', \App\Models\AccountTicket::STATUS_PENDING)->count()
+        : 0;
+
+    $pendingSkpiCount = ($user->isAdmin() && \Illuminate\Support\Facades\Schema::hasTable('skpi_documents'))
+        ? \App\Models\SkpiDocument::where('verification_status', \App\Models\SkpiDocument::STATUS_MENUNGGU)->count()
         : 0;
 @endphp
 
@@ -68,6 +73,11 @@
                     @if ($route === 'admin.tiket' && $pendingTicketsCount > 0)
                         <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" title="{{ $pendingTicketsCount }} tiket menunggu verifikasi">
                             {{ $pendingTicketsCount > 99 ? '99+' : $pendingTicketsCount }}
+                        </span>
+                    @endif
+                    @if ($route === 'admin.skpi' && $pendingSkpiCount > 0)
+                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" title="{{ $pendingSkpiCount }} bukti SKPI menunggu verifikasi">
+                            {{ $pendingSkpiCount > 99 ? '99+' : $pendingSkpiCount }}
                         </span>
                     @endif
                 </a>

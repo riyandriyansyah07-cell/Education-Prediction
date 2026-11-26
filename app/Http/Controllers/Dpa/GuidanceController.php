@@ -10,6 +10,7 @@ use App\Models\EnrichmentRecord;
 use App\Models\GuidanceNote;
 use App\Models\RiskResult;
 use App\Models\RiskSnapshot;
+use App\Models\SkpiDocument;
 use App\Models\StudentSetting;
 use App\Models\User;
 use App\Services\AccessLogger;
@@ -236,6 +237,10 @@ class GuidanceController extends Controller
 
         AccessLogger::record($dpa, $ref, 'detail_faktor');
 
+        $skpiDocs = Schema::hasTable('skpi_documents')
+            ? SkpiDocument::with('verifier')->where('student_ref', $ref)->get()->keyBy('type')
+            : collect();
+
         return view('dpa.show', [
             'student' => $student,
             'results' => $results,
@@ -247,6 +252,7 @@ class GuidanceController extends Controller
             'snapshots' => $snapshots,
             'enrichment' => $enrichment,
             'enrichmentRecords' => $enrichmentRecords,
+            'skpiDocs' => $skpiDocs,
         ]);
     }
 

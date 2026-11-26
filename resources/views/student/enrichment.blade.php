@@ -304,6 +304,7 @@
 @php
     $skpi = $progress['skpi'] ?? ['completed' => 0, 'total' => 4, 'pct' => 0, 'items' => []];
     $stObj = $setting ?? null;
+    $skpiDocs = $skpiDocs ?? collect();
 @endphp
 <style>
     .skpi-card {
@@ -353,9 +354,30 @@
         border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
         background: color-mix(in srgb, var(--warn) 12%, var(--surface));
     }
-    .skpi-item > div:last-child {
+    .skpi-proof-box {
         margin-top: auto;
-        padding-top: 0.2rem;
+        padding-top: 0.65rem;
+        border-top: 1px dashed var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+    .skpi-proof-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4rem 0.6rem;
+        font-size: 11px;
+    }
+    .skpi-file-input {
+        width: 100%;
+        font-size: 12px;
+        color: var(--ink-2);
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface);
     }
     .skpi-subgrid-2 {
         display: grid;
@@ -399,7 +421,7 @@
         <div style="height:100%;width:{{ $skpi['pct'] }}%;background:var(--ok);border-radius:9999px;transition:width 0.3s ease;"></div>
     </div>
 
-    <form method="POST" action="{{ route('mhs.pengayaan.skpi') }}">
+    <form method="POST" action="{{ route('mhs.pengayaan.skpi') }}" enctype="multipart/form-data">
         @csrf
         <div class="skpi-grid">
             {{-- 1. Sertifikat Kompetensi IT --}}
@@ -431,6 +453,32 @@
                         </datalist>
                     </div>
                 </div>
+
+                @php $doc_it = $skpiDocs->get('it'); @endphp
+                <div class="skpi-proof-box">
+                    @if ($doc_it)
+                        <div class="skpi-proof-meta">
+                            <span style="font-weight:600;color:{{ $doc_it->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_it->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
+                                {{ $doc_it->statusLabel() }}@if ($doc_it->verifier) &middot; {{ $doc_it->verifier->name }} @endif
+                            </span>
+                            <a href="{{ route('skpi.dokumen.show', $doc_it) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                Lihat Bukti ({{ $doc_it->formattedSize() }}) &rarr;
+                            </a>
+                        </div>
+                        @if ($doc_it->verification_note)
+                            <p class="text-xs" style="color:{{ $doc_it->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
+                                Catatan: {{ $doc_it->verification_note }}
+                            </p>
+                        @endif
+                    @endif
+                    <div>
+                        <label for="proof_it" class="label text-xs" style="margin-bottom:0.2rem;">
+                            {{ $doc_it ? 'Ganti berkas bukti' : 'Unggah bukti sertifikat' }} (PDF/JPG/PNG, maks 2 MB)
+                        </label>
+                        <input id="proof_it" name="proof_it" type="file" accept=".pdf,.jpg,.jpeg,.png" class="skpi-file-input">
+                        @error('proof_it')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+                    </div>
+                </div>
             </div>
 
             {{-- 2. Baitul Arqam Purna Studi (BAPS) --}}
@@ -450,6 +498,32 @@
                         <option value="terdaftar" @selected($bapsVal === 'terdaftar')>Sudah terdaftar / sedang berjalan</option>
                         <option value="selesai" @selected($bapsVal === 'selesai')>Selesai &amp; bersertifikat BAPS</option>
                     </select>
+                </div>
+
+                @php $doc_baps = $skpiDocs->get('baps'); @endphp
+                <div class="skpi-proof-box">
+                    @if ($doc_baps)
+                        <div class="skpi-proof-meta">
+                            <span style="font-weight:600;color:{{ $doc_baps->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_baps->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
+                                {{ $doc_baps->statusLabel() }}@if ($doc_baps->verifier) &middot; {{ $doc_baps->verifier->name }} @endif
+                            </span>
+                            <a href="{{ route('skpi.dokumen.show', $doc_baps) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                Lihat Bukti ({{ $doc_baps->formattedSize() }}) &rarr;
+                            </a>
+                        </div>
+                        @if ($doc_baps->verification_note)
+                            <p class="text-xs" style="color:{{ $doc_baps->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
+                                Catatan: {{ $doc_baps->verification_note }}
+                            </p>
+                        @endif
+                    @endif
+                    <div>
+                        <label for="proof_baps" class="label text-xs" style="margin-bottom:0.2rem;">
+                            {{ $doc_baps ? 'Ganti berkas bukti' : 'Unggah bukti sertifikat' }} (PDF/JPG/PNG, maks 2 MB)
+                        </label>
+                        <input id="proof_baps" name="proof_baps" type="file" accept=".pdf,.jpg,.jpeg,.png" class="skpi-file-input">
+                        @error('proof_baps')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+                    </div>
                 </div>
             </div>
 
@@ -476,6 +550,32 @@
                         <option value="universitas" @selected($pkmVal === 'universitas')>Lolos Tahap Universitas (Sertifikat PKM &amp; diakui SKPI)</option>
                         <option value="pendanaan" @selected($pkmVal === 'pendanaan')>Lolos Pendanaan / PIMNAS (diakui SKPI + rekognisi SKS)</option>
                     </select>
+                </div>
+
+                @php $doc_pkm = $skpiDocs->get('pkm'); @endphp
+                <div class="skpi-proof-box">
+                    @if ($doc_pkm)
+                        <div class="skpi-proof-meta">
+                            <span style="font-weight:600;color:{{ $doc_pkm->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_pkm->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
+                                {{ $doc_pkm->statusLabel() }}@if ($doc_pkm->verifier) &middot; {{ $doc_pkm->verifier->name }} @endif
+                            </span>
+                            <a href="{{ route('skpi.dokumen.show', $doc_pkm) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                Lihat Bukti ({{ $doc_pkm->formattedSize() }}) &rarr;
+                            </a>
+                        </div>
+                        @if ($doc_pkm->verification_note)
+                            <p class="text-xs" style="color:{{ $doc_pkm->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
+                                Catatan: {{ $doc_pkm->verification_note }}
+                            </p>
+                        @endif
+                    @endif
+                    <div>
+                        <label for="proof_pkm" class="label text-xs" style="margin-bottom:0.2rem;">
+                            {{ $doc_pkm ? 'Ganti berkas bukti' : 'Unggah bukti sertifikat' }} (PDF/JPG/PNG, maks 2 MB)
+                        </label>
+                        <input id="proof_pkm" name="proof_pkm" type="file" accept=".pdf,.jpg,.jpeg,.png" class="skpi-file-input">
+                        @error('proof_pkm')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+                    </div>
                 </div>
             </div>
 
@@ -504,12 +604,38 @@
                             placeholder="450" value="{{ old('skpi_toefl_score', $stObj?->skpi_toefl_score) }}">
                     </div>
                 </div>
+
+                @php $doc_toefl = $skpiDocs->get('toefl'); @endphp
+                <div class="skpi-proof-box">
+                    @if ($doc_toefl)
+                        <div class="skpi-proof-meta">
+                            <span style="font-weight:600;color:{{ $doc_toefl->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_toefl->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
+                                {{ $doc_toefl->statusLabel() }}@if ($doc_toefl->verifier) &middot; {{ $doc_toefl->verifier->name }} @endif
+                            </span>
+                            <a href="{{ route('skpi.dokumen.show', $doc_toefl) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                Lihat Bukti ({{ $doc_toefl->formattedSize() }}) &rarr;
+                            </a>
+                        </div>
+                        @if ($doc_toefl->verification_note)
+                            <p class="text-xs" style="color:{{ $doc_toefl->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
+                                Catatan: {{ $doc_toefl->verification_note }}
+                            </p>
+                        @endif
+                    @endif
+                    <div>
+                        <label for="proof_toefl" class="label text-xs" style="margin-bottom:0.2rem;">
+                            {{ $doc_toefl ? 'Ganti berkas bukti' : 'Unggah bukti sertifikat' }} (PDF/JPG/PNG, maks 2 MB)
+                        </label>
+                        <input id="proof_toefl" name="proof_toefl" type="file" accept=".pdf,.jpg,.jpeg,.png" class="skpi-file-input">
+                        @error('proof_toefl')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p class="text-xs text-ink-3">{{ $progress['pkm_message'] }}</p>
-            <button type="submit" class="btn btn-primary btn-sm">Simpan Status SKPI &amp; PKM</button>
+            <button type="submit" class="btn btn-primary btn-sm">Simpan Status &amp; Bukti SKPI</button>
         </div>
     </form>
 </section>
