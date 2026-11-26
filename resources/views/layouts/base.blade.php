@@ -336,6 +336,34 @@
             background: var(--bad);
             flex-shrink: 0;
         }
+
+        /* Custom Slim Scrollbar Global (Clean, Simpel, Tanpa Panah Bawaan Windows) */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--line-strong) transparent;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--ink-3) 38%, transparent);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: color-mix(in srgb, var(--ink-3) 65%, transparent);
+        }
+        ::-webkit-scrollbar-button {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
     </style>
 </head>
 <body class="min-h-dvh">
