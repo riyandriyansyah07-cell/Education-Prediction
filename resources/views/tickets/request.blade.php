@@ -111,7 +111,7 @@
                 <div>
                     <label for="email" class="label">Email aktif <span style="color:var(--bad);">*</span></label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input" required>
-                    <p class="mt-1.5 text-xs text-ink-3">Wajib diisi — tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
+                    <p class="mt-1.5 text-xs text-ink-3">Wajib diisi â€” tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
                     @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
@@ -127,7 +127,7 @@
 
         <aside class="lg:col-span-5" aria-labelledby="cek-tiket">
             <h2 id="cek-tiket" class="text-lg font-semibold">Cek Status E-Ticket</h2>
-            <form method="GET" action="{{ route('tiket.form') }}" id="cek-tiket-form" class="mt-4 space-y-3.5 bg-surface" style="padding:1.35rem 1.4rem;">
+            <form method="GET" action="{{ route('tiket.form') }}" id="cek-tiket-form" class="mt-4 bg-surface" style="padding:1.35rem 1.4rem;display:flex;flex-direction:column;gap:1rem;">
                 <div>
                     <label for="cek-kode" class="label text-xs">Kode tiket</label>
                     <input id="cek-kode" name="kode" type="text" value="{{ $searchCode }}" placeholder="TKT-20261125-XXXXXXXXXX" class="input mono uppercase" required>
@@ -154,7 +154,7 @@
                                 <span class="risk risk-chip risk-sedang">Menunggu</span>
                             @endif
                         </div>
-                        <dl class="mt-4 space-y-2.5 text-sm">
+                        <dl class="mt-4 text-sm" style="display:flex;flex-direction:column;gap:0.7rem;">
                             <div>
                                 <dt class="text-xs text-ink-3">Pemohon</dt>
                                 <dd class="font-medium">{{ $checkedTicket->name }} (<span class="mono">{{ $checkedTicket->username }}</span>)</dd>
