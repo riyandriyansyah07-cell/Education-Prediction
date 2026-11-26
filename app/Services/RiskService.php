@@ -112,7 +112,7 @@ class RiskService
                     'uas_score' => $r->uas_score !== null ? (float) $r->uas_score : null,
                     'assignment_source' => $r->assignment_source,
                     'is_official_khs' => $isOfficialKhs,
-                    'dpa_confirmed_tasks' => (bool) $settings->dpa_confirmed_tasks,
+                    'dpa_confirmed_tasks' => false,
                 ];
 
                 $proj = RiskModel::projectCourse($courseData);
@@ -141,7 +141,7 @@ class RiskService
             }
 
             $dpaInput = ($semester === $lastSemesterKey) ? [
-                'activity_points' => $settings->activityRiskPoints(),
+                'activity_points' => null,
                 'thesis_points' => $settings->thesisRiskPoints((int) $semester),
             ] : [];
 

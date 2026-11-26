@@ -78,15 +78,6 @@
                         </select>
                     </div>
                     <div>
-                        <label for="dpa_activity_level" class="label">Keaktifan (bobot 10%)</label>
-                        <select id="dpa_activity_level" name="dpa_activity_level" class="input">
-                            <option value="">Belum dinilai</option>
-                            <option value="aktif" @selected($setting->dpa_activity_level === 'aktif')>Aktif</option>
-                            <option value="cukup" @selected($setting->dpa_activity_level === 'cukup')>Cukup</option>
-                            <option value="kurang" @selected($setting->dpa_activity_level === 'kurang')>Kurang</option>
-                        </select>
-                    </div>
-                    <div>
                         <label for="thesis_status" class="label">Tugas akhir (Sem 7+)</label>
                         <select id="thesis_status" name="thesis_status" class="input">
                             <option value="">Belum diisi</option>
@@ -100,11 +91,7 @@
                         <label for="last_guidance_at" class="label">Bimbingan terakhir</label>
                         <input id="last_guidance_at" name="last_guidance_at" type="date" value="{{ $setting->last_guidance_at?->toDateString() }}" class="input">
                     </div>
-                    <label style="display:flex; align-items:flex-start; gap:0.55rem; padding-top:0.15rem;" class="text-xs text-ink-2">
-                        <input type="checkbox" name="dpa_confirmed_tasks" value="1" class="size-4 accent-[var(--accent)]" style="margin-top:1px; flex-shrink:0;" @checked($setting->dpa_confirmed_tasks)>
-                        <span>Rekap nilai tugas sudah dikonfirmasi DPA</span>
-                    </label>
-                    <button type="submit" class="btn btn-primary btn-sm w-full" style="margin-top:0.25rem;">Perbarui status &amp; skor</button>
+                    <button type="submit" class="btn btn-primary btn-sm w-full" style="margin-top:0.25rem;">Perbarui status</button>
                 </form>
                 <p class="mt-4 border-t border-line pt-3 text-xs text-ink-3">Akses aktif atas izin mahasiswa dan tercatat di log akses.</p>
             </section>
@@ -262,31 +249,16 @@
                     <label for="follow_up_action" class="label">Catatan &amp; tindak lanjut</label>
                     <textarea id="follow_up_action" name="follow_up_action" rows="3" class="input py-2" placeholder="Langkah yang disepakati bersama mahasiswa..." required>{{ old('follow_up_action') }}</textarea>
                 </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <label for="activity_assessment" class="label">Keaktifan mahasiswa</label>
-                        <select id="activity_assessment" name="activity_assessment" class="input">
-                            <option value="">Tidak diubah</option>
-                            <option value="aktif" @selected($setting->dpa_activity_level === 'aktif')>Aktif</option>
-                            <option value="cukup" @selected($setting->dpa_activity_level === 'cukup')>Cukup</option>
-                            <option value="kurang" @selected($setting->dpa_activity_level === 'kurang')>Kurang</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="thesis_status_note" class="label">Tugas akhir (Sem 7+)</label>
-                        <select id="thesis_status_note" name="thesis_status" class="input">
-                            <option value="">Belum relevan</option>
-                            <option value="belum_mulai" @selected($setting->thesis_status === 'belum_mulai')>Belum mulai</option>
-                            <option value="proposal" @selected($setting->thesis_status === 'proposal')>Proposal</option>
-                            <option value="pengerjaan" @selected($setting->thesis_status === 'pengerjaan')>Pengerjaan skripsi/capstone</option>
-                            <option value="sidang_terjadwal" @selected($setting->thesis_status === 'sidang_terjadwal')>Sidang terjadwal / selesai</option>
-                        </select>
-                    </div>
+                <div>
+                    <label for="thesis_status_note" class="label">Tugas akhir (Sem 7+)</label>
+                    <select id="thesis_status_note" name="thesis_status" class="input">
+                        <option value="">Belum relevan</option>
+                        <option value="belum_mulai" @selected($setting->thesis_status === 'belum_mulai')>Belum mulai</option>
+                        <option value="proposal" @selected($setting->thesis_status === 'proposal')>Proposal</option>
+                        <option value="pengerjaan" @selected($setting->thesis_status === 'pengerjaan')>Pengerjaan skripsi/capstone</option>
+                        <option value="sidang_terjadwal" @selected($setting->thesis_status === 'sidang_terjadwal')>Sidang terjadwal / selesai</option>
+                    </select>
                 </div>
-                <label style="display:flex; align-items:flex-start; gap:0.55rem;" class="text-xs text-ink-2">
-                    <input type="checkbox" name="confirmed_course_scores" value="1" class="size-4 accent-[var(--accent)]" style="margin-top:1px; flex-shrink:0;" @checked($setting->dpa_confirmed_tasks)>
-                    <span>Konfirmasi nilai tugas/UTS semester berjalan sudah sesuai.</span>
-                </label>
                 <div>
                     <button type="submit" class="btn btn-primary btn-sm">Simpan catatan</button>
                 </div>
@@ -301,9 +273,6 @@
                                 <span class="mono text-xs text-ink-3">{{ $note->guidance_date?->translatedFormat('j M Y') }} &middot; {{ $note->followUpLabel() }}</span>
                             </div>
                             <p class="mt-1.5 text-sm text-ink-2">{{ $note->follow_up_action }}</p>
-                            @if ($note->activity_assessment)
-                                <p class="mt-1 text-xs text-ink-3">Keaktifan: {{ $note->activityLabel() }}</p>
-                            @endif
                         </li>
                     @endforeach
                 </ul>

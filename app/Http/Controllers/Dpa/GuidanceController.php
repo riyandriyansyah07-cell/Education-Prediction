@@ -256,7 +256,7 @@ class GuidanceController extends Controller
         ]);
     }
 
-    /** Simpan penilaian DPA (keaktifan 3 tingkat, status tugas akhir, tanggal bimbingan, status tindak lanjut, konfirmasi tugas). */
+    /** Simpan pemantauan pendampingan DPA (status tindak lanjut, status tugas akhir, tanggal bimbingan terakhir). */
     public function updateMonitoring(Request $request, User $student, RiskService $risk): RedirectResponse
     {
         $dpa = $request->user();
@@ -269,27 +269,20 @@ class GuidanceController extends Controller
                 StudentSetting::STATUS_SUDAH,
                 StudentSetting::STATUS_SELESAI,
             ])],
-            'dpa_activity_level' => ['nullable', Rule::in([
-                StudentSetting::ACTIVITY_AKTIF,
-                StudentSetting::ACTIVITY_CUKUP,
-                StudentSetting::ACTIVITY_KURANG,
-            ])],
             'thesis_status' => ['nullable', 'string', 'max:24'],
             'last_guidance_at' => ['nullable', 'date'],
-            'dpa_confirmed_tasks' => ['nullable', 'boolean'],
         ]);
 
         $ref = $student->student_ref;
-        $confirmed = $request->boolean('dpa_confirmed_tasks');
 
         StudentSetting::updateOrCreate(
             ['student_ref' => $ref],
             [
                 'follow_up_status' => $data['follow_up_status'],
-                'dpa_activity_level' => ($data['dpa_activity_level'] ?? '') !== '' ? $data['dpa_activity_level'] : null,
+                'dpa_activity_level' => null,
                 'thesis_status' => ($data['thesis_status'] ?? '') !== '' ? $data['thesis_status'] : null,
                 'last_guidance_at' => ($data['last_guidance_at'] ?? '') !== '' ? $data['last_guidance_at'] : null,
-                'dpa_confirmed_tasks' => $confirmed,
+                'dpa_confirmed_tasks' => false,
                 'dpa_updated_by' => $dpa->id,
             ]
         );
@@ -298,7 +291,7 @@ class GuidanceController extends Controller
         $risk->refresh($ref, false);
 
         return redirect()->route('dpa.bimbingan.show', $student)
-            ->with('status', 'Status pemantauan dan penilaian DPA diperbarui. Skor risiko telah disesuaikan.');
+            ->with('status', 'Status pemantauan pendampingan DPA berhasil diperbarui.');
     }
 
     /** Simpan catatan pertemuan bimbingan baru (guidance_notes). */
@@ -317,18 +310,11 @@ class GuidanceController extends Controller
                 StudentSetting::STATUS_SUDAH,
                 StudentSetting::STATUS_SELESAI,
             ])],
-            'activity_assessment' => ['nullable', Rule::in([
-                StudentSetting::ACTIVITY_AKTIF,
-                StudentSetting::ACTIVITY_CUKUP,
-                StudentSetting::ACTIVITY_KURANG,
-            ])],
             'thesis_status' => ['nullable', 'string', 'max:24'],
-            'confirmed_course_scores' => ['nullable', 'boolean'],
         ]);
 
         $ref = $student->student_ref;
         $latestSemester = RiskResult::where('student_ref', $ref)->max('semester');
-        $confirmedScores = $request->boolean('confirmed_course_scores');
 
         GuidanceNote::create([
             'student_ref' => $ref,
@@ -338,9 +324,9 @@ class GuidanceController extends Controller
             'topic' => $data['topic'],
             'follow_up_action' => $data['follow_up_action'],
             'follow_up_status' => $data['follow_up_status'],
-            'activity_assessment' => ($data['activity_assessment'] ?? '') !== '' ? $data['activity_assessment'] : null,
+            'activity_assessment' => null,
             'thesis_status' => ($data['thesis_status'] ?? '') !== '' ? $data['thesis_status'] : null,
-            'confirmed_course_scores' => $confirmedScores,
+            'confirmed_course_scores' => false,
         ]);
 
         $settingUpdate = [
@@ -348,14 +334,8 @@ class GuidanceController extends Controller
             'last_guidance_at' => $data['guidance_date'],
             'dpa_updated_by' => $dpa->id,
         ];
-        if (! empty($data['activity_assessment'])) {
-            $settingUpdate['dpa_activity_level'] = $data['activity_assessment'];
-        }
         if (! empty($data['thesis_status'])) {
             $settingUpdate['thesis_status'] = $data['thesis_status'];
-        }
-        if ($confirmedScores) {
-            $settingUpdate['dpa_confirmed_tasks'] = true;
         }
 
         StudentSetting::updateOrCreate(['student_ref' => $ref], $settingUpdate);

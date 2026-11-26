@@ -179,12 +179,12 @@
 
             <div class="mt-card">
                 <div class="flex items-center justify-between gap-2">
-                    <h3 class="font-medium text-ink">Catatan DPA</h3>
-                    <span class="mt-badge mono">10%</span>
+                    <h3 class="font-medium text-ink">Pendampingan DPA</h3>
+                    <span class="mt-badge">Konsultasi &amp; Saran</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
-                    <li>Keaktifan mahasiswa saat bimbingan akademik (Aktif, Cukup, atau Kurang).</li>
-                    <li>Khusus <strong>semester 7 ke atas</strong>, ikut memantau rutinitas bimbingan tugas akhir/skripsi.</li>
+                    <li>DPA berperan sebagai pendamping akademik dan pemberi saran (tidak mengubah nilai keaktifan kelas mahasiswa).</li>
+                    <li>Khusus <strong>semester 7 ke atas</strong>, ikut memantau status dan rutinitas bimbingan tugas akhir/skripsi.</li>
                 </ul>
             </div>
 
@@ -313,12 +313,6 @@
                                 <td class="mono">&le; +3 SKS</td>
                                 <td class="mono">+4 s.d. +6 SKS</td>
                                 <td class="mono">&gt; +6 SKS</td>
-                            </tr>
-                            <tr>
-                                <td class="font-medium text-ink">Keaktifan bimbingan (DPA)</td>
-                                <td>Aktif</td>
-                                <td>Cukup</td>
-                                <td>Kurang</td>
                             </tr>
                             <tr>
                                 <td class="font-medium text-ink">Tugas akhir sem 7+ (DPA)</td>
