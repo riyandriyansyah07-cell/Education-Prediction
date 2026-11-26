@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Mail\ReminderMail;
 use App\Models\Consent;
+use App\Models\GuidanceNote;
 use App\Models\RiskResult;
 use App\Models\StudentSetting;
 use Illuminate\Contracts\View\View;
@@ -12,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -22,6 +24,15 @@ class PrivacyController extends Controller
         $user = $request->user();
         $ref = $user->student_ref;
 
+        $guidanceNotes = Schema::hasTable('guidance_notes')
+            ? GuidanceNote::with('dpa')
+                ->where('student_ref', $ref)
+                ->orderByDesc('guidance_date')
+                ->orderByDesc('id')
+                ->limit(3)
+                ->get()
+            : collect();
+
         return view('student.privacy', [
             'user' => $user,
             'dpa' => $user->dpa,
@@ -29,6 +40,7 @@ class PrivacyController extends Controller
                 ? Consent::where('student_ref', $ref)->where('dpa_id', $user->dpa_id)->first()
                 : null,
             'settings' => StudentSetting::firstOrCreate(['student_ref' => $ref]),
+            'guidanceNotes' => $guidanceNotes,
         ]);
     }
 
