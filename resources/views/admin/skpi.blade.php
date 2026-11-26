@@ -135,6 +135,38 @@
     .skpi-adm-toggle > summary:hover {
         color: var(--ink);
     }
+    .skpi-filter-bar {
+        margin-top: 1.15rem;
+        padding: 0.75rem 0.9rem;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.55rem;
+    }
+    .skpi-filter-bar .input {
+        padding: 0.42rem 0.7rem;
+        font-size: 12.5px;
+        min-height: 36px;
+    }
+    .skpi-filter-search {
+        flex: 1 1 200px;
+        min-width: 170px;
+    }
+    .skpi-filter-select {
+        flex: 0 1 auto;
+        width: auto;
+        min-width: 128px;
+    }
+    @media (max-width: 640px) {
+        .skpi-filter-search,
+        .skpi-filter-select {
+            flex: 1 1 100%;
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="flex flex-wrap items-end justify-between gap-4">
@@ -145,37 +177,68 @@
         </p>
     </div>
 
-    @php $periodFilter = $periodFilter ?? 'semua'; @endphp
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.45rem;">
-        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-            @foreach ([
-                'semua' => 'Semua ('.$counts['semua'].')',
-                'menunggu' => 'Menunggu ('.$counts['menunggu'].')',
-                'terverifikasi' => 'Terverifikasi ('.$counts['terverifikasi'].')',
-                'ditolak' => 'Perlu diperbaiki ('.$counts['ditolak'].')',
-            ] as $key => $label)
-                <a href="{{ route('admin.skpi', ['status' => $key, 'period' => $periodFilter]) }}"
-                   class="btn btn-sm {{ $statusFilter === $key ? 'btn-primary' : 'btn-quiet' }}">
-                    {{ $label }}
-                </a>
-            @endforeach
-        </div>
-
-        <div style="display:inline-flex;flex-wrap:wrap;align-items:center;gap:0.25rem;padding:0.22rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);">
-            @foreach ([
-                'semua' => 'Semua waktu',
-                'hari' => 'Hari ini',
-                'minggu' => 'Minggu ini',
-                'bulan' => 'Bulan ini',
-            ] as $pKey => $pLabel)
-                <a href="{{ route('admin.skpi', ['status' => $statusFilter, 'period' => $pKey]) }}"
-                   style="padding:0.28rem 0.65rem;border-radius:7px;font-size:12px;font-weight:{{ $periodFilter === $pKey ? '600' : '500' }};text-decoration:none;color:{{ $periodFilter === $pKey ? 'var(--accent)' : 'var(--ink-2)' }};background:{{ $periodFilter === $pKey ? 'var(--accent-soft)' : 'transparent' }};">
-                    {{ $pLabel }}
-                </a>
-            @endforeach
-        </div>
+    @php
+        $periodFilter = $periodFilter ?? 'semua';
+        $yearFilter = $yearFilter ?? 0;
+        $typeFilter = $typeFilter ?? 'semua';
+        $search = $search ?? '';
+        $availableYears = $availableYears ?? [];
+        $hasActiveFilter = $periodFilter !== 'semua' || $yearFilter > 0 || $typeFilter !== 'semua' || $search !== '';
+        $baseQuery = array_filter([
+            'period' => $periodFilter !== 'semua' ? $periodFilter : null,
+            'year' => $yearFilter > 0 ? $yearFilter : null,
+            'type' => $typeFilter !== 'semua' ? $typeFilter : null,
+            'q' => $search !== '' ? $search : null,
+        ]);
+    @endphp
+    <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+        @foreach ([
+            'semua' => 'Semua ('.$counts['semua'].')',
+            'menunggu' => 'Menunggu ('.$counts['menunggu'].')',
+            'terverifikasi' => 'Terverifikasi ('.$counts['terverifikasi'].')',
+            'ditolak' => 'Perlu diperbaiki ('.$counts['ditolak'].')',
+        ] as $key => $label)
+            <a href="{{ route('admin.skpi', array_merge($baseQuery, ['status' => $key])) }}"
+               class="btn btn-sm {{ $statusFilter === $key ? 'btn-primary' : 'btn-quiet' }}">
+                {{ $label }}
+            </a>
+        @endforeach
     </div>
 </div>
+
+{{-- Bar Filter Ringkas: Cari Nama/NIM + Periode + Tahun + Jenis SKPI --}}
+<form method="GET" action="{{ route('admin.skpi') }}" class="skpi-filter-bar" aria-label="Filter bukti SKPI">
+    <input type="hidden" name="status" value="{{ $statusFilter }}">
+    <input type="search" name="q" value="{{ $search }}" class="input skpi-filter-search" placeholder="Cari nama atau NIM mahasiswa..." aria-label="Cari nama atau NIM">
+
+    <select name="period" class="input skpi-filter-select" aria-label="Filter periode" onchange="this.form.submit()">
+        <option value="semua" @selected($periodFilter === 'semua')>Semua waktu</option>
+        <option value="hari" @selected($periodFilter === 'hari')>Hari ini</option>
+        <option value="minggu" @selected($periodFilter === 'minggu')>Minggu ini</option>
+        <option value="bulan" @selected($periodFilter === 'bulan')>Bulan ini</option>
+    </select>
+
+    <select name="year" class="input skpi-filter-select" aria-label="Filter tahun" onchange="this.form.submit()">
+        <option value="0" @selected($yearFilter === 0)>Semua tahun</option>
+        @foreach ($availableYears as $yr)
+            <option value="{{ $yr }}" @selected($yearFilter === (int) $yr)>Tahun {{ $yr }}</option>
+        @endforeach
+    </select>
+
+    <select name="type" class="input skpi-filter-select" aria-label="Filter jenis SKPI" onchange="this.form.submit()">
+        <option value="semua" @selected($typeFilter === 'semua')>Semua jenis SKPI</option>
+        <option value="it" @selected($typeFilter === 'it')>Kompetensi IT</option>
+        <option value="baps" @selected($typeFilter === 'baps')>BAPS</option>
+        <option value="pkm" @selected($typeFilter === 'pkm')>Sertifikat PKM</option>
+        <option value="toefl" @selected($typeFilter === 'toefl')>TOEFL UHAMKA</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary btn-sm" style="min-height:36px;padding:0.4rem 0.85rem;font-size:12.5px;">Cari</button>
+
+    @if ($hasActiveFilter)
+        <a href="{{ route('admin.skpi', ['status' => $statusFilter]) }}" class="btn btn-quiet btn-sm" style="min-height:36px;padding:0.4rem 0.75rem;font-size:12px;">Reset</a>
+    @endif
+</form>
 
 @if ($docs->isEmpty())
     <section class="mt-8 rounded-md border border-dashed border-line-strong bg-surface p-8 text-center">
@@ -209,7 +272,7 @@
                             {{ $stu?->program_studi ?: 'Prodi -' }}
                             @if ($stu?->dpa) &middot; DPA {{ $stu->dpa->name }} @endif
                             &middot; <span class="mono" title="{{ $doc->original_name }}">{{ $extLabel }} {{ $doc->formattedSize() }}</span>
-                            &middot; {{ $doc->updated_at?->translatedFormat('j M, H:i') }}
+                            &middot; {{ $doc->updated_at ? $doc->updated_at->translatedFormat($doc->updated_at->year === now()->year ? 'j M, H:i' : 'j M Y, H:i') : '-' }}
                             @if ($doc->verifier)
                                 &middot; {{ $doc->verification_status === 'terverifikasi' ? 'ACC' : 'Ditinjau' }} <strong class="text-ink-2">{{ $doc->verifier->name }}</strong>@if ($doc->verification_note) ("{{ $doc->verification_note }}")@endif
                             @endif
@@ -260,5 +323,11 @@
             </article>
         @endforeach
     </div>
+
+    @if (method_exists($docs, 'hasPages') && $docs->hasPages())
+        <div class="mt-5">
+            {{ $docs->links() }}
+        </div>
+    @endif
 @endif
 @endsection

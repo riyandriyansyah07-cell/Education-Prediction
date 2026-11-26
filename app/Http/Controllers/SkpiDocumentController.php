@@ -88,7 +88,7 @@ class SkpiDocumentController extends Controller
             ->with('status', "Berkas bukti {$label} dihapus.");
     }
 
-    /** Halaman antrean Verifikasi Bukti SKPI untuk Admin Sekretariat (filter status & periode waktu). */
+    /** Halaman antrean Verifikasi Bukti SKPI untuk Admin Sekretariat (pencarian, periode, tahun, jenis, & paginasi). */
     public function adminIndex(Request $request): View
     {
         $statusFilter = (string) $request->query('status', 'semua');
@@ -101,12 +101,45 @@ class SkpiDocumentController extends Controller
             $periodFilter = 'semua';
         }
 
+        $yearFilter = (int) $request->query('year', 0);
+        if ($yearFilter < 2000 || $yearFilter > 2100) {
+            $yearFilter = 0;
+        }
+
+        $typeFilter = (string) $request->query('type', 'semua');
+        if (! in_array($typeFilter, array_merge(['semua'], SkpiDocument::TYPES), true)) {
+            $typeFilter = 'semua';
+        }
+
+        $search = trim((string) $request->query('q', ''));
+
         $docs = collect();
         $counts = ['semua' => 0, 'menunggu' => 0, 'terverifikasi' => 0, 'ditolak' => 0];
         $studentsByRef = collect();
+        $availableYears = [];
 
         if (Schema::hasTable('skpi_documents')) {
+            // Daftar tahun unik yang tersedia di database (lintas PostgreSQL & SQLite)
+            $availableYears = SkpiDocument::query()
+                ->pluck('updated_at')
+                ->filter()
+                ->map(fn ($dt) => (int) $dt->year)
+                ->unique()
+                ->sortDesc()
+                ->values()
+                ->all();
+
             $query = SkpiDocument::with('verifier');
+
+            if ($typeFilter !== 'semua') {
+                $query->where('type', $typeFilter);
+            }
+            if ($yearFilter > 0) {
+                $query->whereBetween('updated_at', [
+                    now()->setDate($yearFilter, 1, 1)->startOfDay(),
+                    now()->setDate($yearFilter, 12, 31)->endOfDay(),
+                ]);
+            }
             if ($periodFilter === 'hari') {
                 $query->where('updated_at', '>=', now()->startOfDay());
             } elseif ($periodFilter === 'minggu') {
@@ -115,21 +148,42 @@ class SkpiDocumentController extends Controller
                 $query->where('updated_at', '>=', now()->startOfMonth());
             }
 
-            $all = $query
+            if ($search !== '') {
+                $term = mb_strtolower($search);
+                $matchedRefs = User::where('role', User::ROLE_STUDENT)
+                    ->where(function ($q) use ($term) {
+                        $q->whereRaw('LOWER(name) LIKE ?', ['%'.$term.'%'])
+                            ->orWhereRaw('LOWER(username) LIKE ?', ['%'.$term.'%']);
+                    })
+                    ->pluck('student_ref')
+                    ->filter()
+                    ->all();
+
+                if ($matchedRefs === []) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->whereIn('student_ref', $matchedRefs);
+                }
+            }
+
+            // Hitung jumlah tiap status sesuai filter aktif (sebelum filter status & paginasi)
+            $statusRows = (clone $query)->pluck('verification_status');
+            $counts['semua'] = $statusRows->count();
+            $counts['menunggu'] = $statusRows->filter(fn ($st) => $st === SkpiDocument::STATUS_MENUNGGU)->count();
+            $counts['terverifikasi'] = $statusRows->filter(fn ($st) => $st === SkpiDocument::STATUS_TERVERIFIKASI)->count();
+            $counts['ditolak'] = $statusRows->filter(fn ($st) => $st === SkpiDocument::STATUS_DITOLAK)->count();
+
+            if ($statusFilter !== 'semua') {
+                $query->where('verification_status', $statusFilter);
+            }
+
+            $docs = $query
                 ->orderByRaw("CASE verification_status WHEN 'menunggu' THEN 0 WHEN 'ditolak' THEN 1 ELSE 2 END")
                 ->orderByDesc('updated_at')
-                ->get();
+                ->paginate(20)
+                ->withQueryString();
 
-            $counts['semua'] = $all->count();
-            $counts['menunggu'] = $all->where('verification_status', SkpiDocument::STATUS_MENUNGGU)->count();
-            $counts['terverifikasi'] = $all->where('verification_status', SkpiDocument::STATUS_TERVERIFIKASI)->count();
-            $counts['ditolak'] = $all->where('verification_status', SkpiDocument::STATUS_DITOLAK)->count();
-
-            $docs = $statusFilter === 'semua'
-                ? $all
-                : $all->where('verification_status', $statusFilter)->values();
-
-            $refs = $docs->pluck('student_ref')->unique()->all();
+            $refs = collect($docs->items())->pluck('student_ref')->unique()->all();
             if ($refs !== []) {
                 $studentsByRef = User::with('dpa')
                     ->where('role', User::ROLE_STUDENT)
@@ -144,6 +198,10 @@ class SkpiDocumentController extends Controller
             'counts' => $counts,
             'statusFilter' => $statusFilter,
             'periodFilter' => $periodFilter,
+            'yearFilter' => $yearFilter,
+            'typeFilter' => $typeFilter,
+            'search' => $search,
+            'availableYears' => $availableYears,
             'studentsByRef' => $studentsByRef,
         ]);
     }
