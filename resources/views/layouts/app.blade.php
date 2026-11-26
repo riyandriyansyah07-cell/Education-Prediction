@@ -26,6 +26,10 @@
             ['admin.catatan', 'Catatan akses', 'eye'],
         ],
     };
+
+    $pendingTicketsCount = $user->isAdmin()
+        ? \App\Models\AccountTicket::where('status', \App\Models\AccountTicket::STATUS_PENDING)->count()
+        : 0;
 @endphp
 
 @section('body')
@@ -59,7 +63,13 @@
         <nav class="mt-8 flex flex-col gap-1" aria-label="Menu utama">
             @foreach ($nav as [$route, $label, $icon])
                 <a href="{{ route($route) }}" class="nav-link" @if (request()->routeIs($route.'*')) aria-current="page" @endif>
-                    <x-icon :name="$icon" /> {{ $label }}
+                    <x-icon :name="$icon" />
+                    <span class="truncate">{{ $label }}</span>
+                    @if ($route === 'admin.tiket' && $pendingTicketsCount > 0)
+                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" title="{{ $pendingTicketsCount }} tiket menunggu verifikasi">
+                            {{ $pendingTicketsCount > 99 ? '99+' : $pendingTicketsCount }}
+                        </span>
+                    @endif
                 </a>
             @endforeach
         </nav>
