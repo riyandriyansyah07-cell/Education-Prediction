@@ -88,7 +88,8 @@
     }
     .val-chip.is-active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
     .val-export-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
-    .val-filter-grid-ext { display: grid; gap: 0.75rem; grid-template-columns: 1.35fr 0.9fr 0.9fr 0.9fr 0.7fr auto; align-items: end; }
+    .val-filter-grid-ext { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); align-items: end; }
+    .val-filter-grid-ext select.input { width: 100%; min-width: 0; padding-right: 2rem; }
     .val-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; width: 100%; }
     .val-tbl th, .val-tbl td { padding: 0.65rem 0.7rem; vertical-align: middle; }
     .val-tbl th.num, .val-tbl td.num { text-align: right; white-space: nowrap; }
@@ -268,28 +269,23 @@
 
 {{-- FILTER & PENCARIAN --}}
 <section class="val-card mt-6">
-    <div class="val-chip-row">
-        @php
-            $statusTabs = [
-                '' => 'Semua ('.$stats['total'].')',
-                'selisih' => 'Prioritas Selisih ('.$stats['disagreement'].')',
-                'belum' => 'Belum Divalidasi ('.$stats['unvalidated'].')',
-                'sesuai' => 'Sesuai ('.$stats['sesuai'].')',
-                'perlu_koreksi' => 'Perlu Koreksi ('.$stats['koreksi'].')',
-            ];
-        @endphp
-        @foreach ($statusTabs as $key => $label)
-            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['status' => $key]))) }}"
-               class="val-chip {{ $filters['status'] === $key ? 'is-active' : '' }}">{{ $label }}</a>
-        @endforeach
-    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="val-chip-row">
+            @php
+                $statusTabs = [
+                    '' => 'Semua ('.$stats['total'].')',
+                    'selisih' => 'Prioritas Selisih ('.$stats['disagreement'].')',
+                    'belum' => 'Belum Divalidasi ('.$stats['unvalidated'].')',
+                    'sesuai' => 'Sesuai ('.$stats['sesuai'].')',
+                    'perlu_koreksi' => 'Perlu Koreksi ('.$stats['koreksi'].')',
+                ];
+            @endphp
+            @foreach ($statusTabs as $key => $label)
+                <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['status' => $key, 'page' => 1]))) }}"
+                   class="val-chip {{ $filters['status'] === $key ? 'is-active' : '' }}">{{ $label }}</a>
+            @endforeach
+        </div>
 
-    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-2">
-        <span>
-            Menampilkan <strong>{{ $pagination['from'] }}&ndash;{{ $pagination['to'] }}</strong> dari
-            <strong>{{ number_format($pagination['total']) }}</strong> hasil terfilter
-            (paginasi server siap untuk ribuan data).
-        </span>
         <div class="val-export-group">
             <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'kartu', 'page' => 1]))) }}"
                class="val-chip {{ $filters['tampilan'] === 'kartu' ? 'is-active' : '' }}">Mode Kartu Audit</a>
@@ -324,10 +320,10 @@
             <label for="v-sort" class="label text-xs">Urutkan</label>
             <select id="v-sort" name="sort" class="input h-9 text-xs">
                 <option value="prioritas" @selected($filters['sort'] === 'prioritas')>Prioritas audit</option>
-                <option value="delta" @selected($filters['sort'] === 'delta')>Selisih skor terbesar</option>
+                <option value="delta" @selected($filters['sort'] === 'delta')>Selisih terbesar</option>
                 <option value="ai_score" @selected($filters['sort'] === 'ai_score')>Skor AI tertinggi</option>
                 <option value="rule_score" @selected($filters['sort'] === 'rule_score')>Skor Rumus tertinggi</option>
-                <option value="nama" @selected($filters['sort'] === 'nama')>Nama mahasiswa (A–Z)</option>
+                <option value="nama" @selected($filters['sort'] === 'nama')>Nama (A–Z)</option>
                 <option value="semester" @selected($filters['sort'] === 'semester')>Semester terbaru</option>
             </select>
         </div>
