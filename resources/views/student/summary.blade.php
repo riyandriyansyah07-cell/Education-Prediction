@@ -42,6 +42,42 @@
         margin-top: 3px;
         white-space: nowrap;
     }
+    /* Ukuran kotak input seragam & angka selalu jelas pada Tambah Mata Kuliah Baru (Desktop) */
+    .addmk-tbl th,
+    .addmk-tbl td {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        vertical-align: middle;
+    }
+    .addmk-tbl td.addmk-code .input {
+        width: 6.25rem !important;
+        min-width: 6.25rem !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0.25rem 0.65rem !important;
+    }
+    .addmk-tbl td.addmk-name .input {
+        min-width: 11.5rem !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0.25rem 0.7rem !important;
+    }
+    .addmk-tbl td.addmk-num .input {
+        width: 4.5rem !important;
+        min-width: 4.5rem !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0.25rem 0.35rem !important;
+        text-align: center;
+        font-size: 0.875rem !important;
+        margin: 0 auto;
+        -moz-appearance: textfield;
+    }
+    .addmk-tbl td.addmk-num input[type="number"]::-webkit-outer-spin-button,
+    .addmk-tbl td.addmk-num input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
     @media (max-width: 860px) {
         .sum-card-wrap {
             padding: 1.1rem !important;
