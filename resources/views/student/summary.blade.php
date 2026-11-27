@@ -390,7 +390,7 @@
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h2 id="input-cepat" class="text-xl font-medium">Rincian Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
-                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai mata kuliah untuk menghitung proyeksi N &amp; target UAS minimal (C: 56 / B: 68 / A: 80).</p>
+                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai mata kuliah untuk menghitung nilai rata-rata &amp; target UAS minimal (C: 56 / B: 68 / A: 80).</p>
                 </div>
             </div>
 
@@ -408,7 +408,7 @@
                                 <th class="px-2 py-3 text-center">Tugas</th>
                                 <th class="px-2 py-3 text-center">UTS</th>
                                 <th class="px-2 py-3 text-center">UAS</th>
-                                <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Rata-rata</th>
                                 <th class="px-3 py-3 text-center whitespace-nowrap">Target UAS</th>
                                 <th class="px-3 py-3 text-center">Risiko</th>
                             </tr>
@@ -444,7 +444,7 @@
                                     <td class="sum-td-inp sum-td-inp-wide px-2 py-3 text-center" data-label="UAS">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
-                                    <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Nilai N">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
+                                    <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Rata-rata">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
                                     <td class="sum-td-meta sum-td-uasmin num px-3 py-3 text-center text-xs" data-label="Target UAS">
                                         @if ($c->min_uas_for_c !== null)
                                             @php

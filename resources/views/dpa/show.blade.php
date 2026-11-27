@@ -114,7 +114,7 @@
                             <th class="px-3 py-3 text-center">SKS</th>
                             <th class="px-3 py-3 text-center">Hadir</th>
                             <th class="px-3 py-3 text-center whitespace-nowrap">Aktif / Tugas / UTS / UAS</th>
-                            <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
+                            <th class="px-3 py-3 text-center whitespace-nowrap">Rata-rata</th>
                             <th class="px-3 py-3 text-center whitespace-nowrap">UAS Min</th>
                             <th class="px-4 py-3 text-center">Risiko</th>
                         </tr>
