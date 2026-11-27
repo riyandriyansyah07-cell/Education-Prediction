@@ -88,8 +88,8 @@
     }
     .val-chip.is-active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
     .val-export-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
-    .val-filter-grid-ext { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); align-items: end; }
-    .val-filter-grid-ext select.input { width: 100%; min-width: 0; padding-right: 2rem; }
+    .val-filter-grid-ext { display: grid; gap: 0.65rem; grid-template-columns: minmax(145px, 1.2fr) minmax(135px, 1fr) minmax(145px, 1fr) minmax(145px, 1fr) minmax(100px, 0.72fr) auto; align-items: end; }
+    .val-filter-grid-ext select.input { width: 100%; min-width: 0; padding-right: 1.75rem; }
     .val-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; width: 100%; }
     .val-tbl th, .val-tbl td { padding: 0.65rem 0.7rem; vertical-align: middle; }
     .val-tbl th.num, .val-tbl td.num { text-align: right; white-space: nowrap; }
