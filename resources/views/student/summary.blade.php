@@ -209,11 +209,11 @@
     </div>
     @if ($latest)
         <div class="no-print flex flex-wrap gap-2">
-            <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm">Metodologi</a>
+            <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm" style="border-radius:9999px !important;padding:0.42rem 0.95rem;">Metodologi</a>
             <form method="POST" action="{{ route('mhs.hitung') }}">
                 @csrf
                 <input type="hidden" name="semester" value="{{ $latest->semester }}">
-                <button class="btn btn-primary btn-sm" type="submit">Hitung ulang</button>
+                <button class="btn btn-primary btn-sm" type="submit" style="border-radius:9999px !important;padding:0.42rem 1rem;font-weight:600;">Hitung ulang</button>
             </form>
         </div>
     @endif
