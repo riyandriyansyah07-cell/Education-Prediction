@@ -147,4 +147,55 @@ class AdminDashboardTest extends TestCase
             'program_studi' => AccountTicket::PROGRAMS[3],
         ]);
     }
+
+    public function test_dasbor_admin_mendukung_paginasi_json_sorting_xlsx_dan_print(): void
+    {
+        [$admin] = $this->seedDashboardData();
+
+        // JSON pagination & sorting untuk ribuan data
+        $json = $this->actingAs($admin)->getJson(route('admin.dasbor', [
+            'format' => 'json',
+            'sort' => 'skor',
+            'dir' => 'desc',
+            'per_page' => 10,
+            'page' => 1,
+        ]));
+        $json->assertOk()
+            ->assertJsonPath('filtered', 2)
+            ->assertJsonPath('per_page', 10)
+            ->assertJsonPath('last_page', 1)
+            ->assertJsonPath('rows.0.username', '2303045003');
+
+        // Pastikan sorting naik (asc) membalik urutan ke skor terendah
+        $this->actingAs($admin)->getJson(route('admin.dasbor', [
+            'format' => 'json',
+            'sort' => 'skor',
+            'dir' => 'asc',
+            'per_page' => 10,
+        ]))->assertOk()
+            ->assertJsonPath('rows.0.username', '2403025011');
+
+        // CSV dengan pilihan kolom khusus
+        $csvCols = $this->actingAs($admin)->get(route('admin.dasbor.ekspor', [
+            'cols' => 'nim,nama,skor',
+        ]));
+        $csvCols->assertOk();
+        $csvBody = $csvCols->streamedContent();
+        $this->assertStringContainsString('NIM,"Nama Mahasiswa","Skor Risiko"', $csvBody);
+        $this->assertStringNotContainsString('Program Studi', $csvBody);
+
+        // Ekspor Excel (.xlsx) 2-sheet
+        $xlsx = $this->actingAs($admin)->get(route('admin.dasbor.ekspor', ['format' => 'xlsx']));
+        $xlsx->assertOk();
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            (string) $xlsx->headers->get('Content-Type')
+        );
+
+        // Pratinjau cetak / PDF
+        $this->actingAs($admin)->get(route('admin.dasbor.ekspor', ['format' => 'print']))
+            ->assertOk()
+            ->assertSee('Laporan Ringkasan')
+            ->assertSee('Aulia Azzahra');
+    }
 }

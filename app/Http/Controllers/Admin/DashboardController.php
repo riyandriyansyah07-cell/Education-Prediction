@@ -3,19 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\LlmAdvisor;
 use App\Models\AccountTicket;
-use App\Models\Consent;
 use App\Models\EnrichmentRecord;
 use App\Models\ModelVersion;
 use App\Models\RiskResult;
 use App\Models\StudentSetting;
 use App\Models\User;
+use App\Services\LlmAdvisor;
 use App\Support\EnrichmentCatalog;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DashboardController extends Controller
@@ -24,128 +29,250 @@ class DashboardController extends Controller
 
     public const UNASSIGNED_ANGKATAN = 'Tidak diketahui';
 
-    /** Dasbor eksekutif Admin: ringkasan keseluruhan pengguna, grafik prodi/angkatan, matriks kohort (Angkatan x Prodi), DPA, dan analisis risiko semua mahasiswa. */
-    public function index(Request $request): View
+    /** @var array<string,string> */
+    public const EXPORT_COLUMNS = [
+        'nim' => 'NIM',
+        'nama' => 'Nama Mahasiswa',
+        'prodi' => 'Program Studi',
+        'angkatan' => 'Angkatan',
+        'status_akun' => 'Status Akun',
+        'dpa' => 'DPA',
+        'izin_dpa' => 'Izin DPA',
+        'tingkat' => 'Tingkat Risiko',
+        'skor' => 'Skor Risiko',
+        'semester' => 'Semester',
+        'ips' => 'IPS',
+        'kehadiran' => 'Kehadiran (%)',
+        'pengayaan' => 'SKS Pengayaan Terkonversi',
+        'tindak_lanjut' => 'Status Tindak Lanjut',
+        'faktor' => 'Faktor Utama',
+    ];
+
+    /**
+     * Dasbor eksekutif Admin: ringkasan keseluruhan pengguna, grafik prodi/angkatan,
+     * matriks kohort (Angkatan x Prodi), DPA, dan tabel analisis risiko terpaginasi.
+     * Mendukung ?format=json untuk live filter, sorting, dan paginasi ribuan data tanpa reload.
+     */
+    public function index(Request $request): View|JsonResponse
     {
         $data = $this->buildDataset($request);
 
+        if ($request->query('format') === 'json') {
+            $paginated = $data['paginatedStudents'];
+
+            return response()->json([
+                'total' => $data['totals']['students'],
+                'filtered' => $data['pagination']['total'],
+                'page' => $data['pagination']['page'],
+                'per_page' => $data['pagination']['per_page'],
+                'last_page' => $data['pagination']['last_page'],
+                'from' => $data['pagination']['from'],
+                'to' => $data['pagination']['to'],
+                'sort' => $data['sort'],
+                'dir' => $data['dir'],
+                'rows' => $paginated->map(fn (array $row) => $this->serializeRowForJson($row))->values()->all(),
+            ]);
+        }
+
         $data['aiHealth'] = LlmAdvisor::healthStatus();
+        $data['exportColumns'] = self::EXPORT_COLUMNS;
 
         return view('admin.dashboard', $data);
     }
 
-    /** Ekspor CSV rekap analisis risiko seluruh mahasiswa sesuai filter aktif. */
-    public function export(Request $request): StreamedResponse
+    /**
+     * Ekspor laporan analisis risiko sesuai filter, urutan, dan kolom aktif.
+     * Mendukung format: csv (default, streaming hemat RAM), xlsx (Excel 2-sheet styled), dan print (siap cetak/PDF).
+     */
+    public function export(Request $request): StreamedResponse|BinaryFileResponse|View
     {
         $data = $this->buildDataset($request);
+        $format = strtolower((string) $request->query('format', 'csv'));
+        $selectedCols = $this->resolveSelectedColumns($request);
 
-        $rows = [[
-            'NIM',
-            'Nama Mahasiswa',
-            'Program Studi',
-            'Angkatan',
-            'Status Akun',
-            'DPA',
-            'Izin DPA',
-            'Tingkat Risiko',
-            'Skor Risiko',
-            'Semester',
-            'IPS',
-            'Kehadiran (%)',
-            'SKS Pengayaan Terkonversi',
-            'Status Tindak Lanjut',
-            'Faktor Utama',
-        ]];
-
-        foreach ($data['filteredStudents'] as $row) {
-            /** @var User $student */
-            $student = $row['student'];
-            $res = $row['result'];
-            $features = is_array($res?->features) ? $res->features : [];
-
-            $rows[] = [
-                $student->username,
-                $student->name,
-                $row['program_studi'],
-                $row['angkatan'],
-                $student->is_active ? 'Aktif' : 'Nonaktif',
-                $student->dpa?->name ?? 'Belum ditetapkan',
-                $row['consent_granted'] ? 'Diizinkan' : 'Belum',
-                strtoupper($row['level']),
-                $res ? number_format((float) $res->score, 2, '.', '') : '-',
-                $res?->semester ?? '-',
-                isset($features['ips']) ? number_format((float) $features['ips'], 2, '.', '') : '-',
-                isset($features['attendance']) ? number_format((float) $features['attendance'], 1, '.', '') : '-',
-                $row['enrichment_converted_sks'].' / '.EnrichmentCatalog::TARGET_SKS,
-                StudentSetting::followUpLabelFor($row['follow_up_status']),
-                $row['top_factor'] ?? '-',
-            ];
+        if ($format === 'print') {
+            return view('admin.dashboard-print', $data + [
+                'selectedCols' => $selectedCols,
+                'exportColumns' => self::EXPORT_COLUMNS,
+                'generatedAt' => now(),
+            ]);
         }
 
-        $stream = fopen('php://temp', 'r+');
-        fwrite($stream, "\xEF\xBB\xBF");
-        foreach ($rows as $r) {
-            fputcsv($stream, $r);
+        if ($format === 'xlsx') {
+            return $this->exportXlsx($data, $selectedCols);
         }
-        rewind($stream);
-        $csv = (string) stream_get_contents($stream);
-        fclose($stream);
 
+        return $this->exportCsvStream($data, $selectedCols);
+    }
+
+    /**
+     * Streaming CSV langsung ke php://output per baris agar sanggup mengekspor ribuan data tanpa membebani RAM.
+     *
+     * @param  array<string,mixed>  $data
+     * @param  list<string>  $selectedCols
+     */
+    private function exportCsvStream(array $data, array $selectedCols): StreamedResponse
+    {
         $filename = 'rekap-analisis-risiko-mahasiswa-'.now()->format('Ymd-His').'.csv';
+        $headers = array_map(fn (string $key) => self::EXPORT_COLUMNS[$key], $selectedCols);
 
-        return response()->streamDownload(fn () => print ($csv), $filename, [
+        return response()->streamDownload(function () use ($data, $selectedCols, $headers) {
+            $stream = fopen('php://output', 'w');
+            if ($stream === false) {
+                return;
+            }
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, $headers);
+
+            foreach ($data['filteredStudents'] as $row) {
+                $mapped = $this->mapRowForExport($row, neutralizeCsv: true);
+                $line = [];
+                foreach ($selectedCols as $colKey) {
+                    $line[] = $mapped[$colKey] ?? '-';
+                }
+                fputcsv($stream, $line);
+            }
+
+            fclose($stream);
+        }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
     /**
-     * Kumpulkan seluruh metrik agregasi dan daftar mahasiswa terfilter.
+     * Ekspor Excel (.xlsx) 2 sheet menggunakan OpenSpout streaming writer:
+     * Sheet 1: Ringkasan Eksekutif & Matriks Kohort; Sheet 2: Data Mahasiswa Terfilter.
+     *
+     * @param  array<string,mixed>  $data
+     * @param  list<string>  $selectedCols
+     */
+    private function exportXlsx(array $data, array $selectedCols): BinaryFileResponse
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'rekap_risiko_').'.xlsx';
+        $writer = new XlsxWriter;
+        $writer->openToFile($tmpFile);
+
+        $titleStyle = (new Style)->setFontBold()->setFontSize(13)->setFontColor('0F172A');
+        $headerStyle = (new Style)->setFontBold()->setFontColor('FFFFFF')->setBackgroundColor('0F766E');
+        $subHeaderStyle = (new Style)->setFontBold()->setFontColor('0F172A')->setBackgroundColor('E2E8F0');
+        $highStyle = (new Style)->setFontBold()->setFontColor('B91C1C')->setBackgroundColor('FEE2E2');
+        $medStyle = (new Style)->setFontBold()->setFontColor('B45309')->setBackgroundColor('FEF3C7');
+        $lowStyle = (new Style)->setFontColor('15803D')->setBackgroundColor('DCFCE7');
+
+        // Sheet 1: Ringkasan Eksekutif & Matriks Kohort
+        $summarySheet = $writer->getCurrentSheet();
+        $summarySheet->setName('Ringkasan Eksekutif');
+
+        $writer->addRow(Row::fromValues(['LAPORAN ANALISIS RISIKO AKADEMIK — FTII UHAMKA'], $titleStyle));
+        $writer->addRow(Row::fromValues(['Waktu Ekspor', now()->format('d/m/Y H:i:s'), 'Total Data Terfilter', $data['filteredStudents']->count().' dari '.$data['totals']['students'].' mahasiswa']));
+        $activeFilters = array_filter($data['filters']);
+        $filterDesc = $activeFilters === []
+            ? 'Semua mahasiswa (tanpa filter)'
+            : implode(' | ', array_map(fn ($k, $v) => strtoupper((string) $k).': '.$v, array_keys($activeFilters), $activeFilters));
+        $writer->addRow(Row::fromValues(['Filter Aktif', $filterDesc]));
+        $writer->addRow(Row::fromValues([]));
+
+        $writer->addRow(Row::fromValues(['Ringkasan Proporsi Risiko', 'Jumlah Mahasiswa', 'Persentase (%)'], $headerStyle));
+        $writer->addRow(Row::fromValues(['Risiko Tinggi', $data['riskCounts']['tinggi'], $data['riskPcts']['tinggi'].'%'], $highStyle));
+        $writer->addRow(Row::fromValues(['Risiko Sedang', $data['riskCounts']['sedang'], $data['riskPcts']['sedang'].'%'], $medStyle));
+        $writer->addRow(Row::fromValues(['Risiko Rendah', $data['riskCounts']['rendah'], $data['riskPcts']['rendah'].'%'], $lowStyle));
+        $writer->addRow(Row::fromValues(['Belum Dihitung', $data['riskCounts']['belum'], $data['riskPcts']['belum'].'%']));
+        $writer->addRow(Row::fromValues(['Total Terdaftar', $data['totals']['students'], '100%'], $subHeaderStyle));
+        $writer->addRow(Row::fromValues([]));
+
+        $writer->addRow(Row::fromValues(['Angkatan', 'Program Studi', 'Total', 'Tinggi', 'Sedang', 'Rendah', 'Belum', 'Rata-rata IPS', 'Rata-rata Hadir (%)'], $headerStyle));
+        foreach ($data['cohortStats'] as $c) {
+            $writer->addRow(Row::fromValues([
+                $c['angkatan'],
+                $c['program_studi'],
+                $c['total'],
+                $c['tinggi'],
+                $c['sedang'],
+                $c['rendah'],
+                $c['belum'],
+                $c['avg_ips'] !== null ? number_format((float) $c['avg_ips'], 2, '.', '') : '-',
+                $c['avg_attendance'] !== null ? number_format((float) $c['avg_attendance'], 1, '.', '') : '-',
+            ]));
+        }
+
+        // Sheet 2: Data Mahasiswa Terfilter (Streaming)
+        $dataSheet = $writer->addNewSheetAndMakeItCurrent();
+        $dataSheet->setName('Data Mahasiswa');
+
+        $headers = array_map(fn (string $key) => self::EXPORT_COLUMNS[$key], $selectedCols);
+        $writer->addRow(Row::fromValues($headers, $headerStyle));
+
+        foreach ($data['filteredStudents'] as $row) {
+            $mapped = $this->mapRowForExport($row, neutralizeCsv: false);
+            $line = [];
+            foreach ($selectedCols as $colKey) {
+                $line[] = $mapped[$colKey] ?? '-';
+            }
+            $rowStyle = match ($row['level']) {
+                'tinggi' => $highStyle,
+                'sedang' => $medStyle,
+                default => null,
+            };
+            $writer->addRow(Row::fromValues($line, $rowStyle));
+        }
+
+        $writer->close();
+
+        $filename = 'rekap-analisis-risiko-mahasiswa-'.now()->format('Ymd-His').'.xlsx';
+
+        return response()->download($tmpFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Kumpulkan seluruh metrik agregasi, daftar terfilter, urutan, dan paginasi.
+     * Dioptimalkan tanpa batas `WHERE IN` dan agregasi SKS langsung di SQL agar siap untuk ribuan mahasiswa.
      *
      * @return array<string,mixed>
      */
     private function buildDataset(Request $request): array
     {
         $students = User::where('role', User::ROLE_STUDENT)
-            ->with('dpa')
+            ->select(['id', 'name', 'username', 'program_studi', 'dpa_id', 'student_ref', 'is_active'])
+            ->with(['dpa:id,name,username,is_active'])
             ->orderBy('username')
             ->orderBy('name')
             ->get();
 
         $dpas = User::where('role', User::ROLE_DPA)
+            ->select(['id', 'name', 'username', 'is_active'])
             ->orderBy('name')
             ->get();
 
         $adminCount = User::where('role', User::ROLE_ADMIN)->count();
         $activeAdminCount = User::where('role', User::ROLE_ADMIN)->where('is_active', true)->count();
 
-        $studentRefs = $students->pluck('student_ref')->filter()->values()->all();
+        // Ambil hanya hasil risiko semester terbaru per mahasiswa via subquery JOIN (hemat RAM untuk ribuan data)
+        $latestSemSub = RiskResult::query()
+            ->select('student_ref', DB::raw('MAX(semester) as max_semester'))
+            ->groupBy('student_ref');
 
-        // Ambil hasil risiko semester terbaru untuk setiap mahasiswa
-        $latestRisks = collect();
-        if ($studentRefs !== []) {
-            $allRisks = RiskResult::whereIn('student_ref', $studentRefs)
-                ->orderBy('semester')
-                ->get();
-            foreach ($allRisks as $r) {
-                $latestRisks->put($r->student_ref, $r);
-            }
-        }
+        $latestRisks = RiskResult::query()
+            ->select([
+                'risk_results.student_ref',
+                'risk_results.semester',
+                'risk_results.level',
+                'risk_results.score',
+                'risk_results.features',
+                'risk_results.factors',
+            ])
+            ->joinSub($latestSemSub, 'lr', function ($join) {
+                $join->on('risk_results.student_ref', '=', 'lr.student_ref')
+                    ->on('risk_results.semester', '=', 'lr.max_semester');
+            })
+            ->get()
+            ->keyBy('student_ref');
 
-        // Ambil status izin DPA aktif per mahasiswa
-        $grantedConsentRefs = $studentRefs !== []
-            ? Consent::whereIn('student_ref', $studentRefs)
-                ->where('granted', true)
-                ->pluck('student_ref')
-                ->flip()
-                ->all()
-            : [];
-
-        // Ambil status tindak lanjut dari student_settings
-        $settingsByRef = $studentRefs !== []
-            ? StudentSetting::whereIn('student_ref', $studentRefs)
-                ->get()
-                ->keyBy('student_ref')
-            : collect();
+        // Ambil status tindak lanjut secara ringan (hanya kolom yang dibutuhkan)
+        $followUpByRef = StudentSetting::query()
+            ->pluck('follow_up_status', 'student_ref')
+            ->all();
 
         // Fallback program_studi dari account_tickets jika users.program_studi masih kosong
         $ticketProdiByUsername = [];
@@ -161,25 +288,25 @@ class DashboardController extends Controller
             }
         }
 
-        // Hitung SKS Pengayaan terkonversi per mahasiswa bila tabel tersedia
+        // Agregasi SKS Pengayaan terkonversi langsung di SQL (tanpa memuat seluruh baris model ke memori)
         $enrichmentSksByRef = [];
-        if ($studentRefs !== [] && Schema::hasTable('enrichment_records')) {
-            $enrRecords = EnrichmentRecord::whereIn('student_ref', $studentRefs)
+        if (Schema::hasTable('enrichment_records')) {
+            $enrichmentSksByRef = EnrichmentRecord::query()
+                ->select('student_ref', DB::raw('SUM(credits) as total_sks'))
                 ->where('status', EnrichmentRecord::STATUS_DIKONVERSI)
-                ->get();
-            foreach ($enrRecords as $er) {
-                if (strtoupper((string) $er->grade) === 'E') {
-                    continue;
-                }
-                $enrichmentSksByRef[$er->student_ref] = ($enrichmentSksByRef[$er->student_ref] ?? 0) + (int) $er->credits;
-            }
+                ->where(function ($q) {
+                    $q->whereNull('grade')->orWhereRaw('UPPER(grade) != ?', ['E']);
+                })
+                ->groupBy('student_ref')
+                ->pluck('total_sks', 'student_ref')
+                ->map(fn ($v) => (int) $v)
+                ->all();
         }
 
         // Susun baris lengkap per mahasiswa
         $allStudentRows = $students->map(function (User $student) use (
             $latestRisks,
-            $grantedConsentRefs,
-            $settingsByRef,
+            $followUpByRef,
             $ticketProdiByUsername,
             $enrichmentSksByRef
         ) {
@@ -188,7 +315,6 @@ class DashboardController extends Controller
             $res = $ref !== '' ? $latestRisks->get($ref) : null;
             $features = is_array($res?->features) ? $res->features : [];
             $factors = is_array($res?->factors) ? $res->factors : [];
-            $setting = $ref !== '' ? $settingsByRef->get($ref) : null;
 
             $prodi = trim((string) ($student->program_studi ?: ($ticketProdiByUsername[$student->username] ?? '')));
             if ($prodi === '') {
@@ -211,7 +337,7 @@ class DashboardController extends Controller
                 'program_studi' => $prodi,
                 'angkatan' => $angkatan,
                 'consent_granted' => $student->dpa_id !== null,
-                'follow_up_status' => $setting?->follow_up_status ?? StudentSetting::STATUS_BELUM,
+                'follow_up_status' => $ref !== '' ? ($followUpByRef[$ref] ?? StudentSetting::STATUS_BELUM) : StudentSetting::STATUS_BELUM,
                 'enrichment_converted_sks' => $ref !== '' ? (int) ($enrichmentSksByRef[$ref] ?? 0) : 0,
             ];
         });
@@ -233,10 +359,7 @@ class DashboardController extends Controller
             'belum' => $totalStudents > 0 ? round(($riskCounts['belum'] / $totalStudents) * 100, 1) : 0.0,
         ];
 
-        // Rekap per Program Studi (untuk grafik batang & dropdown filter)
         $prodiStats = $this->aggregateBy($allStudentRows, 'program_studi', sortDescByKey: false);
-
-        // Rekap per Angkatan (untuk grafik batang & dropdown filter)
         $angkatanStats = $this->aggregateBy($allStudentRows, 'angkatan', sortDescByKey: true);
 
         // Matriks Kohort Gabungan: Angkatan x Program Studi
@@ -273,9 +396,11 @@ class DashboardController extends Controller
             })
             ->values();
 
-        // Rekap per DPA
-        $dpaStats = $dpas->map(function (User $dpa) use ($allStudentRows) {
-            $advisees = $allStudentRows->filter(fn (array $r) => $r['student']->dpa_id === $dpa->id);
+        // Rekap per DPA (dikelompokkan satu kali dalam O(N) alih-alih O(D*N))
+        $rowsByDpa = $allStudentRows->groupBy(fn (array $r) => $r['student']->dpa_id ?? 0);
+        $dpaStats = $dpas->map(function (User $dpa) use ($rowsByDpa) {
+            /** @var Collection<int,array<string,mixed>> $advisees */
+            $advisees = $rowsByDpa->get($dpa->id, collect());
 
             return [
                 'dpa' => $dpa,
@@ -299,7 +424,21 @@ class DashboardController extends Controller
             $levelFilter = '';
         }
 
-        $levelOrder = ['tinggi' => 0, 'sedang' => 1, 'rendah' => 2, 'belum' => 3];
+        // Sorting & Paginasi
+        $allowedSorts = ['risiko', 'nama', 'prodi', 'dpa', 'skor', 'semester', 'ips', 'kehadiran', 'pengayaan'];
+        $sort = strtolower(trim((string) $request->query('sort', 'risiko')));
+        if (! in_array($sort, $allowedSorts, true)) {
+            $sort = 'risiko';
+        }
+        $dir = strtolower(trim((string) $request->query('dir', 'asc')));
+        if (! in_array($dir, ['asc', 'desc'], true)) {
+            $dir = 'asc';
+        }
+
+        $perPage = (int) $request->query('per_page', 25);
+        if (! in_array($perPage, [10, 25, 50, 100], true)) {
+            $perPage = 25;
+        }
 
         $filteredStudents = $allStudentRows
             ->when($q !== '', function (Collection $col) use ($q) {
@@ -317,22 +456,21 @@ class DashboardController extends Controller
                 }
 
                 return $col->filter(fn (array $r) => (string) $r['student']->dpa_id === $dpaFilter);
-            })
-            ->sortBy(fn (array $r) => [
-                $levelOrder[$r['level']] ?? 9,
-                -1 * ($r['score'] ?? -1),
-                $r['student']->username,
-            ])
-            ->values();
+            });
+
+        $filteredStudents = $this->sortStudentRows($filteredStudents, $sort, $dir);
+
+        $filteredTotal = $filteredStudents->count();
+        $lastPage = max(1, (int) ceil($filteredTotal / $perPage));
+        $page = max(1, min($lastPage, (int) $request->query('page', 1)));
+        $offset = ($page - 1) * $perPage;
+        $paginatedStudents = $filteredStudents->slice($offset, $perPage)->values();
 
         $pendingTickets = Schema::hasTable('account_tickets')
             ? AccountTicket::where('status', AccountTicket::STATUS_PENDING)->count()
             : 0;
 
         $activeModel = ModelVersion::where('is_active', true)->latest('id')->first();
-
-        $prodiOptions = $prodiStats->pluck('label')->all();
-        $angkatanOptions = $angkatanStats->pluck('label')->all();
 
         return [
             'totals' => [
@@ -355,9 +493,20 @@ class DashboardController extends Controller
             'dpaStats' => $dpaStats,
             'dpas' => $dpas,
             'filteredStudents' => $filteredStudents,
+            'paginatedStudents' => $paginatedStudents,
+            'pagination' => [
+                'total' => $filteredTotal,
+                'per_page' => $perPage,
+                'page' => $page,
+                'last_page' => $lastPage,
+                'from' => $filteredTotal > 0 ? $offset + 1 : 0,
+                'to' => min($filteredTotal, $offset + $perPage),
+            ],
+            'sort' => $sort,
+            'dir' => $dir,
             'activeModel' => $activeModel,
-            'prodiOptions' => $prodiOptions,
-            'angkatanOptions' => $angkatanOptions,
+            'prodiOptions' => $prodiStats->pluck('label')->all(),
+            'angkatanOptions' => $angkatanStats->pluck('label')->all(),
             'filters' => [
                 'q' => $q,
                 'prodi' => $prodiFilter,
@@ -365,6 +514,120 @@ class DashboardController extends Controller
                 'tingkat' => $levelFilter,
                 'dpa' => $dpaFilter,
             ],
+        ];
+    }
+
+    /**
+     * @param  Collection<int,array<string,mixed>>  $rows
+     * @return Collection<int,array<string,mixed>>
+     */
+    private function sortStudentRows(Collection $rows, string $sort, string $dir): Collection
+    {
+        $levelOrder = ['tinggi' => 0, 'sedang' => 1, 'rendah' => 2, 'belum' => 3];
+        $desc = $dir === 'desc';
+
+        $sorted = match ($sort) {
+            'nama' => $rows->sortBy(fn (array $r) => [mb_strtolower($r['student']->name, 'UTF-8'), $r['student']->username], SORT_REGULAR, $desc),
+            'prodi' => $rows->sortBy(fn (array $r) => [$r['program_studi'], $r['angkatan'], $r['student']->username], SORT_REGULAR, $desc),
+            'dpa' => $rows->sortBy(fn (array $r) => [$r['student']->dpa?->name ?? 'ZZZ', $r['student']->username], SORT_REGULAR, $desc),
+            'skor' => $rows->sortBy(fn (array $r) => [$r['score'] === null ? ($desc ? -1 : 999) : $r['score'], $r['student']->username], SORT_REGULAR, $desc),
+            'semester' => $rows->sortBy(fn (array $r) => [$r['semester'] ?? ($desc ? -1 : 999), $r['student']->username], SORT_REGULAR, $desc),
+            'ips' => $rows->sortBy(fn (array $r) => [$r['ips'] === null ? ($desc ? -1 : 999) : $r['ips'], $r['student']->username], SORT_REGULAR, $desc),
+            'kehadiran' => $rows->sortBy(fn (array $r) => [$r['attendance'] === null ? ($desc ? -1 : 999) : $r['attendance'], $r['student']->username], SORT_REGULAR, $desc),
+            'pengayaan' => $rows->sortBy(fn (array $r) => [$r['enrichment_converted_sks'], $r['student']->username], SORT_REGULAR, $desc),
+            default => $desc
+                ? $rows->sortByDesc(fn (array $r) => [$levelOrder[$r['level']] ?? 9, $r['score'] ?? -1, $r['student']->username])
+                : $rows->sortBy(fn (array $r) => [$levelOrder[$r['level']] ?? 9, -1 * ($r['score'] ?? -1), $r['student']->username]),
+        };
+
+        return $sorted->values();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolveSelectedColumns(Request $request): array
+    {
+        $raw = trim((string) $request->query('cols', ''));
+        if ($raw === '') {
+            return array_keys(self::EXPORT_COLUMNS);
+        }
+
+        $requested = array_filter(array_map('trim', explode(',', $raw)));
+        $valid = array_values(array_intersect($requested, array_keys(self::EXPORT_COLUMNS)));
+
+        return $valid !== [] ? $valid : array_keys(self::EXPORT_COLUMNS);
+    }
+
+    /**
+     * @param  array<string,mixed>  $row
+     * @return array<string,string>
+     */
+    private function mapRowForExport(array $row, bool $neutralizeCsv): array
+    {
+        /** @var User $student */
+        $student = $row['student'];
+        $res = $row['result'];
+        $features = is_array($res?->features) ? $res->features : [];
+
+        $safe = static function (string $val) use ($neutralizeCsv): string {
+            if (! $neutralizeCsv || $val === '') {
+                return $val;
+            }
+            $trimmed = ltrim($val, "'");
+
+            return preg_match('/^[=+\-@\t\r]/', $trimmed) && ! is_numeric($trimmed)
+                ? "'".$trimmed
+                : $val;
+        };
+
+        return [
+            'nim' => $safe((string) $student->username),
+            'nama' => $safe((string) $student->name),
+            'prodi' => $safe((string) $row['program_studi']),
+            'angkatan' => (string) $row['angkatan'],
+            'status_akun' => $student->is_active ? 'Aktif' : 'Nonaktif',
+            'dpa' => $safe((string) ($student->dpa?->name ?? 'Belum ditetapkan')),
+            'izin_dpa' => $row['consent_granted'] ? 'Diizinkan' : 'Belum',
+            'tingkat' => strtoupper((string) $row['level']),
+            'skor' => $res ? number_format((float) $res->score, 2, '.', '') : '-',
+            'semester' => $res?->semester !== null ? (string) $res->semester : '-',
+            'ips' => isset($features['ips']) ? number_format((float) $features['ips'], 2, '.', '') : '-',
+            'kehadiran' => isset($features['attendance']) ? number_format((float) $features['attendance'], 1, '.', '') : '-',
+            'pengayaan' => $row['enrichment_converted_sks'].' / '.EnrichmentCatalog::TARGET_SKS,
+            'tindak_lanjut' => StudentSetting::followUpLabelFor($row['follow_up_status']),
+            'faktor' => $safe((string) ($row['top_factor'] ?? '-')),
+        ];
+    }
+
+    /**
+     * @param  array<string,mixed>  $row
+     * @return array<string,mixed>
+     */
+    private function serializeRowForJson(array $row): array
+    {
+        /** @var User $student */
+        $student = $row['student'];
+
+        return [
+            'id' => $student->id,
+            'name' => $student->name,
+            'username' => $student->username,
+            'is_active' => (bool) $student->is_active,
+            'program_studi' => $row['program_studi'],
+            'angkatan' => $row['angkatan'],
+            'dpa_name' => $student->dpa?->name ?? 'Belum ditetapkan',
+            'consent_granted' => (bool) $row['consent_granted'],
+            'level' => $row['level'],
+            'score' => $row['score'] !== null ? round((float) $row['score'], 2) : null,
+            'semester' => $row['semester'],
+            'ips' => $row['ips'] !== null ? round((float) $row['ips'], 2) : null,
+            'attendance' => $row['attendance'] !== null ? round((float) $row['attendance'], 1) : null,
+            'enrichment_sks' => (int) $row['enrichment_converted_sks'],
+            'target_sks' => EnrichmentCatalog::TARGET_SKS,
+            'top_factor' => $row['top_factor'] ?? 'Belum ada faktor risiko tercatat',
+            'follow_up_label' => StudentSetting::followUpLabelFor($row['follow_up_status']),
+            'edit_url' => route('admin.akun.ubah', $student),
         ];
     }
 

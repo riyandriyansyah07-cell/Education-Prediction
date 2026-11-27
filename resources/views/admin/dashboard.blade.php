@@ -121,6 +121,47 @@
     .adm-detail-row { display: none; background: color-mix(in srgb, var(--accent) 4%, var(--bg)); }
     .adm-detail-row.is-open { display: table-row; }
     .adm-mobile-hint { display: none; }
+    .adm-sort-btn {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        background: none; border: none; padding: 0; color: inherit;
+        font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .adm-sort-btn:hover { color: var(--accent); }
+    .adm-sort-ind { font-size: 10px; opacity: 0.45; }
+    .adm-sort-btn.is-sorted { color: var(--accent); }
+    .adm-sort-btn.is-sorted .adm-sort-ind { opacity: 1; }
+    .adm-export-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+    .adm-col-menu { position: relative; display: inline-block; }
+    .adm-col-popover {
+        display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+        width: 230px; max-height: 310px; overflow-y: auto;
+        border-radius: 10px; border: 1px solid var(--line-strong);
+        background: var(--surface); box-shadow: 0 14px 30px -12px rgba(0,0,0,0.22);
+        padding: 0.65rem 0.75rem;
+    }
+    .adm-col-popover.is-open { display: block; }
+    .adm-col-item {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.3rem 0.25rem; font-size: 12px; color: var(--ink-2); cursor: pointer;
+    }
+    .adm-col-item:hover { color: var(--ink); }
+    .adm-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 0.75rem; margin-top: 1rem; padding-top: 0.9rem;
+        border-top: 1px solid var(--line); font-size: 12px;
+    }
+    .adm-pager-btns { display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+    .adm-page-btn {
+        min-width: 32px; height: 32px; padding: 0 0.55rem; border-radius: 7px;
+        border: 1px solid var(--line); background: var(--bg); color: var(--ink-2);
+        font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s ease;
+    }
+    .adm-page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--ink); }
+    .adm-page-btn.is-current { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; }
+    .adm-page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .adm-cell-bar { width: 58px; height: 5px; border-radius: 9999px; background: var(--bg); overflow: hidden; margin-left: auto; margin-top: 3px; border: 1px solid var(--line); }
+    .adm-cell-fill { height: 100%; border-radius: 9999px; }
+    .adm-loading { opacity: 0.55; pointer-events: none; transition: opacity 0.15s ease; }
 
     @media (max-width: 960px) {
         .adm-analytics-grid { grid-template-columns: 1fr; }
@@ -174,9 +215,15 @@
             </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-            <a id="btn-export-csv" href="{{ route('admin.dasbor.ekspor', array_filter($filters)) }}" class="btn btn-quiet btn-sm">
-                <x-icon name="download-simple" /> Unduh Rekap CSV
+        <div class="adm-export-group">
+            <a id="btn-export-csv" href="{{ route('admin.dasbor.ekspor', array_filter($filters)) }}" class="btn btn-quiet btn-sm" title="Streaming CSV hemat memori untuk ribuan data">
+                <x-icon name="download-simple" /> CSV
+            </a>
+            <a id="btn-export-xlsx" href="{{ route('admin.dasbor.ekspor', array_filter($filters) + ['format' => 'xlsx']) }}" class="btn btn-quiet btn-sm" title="Excel 2-sheet dengan ringkasan eksekutif dan warna risiko">
+                <x-icon name="download-simple" /> Excel (.xlsx)
+            </a>
+            <a id="btn-export-print" href="{{ route('admin.dasbor.ekspor', array_filter($filters) + ['format' => 'print']) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" title="Pratinjau laporan tabel siap cetak atau simpan PDF">
+                Pratinjau / Cetak
             </a>
             <a href="{{ route('admin.akun.baru') }}" class="btn btn-primary btn-sm">
                 <x-icon name="plus" /> Tambah Akun
@@ -567,38 +614,73 @@
     @endif
 </section>
 
-{{-- BLOK 5: TABEL INTERAKTIF ANALISIS RISIKO SELURUH MAHASISWA --}}
+{{-- BLOK 5: TABEL INTERAKTIF ANALISIS RISIKO SELURUH MAHASISWA (SCALABLE RIBUAN DATA) --}}
 <section id="tabel-mahasiswa" class="adm-panel mt-6" aria-labelledby="judul-tabel-mhs">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h2 id="judul-tabel-mhs" class="text-lg font-semibold">Data Analisis Risiko Semua Mahasiswa</h2>
+            <h2 id="judul-tabel-mhs" class="text-lg font-semibold">Laporan Interaktif Analisis Risiko Mahasiswa</h2>
             <p class="mt-0.5 text-xs text-ink-2">
-                Menampilkan <strong id="visible-count">{{ $filteredStudents->count() }}</strong> dari {{ $totals['students'] }} mahasiswa (filter langsung tanpa muat ulang halaman).
+                Menampilkan <strong id="range-label">{{ $pagination['from'] }}&ndash;{{ $pagination['to'] }}</strong> dari
+                <strong id="visible-count">{{ number_format($pagination['total']) }}</strong> mahasiswa terfilter
+                (total {{ number_format($totals['students']) }} terdaftar &middot; paginasi server untuk performa ribuan data).
             </p>
         </div>
-        <button id="btn-reset-filter" type="button" class="btn btn-quiet btn-sm" onclick="dashResetFilters()" style="{{ array_filter($filters) === [] ? 'display:none;' : '' }}">
-            Reset Filter
-        </button>
+
+        <div class="adm-export-group">
+            <div class="adm-col-menu">
+                <button type="button" class="btn btn-quiet btn-sm" onclick="dashToggleColMenu()" aria-expanded="false" id="btn-col-menu">
+                    Atur Kolom
+                </button>
+                <div id="col-popover" class="adm-col-popover" role="menu">
+                    <p class="text-xs font-semibold text-ink" style="margin:0 0 0.4rem;">Kolom Tabel &amp; Ekspor</p>
+                    @foreach ([
+                        ['key' => 'prodi', 'label' => 'Prodi & Angkatan'],
+                        ['key' => 'dpa', 'label' => 'DPA Pendamping'],
+                        ['key' => 'tingkat', 'label' => 'Tingkat Risiko'],
+                        ['key' => 'skor', 'label' => 'Skor Risiko'],
+                        ['key' => 'semester', 'label' => 'Semester'],
+                        ['key' => 'ips', 'label' => 'IPS'],
+                        ['key' => 'kehadiran', 'label' => 'Kehadiran (%)'],
+                        ['key' => 'pengayaan', 'label' => 'Progres Pengayaan'],
+                    ] as $colOpt)
+                        <label class="adm-col-item">
+                            <input type="checkbox" checked data-col-toggle="{{ $colOpt['key'] }}" onchange="dashApplyColumnVisibility()">
+                            <span>{{ $colOpt['label'] }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <select id="f-per-page" class="input h-8 text-xs" style="width:auto; min-width:96px;" aria-label="Baris per halaman" onchange="dashChangePerPage()">
+                @foreach ([10, 25, 50, 100] as $pp)
+                    <option value="{{ $pp }}" @selected($pagination['per_page'] === $pp)>{{ $pp }} / hal</option>
+                @endforeach
+            </select>
+
+            <button id="btn-reset-filter" type="button" class="btn btn-quiet btn-sm" onclick="dashResetFilters()" style="{{ array_filter($filters) === [] ? 'display:none;' : '' }}">
+                Reset Filter
+            </button>
+        </div>
     </div>
 
     {{-- Chip Filter Cepat Tingkat Risiko --}}
     <div class="adm-chip-row mt-4" role="group" aria-label="Saring cepat tingkat risiko">
-        <button type="button" class="adm-chip {{ $filters['tingkat'] === '' ? 'is-active' : '' }}" data-quick-level="" onclick="dashFilterByLevel('')">Semua ({{ $riskCounts['semua'] }})</button>
-        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'tinggi' ? 'is-active' : '' }}" data-quick-level="tinggi" onclick="dashFilterByLevel('tinggi')">Tinggi ({{ $riskCounts['tinggi'] }})</button>
-        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'sedang' ? 'is-active' : '' }}" data-quick-level="sedang" onclick="dashFilterByLevel('sedang')">Sedang ({{ $riskCounts['sedang'] }})</button>
-        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'rendah' ? 'is-active' : '' }}" data-quick-level="rendah" onclick="dashFilterByLevel('rendah')">Rendah ({{ $riskCounts['rendah'] }})</button>
-        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'belum' ? 'is-active' : '' }}" data-quick-level="belum" onclick="dashFilterByLevel('belum')">Belum ({{ $riskCounts['belum'] }})</button>
+        <button type="button" class="adm-chip {{ $filters['tingkat'] === '' ? 'is-active' : '' }}" data-quick-level="" onclick="dashFilterByLevel('')">Semua ({{ number_format($riskCounts['semua']) }})</button>
+        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'tinggi' ? 'is-active' : '' }}" data-quick-level="tinggi" onclick="dashFilterByLevel('tinggi')">Tinggi ({{ number_format($riskCounts['tinggi']) }})</button>
+        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'sedang' ? 'is-active' : '' }}" data-quick-level="sedang" onclick="dashFilterByLevel('sedang')">Sedang ({{ number_format($riskCounts['sedang']) }})</button>
+        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'rendah' ? 'is-active' : '' }}" data-quick-level="rendah" onclick="dashFilterByLevel('rendah')">Rendah ({{ number_format($riskCounts['rendah']) }})</button>
+        <button type="button" class="adm-chip {{ $filters['tingkat'] === 'belum' ? 'is-active' : '' }}" data-quick-level="belum" onclick="dashFilterByLevel('belum')">Belum ({{ number_format($riskCounts['belum']) }})</button>
     </div>
 
-    <form id="dash-filter-form" method="GET" action="{{ route('admin.dasbor') }}#tabel-mahasiswa" class="adm-filter-grid mt-4">
+    <form id="dash-filter-form" method="GET" action="{{ route('admin.dasbor') }}#tabel-mahasiswa" class="adm-filter-grid mt-4" onsubmit="event.preventDefault(); dashFetchPage(1);">
         <div>
             <label for="f-q" class="label text-xs">Cari nama / NIM</label>
-            <input id="f-q" name="q" type="text" value="{{ $filters['q'] }}" placeholder="Ketik nama atau NIM..." class="input h-9 text-sm" oninput="dashApplyFilters()">
+            <input id="f-q" name="q" type="text" value="{{ $filters['q'] }}" placeholder="Ketik nama atau NIM..." class="input h-9 text-sm" oninput="dashDebouncedSearch()">
         </div>
 
         <div>
             <label for="f-prodi" class="label text-xs">Program Studi</label>
-            <select id="f-prodi" name="prodi" class="input h-9 text-xs" onchange="dashApplyFilters()">
+            <select id="f-prodi" name="prodi" class="input h-9 text-xs" onchange="dashFetchPage(1)">
                 <option value="">Semua prodi</option>
                 @foreach ($prodiOptions as $po)
                     <option value="{{ $po }}" @selected($filters['prodi'] === $po)>{{ $po }}</option>
@@ -608,7 +690,7 @@
 
         <div>
             <label for="f-angkatan" class="label text-xs">Angkatan</label>
-            <select id="f-angkatan" name="angkatan" class="input h-9 text-xs" onchange="dashApplyFilters()">
+            <select id="f-angkatan" name="angkatan" class="input h-9 text-xs" onchange="dashFetchPage(1)">
                 <option value="">Semua angkatan</option>
                 @foreach ($angkatanOptions as $ao)
                     <option value="{{ $ao }}" @selected($filters['angkatan'] === $ao)>{{ $ao === 'Tidak diketahui' ? $ao : 'Angkatan '.$ao }}</option>
@@ -618,7 +700,7 @@
 
         <div>
             <label for="f-tingkat" class="label text-xs">Tingkat Risiko</label>
-            <select id="f-tingkat" name="tingkat" class="input h-9 text-xs" onchange="dashApplyFilters()">
+            <select id="f-tingkat" name="tingkat" class="input h-9 text-xs" onchange="dashFetchPage(1)">
                 <option value="">Semua tingkat</option>
                 <option value="tinggi" @selected($filters['tingkat'] === 'tinggi')>Tinggi</option>
                 <option value="sedang" @selected($filters['tingkat'] === 'sedang')>Sedang</option>
@@ -629,7 +711,7 @@
 
         <div>
             <label for="f-dpa" class="label text-xs">DPA</label>
-            <select id="f-dpa" name="dpa" class="input h-9 text-xs" onchange="dashApplyFilters()">
+            <select id="f-dpa" name="dpa" class="input h-9 text-xs" onchange="dashFetchPage(1)">
                 <option value="">Semua DPA</option>
                 <option value="belum" @selected($filters['dpa'] === 'belum')>Belum ditetapkan</option>
                 @foreach ($dpas as $d)
@@ -645,104 +727,135 @@
 
     <p class="adm-mobile-hint">Geser tabel ke samping untuk melihat seluruh kolom &rarr;</p>
 
-    @if ($filteredStudents->isEmpty())
-        <p class="mt-6 text-sm text-ink-2">Tidak ada mahasiswa yang cocok dengan filter saat ini.</p>
-    @else
-        <div class="adm-scroll mt-5">
-            <table class="tbl adm-table w-full text-xs" style="min-width:66rem;">
-                <thead>
-                    <tr>
-                        <th>Mahasiswa</th>
-                        <th>Prodi &amp; Angkatan</th>
-                        <th>DPA Pendamping</th>
-                        <th>Risiko</th>
-                        <th class="num">Skor</th>
-                        <th class="num">Sem</th>
-                        <th class="num">IPS</th>
-                        <th class="num">Hadir</th>
-                        <th class="num">Pengayaan</th>
-                        <th><span class="sr-only">Aksi</span></th>
+    <div id="student-table-wrap" class="adm-scroll mt-5">
+        <table class="tbl adm-table w-full text-xs" style="min-width:66rem;">
+            <thead>
+                <tr>
+                    <th><button type="button" class="adm-sort-btn {{ $sort === 'nama' ? 'is-sorted' : '' }}" data-sort-col="nama" onclick="dashSortBy('nama')">Mahasiswa <span class="adm-sort-ind">{{ $sort === 'nama' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th data-col="prodi"><button type="button" class="adm-sort-btn {{ $sort === 'prodi' ? 'is-sorted' : '' }}" data-sort-col="prodi" onclick="dashSortBy('prodi')">Prodi &amp; Angkatan <span class="adm-sort-ind">{{ $sort === 'prodi' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th data-col="dpa"><button type="button" class="adm-sort-btn {{ $sort === 'dpa' ? 'is-sorted' : '' }}" data-sort-col="dpa" onclick="dashSortBy('dpa')">DPA Pendamping <span class="adm-sort-ind">{{ $sort === 'dpa' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th data-col="tingkat"><button type="button" class="adm-sort-btn {{ $sort === 'risiko' ? 'is-sorted' : '' }}" data-sort-col="risiko" onclick="dashSortBy('risiko')">Risiko <span class="adm-sort-ind">{{ $sort === 'risiko' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th class="num" data-col="skor"><button type="button" class="adm-sort-btn {{ $sort === 'skor' ? 'is-sorted' : '' }}" data-sort-col="skor" onclick="dashSortBy('skor')">Skor <span class="adm-sort-ind">{{ $sort === 'skor' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th class="num" data-col="semester"><button type="button" class="adm-sort-btn {{ $sort === 'semester' ? 'is-sorted' : '' }}" data-sort-col="semester" onclick="dashSortBy('semester')">Sem <span class="adm-sort-ind">{{ $sort === 'semester' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th class="num" data-col="ips"><button type="button" class="adm-sort-btn {{ $sort === 'ips' ? 'is-sorted' : '' }}" data-sort-col="ips" onclick="dashSortBy('ips')">IPS <span class="adm-sort-ind">{{ $sort === 'ips' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th class="num" data-col="kehadiran"><button type="button" class="adm-sort-btn {{ $sort === 'kehadiran' ? 'is-sorted' : '' }}" data-sort-col="kehadiran" onclick="dashSortBy('kehadiran')">Hadir <span class="adm-sort-ind">{{ $sort === 'kehadiran' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th class="num" data-col="pengayaan"><button type="button" class="adm-sort-btn {{ $sort === 'pengayaan' ? 'is-sorted' : '' }}" data-sort-col="pengayaan" onclick="dashSortBy('pengayaan')">Pengayaan <span class="adm-sort-ind">{{ $sort === 'pengayaan' ? ($dir === 'desc' ? '▼' : '▲') : '⇅' }}</span></button></th>
+                    <th><span class="sr-only">Aksi</span></th>
+                </tr>
+            </thead>
+            <tbody id="student-table-body">
+                @foreach ($paginatedStudents as $idx => $row)
+                    @php
+                        $stu = $row['student'];
+                        $scorePct = $row['score'] !== null ? min(100, max(0, round(($row['score'] / 10) * 100))) : 0;
+                        $enrPct = min(100, round(($row['enrichment_converted_sks'] / 20) * 100));
+                        $scoreColor = $row['level'] === 'tinggi' ? 'var(--bad)' : ($row['level'] === 'sedang' ? 'var(--warn)' : 'var(--ok)');
+                        $ipsColor = $row['ips'] === null ? '' : ($row['ips'] < 2.5 ? 'color:var(--bad);font-weight:600;' : ($row['ips'] < 3.0 ? 'color:var(--warn);font-weight:600;' : 'color:var(--ok);font-weight:600;'));
+                        $attColor = $row['attendance'] !== null && $row['attendance'] < 75 ? 'color:var(--bad);font-weight:600;' : '';
+                    @endphp
+                    <tr data-student-row data-idx="{{ $idx }}">
+                        <td>
+                            <p class="font-medium text-sm">{{ $stu->name }}</p>
+                            <p class="mono text-ink-3">{{ $stu->username }}@if (! $stu->is_active) &middot; <span style="color:var(--bad);">Nonaktif</span>@endif</p>
+                        </td>
+                        <td data-col="prodi">
+                            <p class="font-medium">{{ $row['program_studi'] }}</p>
+                            <p class="text-ink-3">{{ $row['angkatan'] === 'Tidak diketahui' ? 'Angkatan -' : 'Angkatan '.$row['angkatan'] }}</p>
+                        </td>
+                        <td data-col="dpa">
+                            <p>{{ $stu->dpa?->name ?? 'Belum ditetapkan' }}</p>
+                            <p class="text-ink-3">{{ $row['consent_granted'] ? 'Akses DPA aktif' : 'Menunggu penetapan DPA' }}</p>
+                        </td>
+                        <td data-col="tingkat" style="white-space:nowrap;">
+                            @if ($row['level'] === 'belum')
+                                <span class="rounded border border-line-strong bg-bg px-2 py-0.5 text-ink-3">Belum</span>
+                            @else
+                                <x-risk :level="$row['level']" />
+                            @endif
+                        </td>
+                        <td class="num mono font-semibold" data-col="skor">
+                            {{ $row['score'] !== null ? number_format($row['score'], 2) : '-' }}
+                            @if ($row['score'] !== null)
+                                <div class="adm-cell-bar"><div class="adm-cell-fill" style="width:{{ $scorePct }}%; background:{{ $scoreColor }};"></div></div>
+                            @endif
+                        </td>
+                        <td class="num mono" data-col="semester">{{ $row['semester'] ?? '-' }}</td>
+                        <td class="num mono" data-col="ips" style="{{ $ipsColor }}">{{ $row['ips'] !== null ? number_format($row['ips'], 2) : '-' }}</td>
+                        <td class="num mono" data-col="kehadiran" style="{{ $attColor }}">{{ $row['attendance'] !== null ? number_format($row['attendance'], 1).'%' : '-' }}</td>
+                        <td class="num mono" data-col="pengayaan">
+                            {{ $row['enrichment_converted_sks'] }}/20
+                            <div class="adm-cell-bar"><div class="adm-cell-fill" style="width:{{ $enrPct }}%; background:var(--accent);"></div></div>
+                        </td>
+                        <td class="text-right" style="white-space:nowrap;">
+                            <button type="button" class="btn btn-quiet btn-sm" onclick="dashToggleDetail({{ $idx }})">Detail</button>
+                            <a href="{{ route('admin.akun.ubah', $stu) }}" class="btn btn-quiet btn-sm">Ubah</a>
+                        </td>
                     </tr>
-                </thead>
-                <tbody id="student-table-body">
-                    @foreach ($filteredStudents as $idx => $row)
-                        @php
-                            $stu = $row['student'];
-                            $scorePct = $row['score'] !== null ? min(100, max(0, round(($row['score'] / 10) * 100))) : 0;
-                            $enrPct = min(100, round(($row['enrichment_converted_sks'] / 20) * 100));
-                        @endphp
-                        <tr data-student-row
-                            data-search="{{ mb_strtolower($stu->name.' '.$stu->username, 'UTF-8') }}"
-                            data-prodi="{{ $row['program_studi'] }}"
-                            data-angkatan="{{ $row['angkatan'] }}"
-                            data-level="{{ $row['level'] }}"
-                            data-dpa="{{ $stu->dpa_id ? (string) $stu->dpa_id : 'belum' }}"
-                            data-idx="{{ $idx }}">
-                            <td>
-                                <p class="font-medium text-sm">{{ $stu->name }}</p>
-                                <p class="mono text-ink-3">{{ $stu->username }}@if (! $stu->is_active) &middot; <span style="color:var(--bad);">Nonaktif</span>@endif</p>
-                            </td>
-                            <td>
-                                <p class="font-medium">{{ $row['program_studi'] }}</p>
-                                <p class="text-ink-3">{{ $row['angkatan'] === 'Tidak diketahui' ? 'Angkatan -' : 'Angkatan '.$row['angkatan'] }}</p>
-                            </td>
-                            <td>
-                                <p>{{ $stu->dpa?->name ?? 'Belum ditetapkan' }}</p>
-                                <p class="text-ink-3">{{ $row['consent_granted'] ? 'Akses DPA aktif' : 'Menunggu penetapan DPA' }}</p>
-                            </td>
-                            <td style="white-space:nowrap;">
-                                @if ($row['level'] === 'belum')
-                                    <span class="rounded border border-line-strong bg-bg px-2 py-0.5 text-ink-3">Belum</span>
-                                @else
-                                    <x-risk :level="$row['level']" />
-                                @endif
-                            </td>
-                            <td class="num mono font-semibold">{{ $row['score'] !== null ? number_format($row['score'], 2) : '-' }}</td>
-                            <td class="num mono">{{ $row['semester'] ?? '-' }}</td>
-                            <td class="num mono">{{ $row['ips'] !== null ? number_format($row['ips'], 2) : '-' }}</td>
-                            <td class="num mono">{{ $row['attendance'] !== null ? number_format($row['attendance'], 1).'%' : '-' }}</td>
-                            <td class="num mono">{{ $row['enrichment_converted_sks'] }}/20</td>
-                            <td class="text-right" style="white-space:nowrap;">
-                                <button type="button" class="btn btn-quiet btn-sm" onclick="dashToggleDetail({{ $idx }})">Detail</button>
-                                <a href="{{ route('admin.akun.ubah', $stu) }}" class="btn btn-quiet btn-sm">Ubah</a>
-                            </td>
-                        </tr>
-                        <tr id="detail-row-{{ $idx }}" class="adm-detail-row" data-detail-for="{{ $idx }}">
-                            <td colspan="10" style="padding: 0.9rem 1rem;">
-                                <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));">
-                                    <div>
-                                        <p class="text-ink-3" style="font-size:11px;">Faktor Risiko Utama</p>
-                                        <p class="mt-1 font-medium text-ink">{{ $row['top_factor'] ?? 'Belum ada faktor risiko tercatat' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-ink-3" style="font-size:11px;">Status Tindak Lanjut DPA</p>
-                                        <p class="mt-1 font-medium text-ink">{{ \App\Models\StudentSetting::followUpLabelFor($row['follow_up_status']) }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-ink-3" style="font-size:11px;">Skor Risiko ({{ $row['score'] !== null ? number_format($row['score'], 2).'/10' : '-' }})</p>
-                                        <div class="adm-mini-bar" style="margin-top:0.45rem;">
-                                            <div class="adm-mini-fill" style="width:{{ $scorePct }}%; background:{{ $row['level'] === 'tinggi' ? 'var(--bad)' : ($row['level'] === 'sedang' ? 'var(--warn)' : 'var(--ok)') }};"></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-ink-3" style="font-size:11px;">Progres 20 SKS Pengayaan ({{ $row['enrichment_converted_sks'] }}/20 SKS)</p>
-                                        <div class="adm-mini-bar" style="margin-top:0.45rem;">
-                                            <div class="adm-mini-fill" style="width:{{ $enrPct }}%; background:var(--accent);"></div>
-                                        </div>
+                    <tr id="detail-row-{{ $idx }}" class="adm-detail-row" data-detail-for="{{ $idx }}">
+                        <td colspan="10" style="padding: 0.9rem 1rem;">
+                            <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));">
+                                <div>
+                                    <p class="text-ink-3" style="font-size:11px;">Faktor Risiko Utama</p>
+                                    <p class="mt-1 font-medium text-ink">{{ $row['top_factor'] ?? 'Belum ada faktor risiko tercatat' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-ink-3" style="font-size:11px;">Status Tindak Lanjut DPA</p>
+                                    <p class="mt-1 font-medium text-ink">{{ \App\Models\StudentSetting::followUpLabelFor($row['follow_up_status']) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-ink-3" style="font-size:11px;">Skor Risiko ({{ $row['score'] !== null ? number_format($row['score'], 2).'/10' : '-' }})</p>
+                                    <div class="adm-mini-bar" style="margin-top:0.45rem;">
+                                        <div class="adm-mini-fill" style="width:{{ $scorePct }}%; background:{{ $scoreColor }};"></div>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                                <div>
+                                    <p class="text-ink-3" style="font-size:11px;">Progres 20 SKS Pengayaan ({{ $row['enrichment_converted_sks'] }}/20 SKS)</p>
+                                    <div class="adm-mini-bar" style="margin-top:0.45rem;">
+                                        <div class="adm-mini-fill" style="width:{{ $enrPct }}%; background:var(--accent);"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <p id="empty-filter-msg" class="mt-5 text-sm text-ink-2" style="{{ $paginatedStudents->isNotEmpty() ? 'display:none;' : '' }}">
+        Tidak ada mahasiswa yang cocok dengan filter saat ini.
+    </p>
+
+    {{-- Paginasi Server-Side untuk Ribuan Data --}}
+    <div id="dash-pager" class="adm-pager" style="{{ $pagination['total'] === 0 ? 'display:none;' : '' }}">
+        <span id="pager-summary" class="text-ink-2">
+            Halaman <strong>{{ $pagination['page'] }}</strong> dari <strong>{{ $pagination['last_page'] }}</strong>
+            &middot; {{ number_format($pagination['total']) }} mahasiswa
+        </span>
+        <div id="pager-buttons" class="adm-pager-btns">
+            <button type="button" class="adm-page-btn" onclick="dashFetchPage({{ max(1, $pagination['page'] - 1) }})" @disabled($pagination['page'] <= 1)>&larr; Sebelumnya</button>
+            <button type="button" class="adm-page-btn is-current" disabled>{{ $pagination['page'] }}</button>
+            <button type="button" class="adm-page-btn" onclick="dashFetchPage({{ min($pagination['last_page'], $pagination['page'] + 1) }})" @disabled($pagination['page'] >= $pagination['last_page'])>Berikutnya &rarr;</button>
         </div>
-        <p id="empty-filter-msg" class="mt-5 text-sm text-ink-2" style="display:none;">Tidak ada mahasiswa yang cocok dengan filter saat ini.</p>
-    @endif
+    </div>
 </section>
 
 <script>
+const dashIndexBase = @js(route('admin.dasbor'));
 const dashExportBase = @js(route('admin.dasbor.ekspor'));
+let dashState = {
+    page: @js($pagination['page']),
+    lastPage: @js($pagination['last_page']),
+    perPage: @js($pagination['per_page']),
+    sort: @js($sort),
+    dir: @js($dir),
+    timer: null,
+    controller: null,
+};
+
+function escHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s]));
+}
 
 function dashHoverDonut(val, lbl) {
     const v = document.getElementById('donut-center-val');
@@ -768,28 +881,28 @@ function dashScrollToTable() {
 function dashFilterByLevel(level) {
     const sel = document.getElementById('f-tingkat');
     if (sel) sel.value = level;
-    dashApplyFilters();
+    dashFetchPage(1);
     dashScrollToTable();
 }
 
 function dashFilterByProdi(prodi) {
     const sel = document.getElementById('f-prodi');
     if (sel) sel.value = prodi;
-    dashApplyFilters();
+    dashFetchPage(1);
     dashScrollToTable();
 }
 
 function dashFilterByAngkatan(angkatan) {
     const sel = document.getElementById('f-angkatan');
     if (sel) sel.value = angkatan;
-    dashApplyFilters();
+    dashFetchPage(1);
     dashScrollToTable();
 }
 
 function dashFilterByDpa(dpaId) {
     const sel = document.getElementById('f-dpa');
     if (sel) sel.value = dpaId;
-    dashApplyFilters();
+    dashFetchPage(1);
     dashScrollToTable();
 }
 
@@ -798,7 +911,7 @@ function dashFilterByCohort(angkatan, prodi) {
     const pSel = document.getElementById('f-prodi');
     if (aSel) aSel.value = angkatan;
     if (pSel) pSel.value = prodi;
-    dashApplyFilters();
+    dashFetchPage(1);
     dashScrollToTable();
 }
 
@@ -807,7 +920,9 @@ function dashResetFilters() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    dashApplyFilters();
+    dashState.sort = 'risiko';
+    dashState.dir = 'asc';
+    dashFetchPage(1);
 }
 
 function dashToggleDetail(idx) {
@@ -815,33 +930,259 @@ function dashToggleDetail(idx) {
     if (row) row.classList.toggle('is-open');
 }
 
-function dashApplyFilters() {
-    const q = (document.getElementById('f-q')?.value || '').trim().toLowerCase();
+function dashToggleColMenu() {
+    const pop = document.getElementById('col-popover');
+    if (pop) pop.classList.toggle('is-open');
+}
+
+document.addEventListener('click', function (e) {
+    const pop = document.getElementById('col-popover');
+    const btn = document.getElementById('btn-col-menu');
+    if (pop && pop.classList.contains('is-open') && !pop.contains(e.target) && btn && !btn.contains(e.target)) {
+        pop.classList.remove('is-open');
+    }
+});
+
+function dashGetExportCols() {
+    const cols = ['nim', 'nama'];
+    const map = {
+        prodi: ['prodi', 'angkatan'],
+        dpa: ['dpa', 'izin_dpa'],
+        tingkat: ['tingkat'],
+        skor: ['skor'],
+        semester: ['semester'],
+        ips: ['ips'],
+        kehadiran: ['kehadiran'],
+        pengayaan: ['pengayaan'],
+    };
+    document.querySelectorAll('[data-col-toggle]').forEach(cb => {
+        if (cb.checked && map[cb.dataset.colToggle]) {
+            cols.push(...map[cb.dataset.colToggle]);
+        }
+    });
+    cols.push('tindak_lanjut', 'faktor');
+    return cols;
+}
+
+function dashApplyColumnVisibility() {
+    const hidden = new Set();
+    document.querySelectorAll('[data-col-toggle]').forEach(cb => {
+        if (!cb.checked) hidden.add(cb.dataset.colToggle);
+    });
+    document.querySelectorAll('[data-col]').forEach(el => {
+        el.style.display = hidden.has(el.dataset.col) ? 'none' : '';
+    });
+    dashSyncExportLinks();
+}
+
+function dashDebouncedSearch() {
+    clearTimeout(dashState.timer);
+    dashState.timer = setTimeout(() => dashFetchPage(1), 220);
+}
+
+function dashChangePerPage() {
+    const sel = document.getElementById('f-per-page');
+    dashState.perPage = sel ? parseInt(sel.value, 10) || 25 : 25;
+    dashFetchPage(1);
+}
+
+function dashSortBy(col) {
+    if (dashState.sort === col) {
+        dashState.dir = dashState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+        dashState.sort = col;
+        dashState.dir = ['skor', 'ips', 'kehadiran', 'pengayaan', 'semester'].includes(col) ? 'desc' : 'asc';
+    }
+    dashFetchPage(1);
+}
+
+function dashBuildQueryParams(includePaging = true) {
+    const params = new URLSearchParams();
+    const q = (document.getElementById('f-q')?.value || '').trim();
     const prodi = document.getElementById('f-prodi')?.value || '';
     const angkatan = document.getElementById('f-angkatan')?.value || '';
     const level = document.getElementById('f-tingkat')?.value || '';
     const dpa = document.getElementById('f-dpa')?.value || '';
 
-    let visible = 0;
-    document.querySelectorAll('[data-student-row]').forEach(tr => {
-        const ok = (!q || tr.dataset.search.includes(q))
-            && (!prodi || tr.dataset.prodi === prodi)
-            && (!angkatan || tr.dataset.angkatan === angkatan)
-            && (!level || tr.dataset.level === level)
-            && (!dpa || tr.dataset.dpa === dpa);
-        tr.style.display = ok ? '' : 'none';
-        const det = document.getElementById('detail-row-' + tr.dataset.idx);
-        if (det && !ok) det.classList.remove('is-open');
-        if (ok) visible++;
+    if (q) params.set('q', q);
+    if (prodi) params.set('prodi', prodi);
+    if (angkatan) params.set('angkatan', angkatan);
+    if (level) params.set('tingkat', level);
+    if (dpa) params.set('dpa', dpa);
+    if (dashState.sort !== 'risiko' || dashState.dir !== 'asc') {
+        params.set('sort', dashState.sort);
+        params.set('dir', dashState.dir);
+    }
+    if (includePaging) {
+        params.set('per_page', String(dashState.perPage));
+        params.set('page', String(dashState.page));
+    }
+    return params;
+}
+
+function dashSyncExportLinks() {
+    const baseParams = dashBuildQueryParams(false);
+    const cols = dashGetExportCols();
+    if (cols.length < 15) {
+        baseParams.set('cols', cols.join(','));
+    }
+
+    const csvBtn = document.getElementById('btn-export-csv');
+    if (csvBtn) {
+        const p = new URLSearchParams(baseParams);
+        csvBtn.href = p.toString() ? `${dashExportBase}?${p.toString()}` : dashExportBase;
+    }
+    const xlsxBtn = document.getElementById('btn-export-xlsx');
+    if (xlsxBtn) {
+        const p = new URLSearchParams(baseParams);
+        p.set('format', 'xlsx');
+        xlsxBtn.href = `${dashExportBase}?${p.toString()}`;
+    }
+    const printBtn = document.getElementById('btn-export-print');
+    if (printBtn) {
+        const p = new URLSearchParams(baseParams);
+        p.set('format', 'print');
+        printBtn.href = `${dashExportBase}?${p.toString()}`;
+    }
+}
+
+function dashRiskBadgeHtml(level) {
+    if (level === 'tinggi') return '<span class="risk risk-chip risk-tinggi">Tinggi</span>';
+    if (level === 'sedang') return '<span class="risk risk-chip risk-sedang">Sedang</span>';
+    if (level === 'rendah') return '<span class="risk risk-chip risk-rendah">Rendah</span>';
+    return '<span class="rounded border border-line-strong bg-bg px-2 py-0.5 text-ink-3">Belum</span>';
+}
+
+function dashRenderRows(rows) {
+    const tbody = document.getElementById('student-table-body');
+    if (!tbody) return;
+
+    const html = rows.map((r, idx) => {
+        const scorePct = r.score !== null ? Math.min(100, Math.max(0, Math.round((r.score / 10) * 100))) : 0;
+        const enrPct = Math.min(100, Math.round((r.enrichment_sks / (r.target_sks || 20)) * 100));
+        const scoreColor = r.level === 'tinggi' ? 'var(--bad)' : (r.level === 'sedang' ? 'var(--warn)' : 'var(--ok)');
+        const ipsStyle = r.ips === null ? '' : (r.ips < 2.5 ? 'color:var(--bad);font-weight:600;' : (r.ips < 3.0 ? 'color:var(--warn);font-weight:600;' : 'color:var(--ok);font-weight:600;'));
+        const attStyle = r.attendance !== null && r.attendance < 75 ? 'color:var(--bad);font-weight:600;' : '';
+        const angkatanText = r.angkatan === 'Tidak diketahui' ? 'Angkatan -' : 'Angkatan ' + r.angkatan;
+        const scoreText = r.score !== null ? Number(r.score).toFixed(2) : '-';
+        const ipsText = r.ips !== null ? Number(r.ips).toFixed(2) : '-';
+        const attText = r.attendance !== null ? Number(r.attendance).toFixed(1) + '%' : '-';
+
+        return `
+            <tr data-student-row data-idx="${idx}">
+                <td>
+                    <p class="font-medium text-sm">${escHtml(r.name)}</p>
+                    <p class="mono text-ink-3">${escHtml(r.username)}${!r.is_active ? ' &middot; <span style="color:var(--bad);">Nonaktif</span>' : ''}</p>
+                </td>
+                <td data-col="prodi">
+                    <p class="font-medium">${escHtml(r.program_studi)}</p>
+                    <p class="text-ink-3">${escHtml(angkatanText)}</p>
+                </td>
+                <td data-col="dpa">
+                    <p>${escHtml(r.dpa_name)}</p>
+                    <p class="text-ink-3">${r.consent_granted ? 'Akses DPA aktif' : 'Menunggu penetapan DPA'}</p>
+                </td>
+                <td data-col="tingkat" style="white-space:nowrap;">${dashRiskBadgeHtml(r.level)}</td>
+                <td class="num mono font-semibold" data-col="skor">
+                    ${scoreText}
+                    ${r.score !== null ? `<div class="adm-cell-bar"><div class="adm-cell-fill" style="width:${scorePct}%; background:${scoreColor};"></div></div>` : ''}
+                </td>
+                <td class="num mono" data-col="semester">${r.semester ?? '-'}</td>
+                <td class="num mono" data-col="ips" style="${ipsStyle}">${ipsText}</td>
+                <td class="num mono" data-col="kehadiran" style="${attStyle}">${attText}</td>
+                <td class="num mono" data-col="pengayaan">
+                    ${r.enrichment_sks}/${r.target_sks || 20}
+                    <div class="adm-cell-bar"><div class="adm-cell-fill" style="width:${enrPct}%; background:var(--accent);"></div></div>
+                </td>
+                <td class="text-right" style="white-space:nowrap;">
+                    <button type="button" class="btn btn-quiet btn-sm" onclick="dashToggleDetail(${idx})">Detail</button>
+                    <a href="${escHtml(r.edit_url)}" class="btn btn-quiet btn-sm">Ubah</a>
+                </td>
+            </tr>
+            <tr id="detail-row-${idx}" class="adm-detail-row" data-detail-for="${idx}">
+                <td colspan="10" style="padding: 0.9rem 1rem;">
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));">
+                        <div>
+                            <p class="text-ink-3" style="font-size:11px;">Faktor Risiko Utama</p>
+                            <p class="mt-1 font-medium text-ink">${escHtml(r.top_factor)}</p>
+                        </div>
+                        <div>
+                            <p class="text-ink-3" style="font-size:11px;">Status Tindak Lanjut DPA</p>
+                            <p class="mt-1 font-medium text-ink">${escHtml(r.follow_up_label)}</p>
+                        </div>
+                        <div>
+                            <p class="text-ink-3" style="font-size:11px;">Skor Risiko (${r.score !== null ? scoreText + '/10' : '-'})</p>
+                            <div class="adm-mini-bar" style="margin-top:0.45rem;"><div class="adm-mini-fill" style="width:${scorePct}%; background:${scoreColor};"></div></div>
+                        </div>
+                        <div>
+                            <p class="text-ink-3" style="font-size:11px;">Progres 20 SKS Pengayaan (${r.enrichment_sks}/${r.target_sks || 20} SKS)</p>
+                            <div class="adm-mini-bar" style="margin-top:0.45rem;"><div class="adm-mini-fill" style="width:${enrPct}%; background:var(--accent);"></div></div>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+    }).join('');
+
+    tbody.innerHTML = html;
+    dashApplyColumnVisibility();
+}
+
+function dashRenderPager(data) {
+    const pager = document.getElementById('dash-pager');
+    const summary = document.getElementById('pager-summary');
+    const btns = document.getElementById('pager-buttons');
+    if (!pager || !summary || !btns) return;
+
+    if (data.filtered === 0) {
+        pager.style.display = 'none';
+        return;
+    }
+
+    pager.style.display = '';
+    summary.innerHTML = `Halaman <strong>${data.page}</strong> dari <strong>${data.last_page}</strong> &middot; ${Number(data.filtered).toLocaleString('id-ID')} mahasiswa`;
+
+    const pages = [];
+    const cur = data.page;
+    const last = data.last_page;
+    const start = Math.max(1, cur - 2);
+    const end = Math.min(last, cur + 2);
+
+    let html = `<button type="button" class="adm-page-btn" onclick="dashFetchPage(${Math.max(1, cur - 1)})" ${cur <= 1 ? 'disabled' : ''}>&larr; Sebelumnya</button>`;
+    if (start > 1) {
+        html += `<button type="button" class="adm-page-btn" onclick="dashFetchPage(1)">1</button>`;
+        if (start > 2) html += `<span class="px-1 text-ink-3">&hellip;</span>`;
+    }
+    for (let p = start; p <= end; p++) {
+        html += `<button type="button" class="adm-page-btn ${p === cur ? 'is-current' : ''}" onclick="dashFetchPage(${p})" ${p === cur ? 'disabled' : ''}>${p}</button>`;
+    }
+    if (end < last) {
+        if (end < last - 1) html += `<span class="px-1 text-ink-3">&hellip;</span>`;
+        html += `<button type="button" class="adm-page-btn" onclick="dashFetchPage(${last})">${last}</button>`;
+    }
+    html += `<button type="button" class="adm-page-btn" onclick="dashFetchPage(${Math.min(last, cur + 1)})" ${cur >= last ? 'disabled' : ''}>Berikutnya &rarr;</button>`;
+    btns.innerHTML = html;
+}
+
+function dashUpdateSortIndicators() {
+    document.querySelectorAll('[data-sort-col]').forEach(btn => {
+        const active = btn.dataset.sortCol === dashState.sort;
+        btn.classList.toggle('is-sorted', active);
+        const ind = btn.querySelector('.adm-sort-ind');
+        if (ind) ind.textContent = active ? (dashState.dir === 'desc' ? '▼' : '▲') : '⇅';
     });
+}
 
-    const cnt = document.getElementById('visible-count');
-    if (cnt) cnt.textContent = visible;
+async function dashFetchPage(page = 1) {
+    dashState.page = page;
+    const level = document.getElementById('f-tingkat')?.value || '';
+    const hasFilter = Boolean(
+        (document.getElementById('f-q')?.value || '').trim()
+        || (document.getElementById('f-prodi')?.value || '')
+        || (document.getElementById('f-angkatan')?.value || '')
+        || level
+        || (document.getElementById('f-dpa')?.value || '')
+    );
 
-    const emptyMsg = document.getElementById('empty-filter-msg');
-    if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
-
-    const hasFilter = Boolean(q || prodi || angkatan || level || dpa);
     const resetBtn = document.getElementById('btn-reset-filter');
     if (resetBtn) resetBtn.style.display = hasFilter ? '' : 'none';
 
@@ -852,16 +1193,47 @@ function dashApplyFilters() {
         btn.classList.toggle('is-active', level !== '' && btn.dataset.legendLevel === level);
     });
 
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (prodi) params.set('prodi', prodi);
-    if (angkatan) params.set('angkatan', angkatan);
-    if (level) params.set('tingkat', level);
-    if (dpa) params.set('dpa', dpa);
-    const exportBtn = document.getElementById('btn-export-csv');
-    if (exportBtn) {
-        exportBtn.href = params.toString() ? `${dashExportBase}?${params.toString()}` : dashExportBase;
+    dashUpdateSortIndicators();
+    dashSyncExportLinks();
+
+    if (dashState.controller) dashState.controller.abort();
+    dashState.controller = new AbortController();
+
+    const wrap = document.getElementById('student-table-wrap');
+    if (wrap) wrap.classList.add('adm-loading');
+
+    try {
+        const params = dashBuildQueryParams(true);
+        params.set('format', 'json');
+        const res = await fetch(`${dashIndexBase}?${params.toString()}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            signal: dashState.controller.signal,
+        });
+        if (!res.ok) throw new Error('Gagal memuat data');
+        const data = await res.json();
+
+        dashState.page = data.page;
+        dashState.lastPage = data.last_page;
+
+        const cnt = document.getElementById('visible-count');
+        if (cnt) cnt.textContent = Number(data.filtered).toLocaleString('id-ID');
+        const range = document.getElementById('range-label');
+        if (range) range.textContent = `${data.from}–${data.to}`;
+
+        const emptyMsg = document.getElementById('empty-filter-msg');
+        if (emptyMsg) emptyMsg.style.display = data.filtered === 0 ? '' : 'none';
+
+        dashRenderRows(data.rows || []);
+        dashRenderPager(data);
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+        }
+    } finally {
+        if (wrap) wrap.classList.remove('adm-loading');
     }
 }
+
+dashSyncExportLinks();
 </script>
 @endsection
