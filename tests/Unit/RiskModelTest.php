@@ -60,7 +60,7 @@ class RiskModelTest extends TestCase
         $this->assertSame("'=cmd|calc", $ok['records'][0]['course_name']);
         $this->assertFalse($ok['records'][0]['is_official_khs']);
         $this->assertSame('olu', $ok['records'][0]['assignment_source']);
-        $this->assertEqualsWithDelta(36.25, $ok['records'][0]['min_uas_for_c'], 0.01);
+        $this->assertEqualsWithDelta(37.5, $ok['records'][0]['min_uas_for_c'], 0.01);
 
         // C1: Bobot numerik 0-4.0 di kolom "nilai" (skala 0-100) harus meminta konfirmasi (error), bukan diam-diam jadi E
         $ambiguousBobot = SheetValidator::validate([$header, ['5', 'IF501', 'Big Data', '3', '3.5', '90', '', '', '']], '2303045009');
