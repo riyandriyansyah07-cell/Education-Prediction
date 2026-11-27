@@ -6,7 +6,7 @@ use App\Models\AcademicRecord;
 
 /**
  * Model risiko berbasis proyeksi nilai akhir dan 10 variabel inti:
- * - Proyeksi per mata kuliah: UAS 40%, UTS 25%, Tugas 25%, Kehadiran/Keaktifan 10%
+ * - Proyeksi per mata kuliah: UAS 40%, UTS 30%, Tugas 20%, Kehadiran/Keaktifan 10%
  * - Rumus nilai sementara (N) dengan pembagian ulang bobot komponen yang aktif
  * - Rumus nilai UAS minimal (U_min) untuk target C (56) dan B (68)
  * - Penggabungan skor mahasiswa (0-10): Semester berjalan 75%, Riwayat 25% (total 100%)
@@ -40,8 +40,8 @@ final class RiskModel
     /** Bobot standar komponen penilaian per mata kuliah. */
     public const COURSE_WEIGHTS = [
         'uas' => 0.40,
-        'uts' => 0.25,
-        'assignment' => 0.25,
+        'uts' => 0.30,
+        'assignment' => 0.20,
         'attendance' => 0.10,
     ];
 

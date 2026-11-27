@@ -491,7 +491,7 @@
                 <p class="mono" style="font-size:0.72rem;color:var(--ok);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Aturan UHAMKA</p>
                 <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Skala Nilai &amp; Hadir 75%</h3>
                 <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.6;">
-                    UAS 40% &middot; UTS 25% &middot; Tugas 25% &middot; Hadir 10%. Hadir <strong style="color:var(--ink);">&lt; 75%</strong> otomatis menaikkan status waspada.
+                    UAS 40% &middot; UTS 30% &middot; Tugas 20% &middot; Hadir 10%. Hadir <strong style="color:var(--ink);">&lt; 75%</strong> otomatis menaikkan status waspada.
                 </p>
                 <div style="margin-top:1.1rem;display:flex;flex-wrap:wrap;gap:0.5rem;" class="mono">
                     <span class="px-node" style="border-color:color-mix(in srgb, var(--ok) 35%, var(--line));">A &ge; 80</span>

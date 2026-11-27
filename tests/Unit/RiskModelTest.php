@@ -21,7 +21,7 @@ class RiskModelTest extends TestCase
         $this->assertSame('rendah', RiskModel::classify(RiskModel::score($aman), RiskModel::DEFAULT_THRESHOLDS));
         $this->assertSame([], RiskModel::factors($aman));
 
-        // Contoh di dokumen rancangan: UTS 60, Tugas 70, Kehadiran 90 -> poin pra-UAS 41,5 -> U_min(C=56) = 36,25 & U_min(B=68) = 66,25
+        // Bobot resmi KHS UHAMKA (UAS 40%, UTS 30%, Tugas 20%, Hadir 10%): UTS 60, Tugas 70, Hadir 90 -> pra-UAS 41,0 -> U_min(C=56) = 37,5 & U_min(B=68) = 67,5
         $proj = RiskModel::projectCourse([
             'credits' => 3,
             'attendance' => 90,
@@ -30,8 +30,8 @@ class RiskModelTest extends TestCase
             'uas_score' => null,
             'is_official_khs' => false,
         ]);
-        $this->assertEqualsWithDelta(36.25, $proj['min_uas_for_c'], 0.01);
-        $this->assertEqualsWithDelta(66.25, $proj['min_uas_for_b'], 0.01);
+        $this->assertEqualsWithDelta(37.5, $proj['min_uas_for_c'], 0.01);
+        $this->assertEqualsWithDelta(67.5, $proj['min_uas_for_b'], 0.01);
         $this->assertSame('rendah', $proj['course_risk_level']);
     }
 

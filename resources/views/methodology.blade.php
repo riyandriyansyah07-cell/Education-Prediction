@@ -159,7 +159,7 @@
                     <span class="mt-badge mono">75%</span>
                 </div>
                 <ul class="mt-3 list-disc space-y-1.5 pl-4 text-sm text-ink-2">
-                    <li>Tiap matkul memakai bobot <strong>UAS 40%</strong>, <strong>UTS 25%</strong>, <strong>Tugas 25%</strong>, dan <strong>Kehadiran 10%</strong>.</li>
+                    <li>Tiap matkul memakai bobot <strong>UAS 40%</strong>, <strong>UTS 30%</strong>, <strong>Tugas 20%</strong>, dan <strong>Kehadiran 10%</strong>.</li>
                     <li>Nilai yang belum keluar (kosong) <strong>tidak dihitung nol</strong> — dilewati otomatis.</li>
                     <li>Sebelum UAS, sistem menghitung <strong>target nilai UAS minimal</strong> agar lulus C (56) atau B (68).</li>
                     <li>Jika ada matkul kelas biasa dengan hadir <strong>&lt; 75%</strong>, skor langsung naik minimal <strong>3,0 (Sedang)</strong>.</li>
