@@ -138,7 +138,8 @@
                                 <td class="num mono px-3 py-3 text-center font-semibold whitespace-nowrap">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
                                 <td class="mono px-3 py-3 text-center text-xs whitespace-nowrap">
                                     @if ($c->min_uas_for_c !== null)
-                                        C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }}
+                                        @php $minUasA = round((float) ($c->min_uas_for_b ?? 0) + 30.0, 2); @endphp
+                                        C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }} / A: <strong style="color:var(--ok);">{{ $minUasA > 100 ? '>100' : \App\Support\Fmt::num($minUasA, 0) }}</strong>
                                     @else
                                         KHS ({{ $c->grade_input ?? '-' }})
                                     @endif

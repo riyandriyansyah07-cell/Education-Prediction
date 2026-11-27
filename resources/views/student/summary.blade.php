@@ -350,7 +350,7 @@
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h2 id="input-cepat" class="text-xl font-medium">Rincian Nilai &amp; Target UAS (Sem {{ $latest->semester }})</h2>
-                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai mata kuliah untuk menghitung proyeksi N &amp; target UAS minimal (C: 56 / B: 68).</p>
+                    <p class="mt-1 text-sm text-ink-2">Perbarui kehadiran atau nilai mata kuliah untuk menghitung proyeksi N &amp; target UAS minimal (C: 56 / B: 68 / A: 80).</p>
                 </div>
             </div>
 
@@ -407,7 +407,8 @@
                                     <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Nilai N">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
                                     <td class="sum-td-meta sum-td-uasmin num mono px-3 py-3 text-center text-xs whitespace-nowrap" data-label="UAS Min">
                                         @if ($c->min_uas_for_c !== null)
-                                            C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }}
+                                            @php $minUasA = round((float) ($c->min_uas_for_b ?? 0) + 30.0, 2); @endphp
+                                            C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }} / A: <strong style="color:var(--ok);">{{ $minUasA > 100 ? '>100' : \App\Support\Fmt::num($minUasA, 0) }}</strong>
                                         @else
                                             KHS ({{ $c->grade_input ?? '-' }})
                                         @endif
