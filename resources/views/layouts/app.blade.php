@@ -296,9 +296,9 @@
                 });
             }
 
-            // Catat notifikasi lama tanpa spam saat baru buka halaman, lalu cek berkala setiap 30 detik
+            // Langsung tampilkan notifikasi untuk tiket/SKPI baru yang belum pernah dilihat di perangkat ini
             if (Notification.permission === 'granted') {
-                checkNow(true);
+                checkNow(false);
             }
             setInterval(function () {
                 if (Notification.permission === 'granted') {
