@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessLogController;
 use App\Http\Controllers\AccountTicketController;
+use App\Http\Controllers\NotificationPollController;
 use App\Http\Controllers\SkpiDocumentController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
@@ -43,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding/tutup', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
     Route::get('/kata-sandi', [PasswordController::class, 'show'])->name('sandi.edit');
     Route::post('/kata-sandi', [PasswordController::class, 'update'])->name('sandi.update');
+    Route::get('/notifikasi/cek', [NotificationPollController::class, 'check'])->name('notifikasi.cek');
 
     // Mahasiswa: UC-02 sampai UC-07 + Cek Berkala Langsung, Input Cepat, & Pelacak 20 SKS Pengayaan
     Route::middleware('role:mahasiswa')->prefix('mahasiswa')->name('mhs.')->group(function () {

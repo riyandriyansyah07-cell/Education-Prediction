@@ -72,12 +72,12 @@
                     <x-icon :name="$icon" />
                     <span class="truncate">{{ $label }}</span>
                     @if ($route === 'admin.tiket' && $pendingTicketsCount > 0)
-                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" title="{{ $pendingTicketsCount }} tiket menunggu verifikasi">
+                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" data-badge-tickets title="{{ $pendingTicketsCount }} tiket menunggu verifikasi">
                             {{ $pendingTicketsCount > 99 ? '99+' : $pendingTicketsCount }}
                         </span>
                     @endif
                     @if ($route === 'admin.skpi' && $pendingSkpiCount > 0)
-                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" title="{{ $pendingSkpiCount }} bukti SKPI menunggu verifikasi">
+                        <span class="mono" style="margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;line-height:1;display:inline-flex;align-items:center;justify-content:center;background:var(--bad);color:#ffffff;flex-shrink:0;" data-badge-skpi title="{{ $pendingSkpiCount }} bukti SKPI menunggu verifikasi">
                             {{ $pendingSkpiCount > 99 ? '99+' : $pendingSkpiCount }}
                         </span>
                     @endif
@@ -90,7 +90,11 @@
                 <p class="truncate text-sm font-semibold text-ink">{{ $user->name }}</p>
                 <p class="truncate text-xs text-ink-3">{{ $user->roleLabel() }}</p>
             </div>
-            <div class="mt-3 px-1">
+            <div class="mt-3 px-1" style="display:flex;flex-direction:column;gap:0.2rem;">
+                <button type="button" data-notif-enable class="nav-link w-full" style="display:none;text-align:left;" aria-label="Aktifkan notifikasi browser">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 0-10 0c0 4-2 5.5-2 5.5h14s-2-1.5-2-5.5"/><path d="M8.5 16.5a1.6 1.6 0 0 0 3 0"/></svg>
+                    <span data-notif-label class="truncate">Aktifkan notifikasi</span>
+                </button>
                 <a href="{{ route('sandi.edit') }}" class="nav-link {{ request()->routeIs('sandi.*') ? 'is-active' : '' }}"><x-icon name="lock-key" /> Ubah kata sandi</a>
             </div>
             <div class="mt-1 flex items-center gap-2 px-1">
@@ -164,6 +168,146 @@
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && backdrop.classList.contains('is-open')) {
                     toggle.click();
+                }
+            });
+        })();
+    </script>
+    <script>
+        (function () {
+            if (!('Notification' in window)) return;
+            var btn = document.querySelector('[data-notif-enable]');
+            var lbl = document.querySelector('[data-notif-label]');
+            var pollUrl = @json(route('notifikasi.cek'));
+            var iconUrl = @json(asset('favicon.svg'));
+            var SEEN_KEY = 'cst_seen_notif_keys_v1';
+            var swReg = null;
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then(function (reg) {
+                    swReg = reg;
+                }).catch(function () {});
+            }
+
+            function getSeen() {
+                try {
+                    return JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
+                } catch (e) { return []; }
+            }
+            function markSeen(key) {
+                try {
+                    var arr = getSeen();
+                    if (arr.indexOf(key) === -1) {
+                        arr.push(key);
+                        if (arr.length > 60) arr = arr.slice(-60);
+                        localStorage.setItem(SEEN_KEY, JSON.stringify(arr));
+                    }
+                } catch (e) {}
+            }
+
+            function showOsNotif(title, body, url, tag) {
+                if (Notification.permission !== 'granted') return;
+                var opts = {
+                    body: body,
+                    icon: iconUrl,
+                    badge: iconUrl,
+                    tag: tag || 'cst-notif',
+                    data: { url: url || '/beranda' }
+                };
+                if (swReg && swReg.showNotification) {
+                    swReg.showNotification(title, opts).catch(function () {
+                        try {
+                            var n = new Notification(title, opts);
+                            n.onclick = function () { window.focus(); if (url) window.location.href = url; };
+                        } catch (e) {}
+                    });
+                } else {
+                    try {
+                        var n = new Notification(title, opts);
+                        n.onclick = function () { window.focus(); if (url) window.location.href = url; };
+                    } catch (e) {}
+                }
+            }
+
+            function syncButton() {
+                if (!btn || !lbl) return;
+                btn.style.display = 'flex';
+                if (Notification.permission === 'granted') {
+                    lbl.textContent = 'Notifikasi aktif';
+                    btn.style.color = 'var(--ok)';
+                } else if (Notification.permission === 'denied') {
+                    lbl.textContent = 'Notifikasi diblokir';
+                    btn.style.color = 'var(--ink-3)';
+                } else {
+                    lbl.textContent = 'Aktifkan notifikasi';
+                    btn.style.color = 'var(--accent)';
+                }
+            }
+
+            function checkNow(seedOnly) {
+                fetch(pollUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) {
+                        if (!data || !Array.isArray(data.items)) return;
+
+                        // Perbarui badge sidebar Admin secara live jika ada perubahan
+                        var bTicket = document.querySelector('[data-badge-tickets]');
+                        if (bTicket && typeof data.pending_tickets === 'number') {
+                            bTicket.textContent = data.pending_tickets > 99 ? '99+' : String(data.pending_tickets);
+                            bTicket.style.display = data.pending_tickets > 0 ? 'inline-flex' : 'none';
+                        }
+                        var bSkpi = document.querySelector('[data-badge-skpi]');
+                        if (bSkpi && typeof data.pending_skpi === 'number') {
+                            bSkpi.textContent = data.pending_skpi > 99 ? '99+' : String(data.pending_skpi);
+                            bSkpi.style.display = data.pending_skpi > 0 ? 'inline-flex' : 'none';
+                        }
+
+                        var seen = getSeen();
+                        data.items.forEach(function (item) {
+                            if (seen.indexOf(item.key) === -1) {
+                                markSeen(item.key);
+                                if (!seedOnly && Notification.permission === 'granted') {
+                                    showOsNotif(item.title, item.body, item.url, item.key);
+                                }
+                            }
+                        });
+                    })
+                    .catch(function () {});
+            }
+
+            syncButton();
+
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (Notification.permission === 'granted') {
+                        showOsNotif('Notifikasi Aktif', 'Kamu akan menerima pemberitahuan saat ada E-Ticket, bukti SKPI, atau pengingat baru.', window.location.href, 'cst-test');
+                        return;
+                    }
+                    if (Notification.permission === 'denied') {
+                        alert('Izin notifikasi sedang diblokir di browser. Buka pengaturan situs (ikon gembok di bilah alamat) lalu ubah Notifikasi menjadi Izinkan.');
+                        return;
+                    }
+                    Notification.requestPermission().then(function (perm) {
+                        syncButton();
+                        if (perm === 'granted') {
+                            showOsNotif('Notifikasi Diaktifkan', 'Notifikasi untuk Cegah Sebelum Terlambat sudah aktif di perangkat ini.', window.location.href, 'cst-enabled');
+                            checkNow(false);
+                        }
+                    });
+                });
+            }
+
+            // Catat notifikasi lama tanpa spam saat baru buka halaman, lalu cek berkala setiap 30 detik
+            if (Notification.permission === 'granted') {
+                checkNow(true);
+            }
+            setInterval(function () {
+                if (Notification.permission === 'granted') {
+                    checkNow(false);
+                }
+            }, 30000);
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden && Notification.permission === 'granted') {
+                    checkNow(false);
                 }
             });
         })();

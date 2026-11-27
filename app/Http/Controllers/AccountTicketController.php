@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AccountTicketMail;
+use App\Mail\AdminNewTicketMail;
 use App\Models\AccountTicket;
 use App\Models\StudentSetting;
 use App\Models\User;
@@ -106,6 +107,23 @@ class AccountTicketController extends Controller
             'notes' => ($data['notes'] ?? null) ?: null,
             'status' => AccountTicket::STATUS_PENDING,
         ]);
+
+        // Kirim notifikasi email instan ke seluruh akun Admin aktif yang memiliki email (muncul meski browser tertutup)
+        try {
+            $adminEmails = User::where('role', User::ROLE_ADMIN)
+                ->where('is_active', true)
+                ->whereNotNull('email')
+                ->where('email', '!=', '')
+                ->pluck('email')
+                ->unique()
+                ->values();
+
+            foreach ($adminEmails as $adminEmail) {
+                Mail::to($adminEmail)->send(new AdminNewTicketMail($ticket));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Email notifikasi E-Ticket baru ke Admin gagal dikirim: '.$e->getMessage());
+        }
 
         return redirect()->route('tiket.form')
             ->with('status', "E-Ticket {$ticket->ticket_code} berhasil dibuat! Simpan kode ini. Setelah disetujui Admin Sekretariat, tautan aman untuk mengatur kata sandi akan dikirim ke {$ticket->email}.")
