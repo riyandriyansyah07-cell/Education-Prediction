@@ -5,243 +5,254 @@
 @section('body')
 <style>
     .lg-shell {
-        min-height: 100dvh;
+        min-height: 100vh;
         display: grid;
-        grid-template-columns: 1fr;
-        background: var(--bg);
+        grid-template-columns: minmax(0, 1fr);
+        background: var(--surface);
     }
-    @media (min-width: 1024px) {
-        .lg-shell { grid-template-columns: minmax(420px, 5fr) 7fr; }
+    @media (min-width: 980px) {
+        .lg-shell {
+            grid-template-columns: minmax(0, 470px) minmax(0, 1fr);
+        }
     }
-
     .lg-left {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 1.75rem 1.5rem;
-        background: var(--bg);
-        position: relative;
-        z-index: 2;
+        padding: 2rem clamp(1.35rem, 4vw, 3rem);
+        background: var(--surface);
     }
-    @media (min-width: 640px) { .lg-left { padding: 2.25rem 2.75rem; } }
-    @media (min-width: 1024px) { .lg-left { padding: 2.75rem 3.5rem; } }
-
+    .lg-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
     .lg-brand {
         display: inline-flex;
         align-items: center;
-        gap: 0.7rem;
+        gap: 0.65rem;
         text-decoration: none;
         color: var(--ink);
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: -0.015em;
     }
-    .lg-brand-mark {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: grid;
-        place-items: center;
-        background: color-mix(in oklab, var(--accent) 14%, var(--surface));
-        border: 1px solid color-mix(in oklab, var(--accent) 32%, var(--line));
-        color: var(--accent);
-        flex-shrink: 0;
-    }
-    .lg-brand-title { font-weight: 600; font-size: 0.96rem; letter-spacing: -0.02em; line-height: 1.2; }
-    .lg-brand-sub { font-size: 0.72rem; color: var(--ink-3); letter-spacing: 0.02em; }
-
     .lg-form-wrap {
         width: 100%;
-        max-width: 24.5rem;
-        margin: 2.75rem auto;
+        max-width: 390px;
+        margin: 2.25rem auto;
     }
-    @media (min-width: 1024px) { .lg-form-wrap { margin: 2.5rem 0; } }
-
-    .lg-pwd-wrap { position: relative; }
-    .lg-pwd-wrap .input { padding-right: 2.75rem; }
-    .lg-pwd-toggle {
+    .lg-eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.45rem;
+    }
+    .lg-title {
+        font-size: clamp(1.75rem, 3vw, 2.15rem);
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        color: var(--ink);
+    }
+    .lg-sub {
+        margin-top: 0.6rem;
+        font-size: 0.9rem;
+        color: var(--ink-2);
+        line-height: 1.55;
+    }
+    .lg-pass-wrap {
+        position: relative;
+    }
+    .lg-pass-wrap .input {
+        padding-right: 2.75rem;
+    }
+    .lg-pass-toggle {
         position: absolute;
+        right: 0.55rem;
         top: 50%;
-        right: 0.5rem;
         transform: translateY(-50%);
-        width: 32px;
-        height: 32px;
-        border: 0;
-        background: transparent;
-        color: var(--ink-3);
-        border-radius: 6px;
-        display: grid;
-        place-items: center;
-        cursor: pointer;
-        transition: color 140ms ease, background-color 140ms ease;
-    }
-    .lg-pwd-toggle:hover { color: var(--ink); background: var(--sunken); }
-
-    .lg-ticket-box {
-        margin-top: 1.5rem;
-        padding: 0.9rem 1rem;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .lg-right {
-        position: relative;
-        overflow: hidden;
-        border-top: 1px solid var(--line);
-        background: var(--surface);
-        padding: 2.5rem 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    @media (min-width: 640px) { .lg-right { padding: 3rem 2.75rem; } }
-    @media (min-width: 1024px) {
-        .lg-right {
-            border-top: 0;
-            border-left: 1px solid var(--line);
-            padding: 3.5rem 4rem;
-        }
-    }
-
-    .lg-right-bg {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background-image:
-            radial-gradient(680px circle at 85% 15%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 65%),
-            radial-gradient(520px circle at 15% 88%, color-mix(in oklab, var(--ok) 11%, transparent), transparent 62%),
-            radial-gradient(color-mix(in oklab, var(--ink) 12%, transparent) 1px, transparent 1px);
-        background-size: 100% 100%, 100% 100%, 24px 24px;
-    }
-
-    .lg-showcase {
-        position: relative;
-        z-index: 1;
-        width: 100%;
-        max-width: 34rem;
-    }
-
-    .lg-pill {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
         display: inline-flex;
         align-items: center;
-        gap: 0.45rem;
-        padding: 0.3rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: var(--accent);
-        background: color-mix(in oklab, var(--accent) 10%, var(--bg));
-        border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--line));
+        justify-content: center;
+        color: var(--ink-3);
+        background: transparent;
+        border: none;
+        cursor: pointer;
     }
-    .lg-pill-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 999px;
-        background: var(--ok);
+    .lg-pass-toggle:hover { color: var(--ink); }
+    .lg-submit {
+        width: 100%;
+        min-height: 46px;
+        padding: 0.55rem 0.6rem 0.55rem 1.25rem;
+        border-radius: 9999px;
+        background: var(--ink);
+        color: var(--surface);
+        font-size: 0.92rem;
+        font-weight: 600;
+        border: 1px solid var(--ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: opacity 140ms ease;
+    }
+    .lg-submit:hover { opacity: 0.9; }
+    .lg-submit-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        background: var(--surface);
+        color: var(--ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .lg-ticket-box {
+        margin-top: 1.35rem;
+        padding: 0.95rem 1.1rem;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: var(--sunken);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .lg-foot {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--ink-3);
     }
 
-    .lg-preview {
-        margin-top: 2rem;
-        border-radius: 14px;
-        border: 1px solid var(--line-strong);
-        background: var(--bg);
-        overflow: hidden;
-        box-shadow: 0 22px 48px -20px rgba(15, 23, 42, 0.22);
+    /* Right editorial panel */
+    .lg-right-wrap {
+        display: none;
+        padding: 1.25rem 1.25rem 1.25rem 0;
+        background: var(--surface);
     }
-    .lg-preview-bar {
+    @media (min-width: 980px) {
+        .lg-right-wrap { display: flex; }
+    }
+    .lg-right {
+        flex: 1;
+        border-radius: 26px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        padding: clamp(2rem, 4vw, 3.5rem);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .lg-right-inner {
+        max-width: 560px;
+        margin: 0 auto;
+        width: 100%;
+    }
+    .lg-right-h2 {
+        font-size: clamp(1.9rem, 3vw, 2.55rem);
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        color: var(--ink);
+        margin-top: 0.45rem;
+    }
+    .lg-right-h2 span { color: var(--accent); }
+    .lg-preview-card {
+        margin-top: 2rem;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: 1.4rem 1.55rem;
+        box-shadow: 0 8px 30px -16px rgba(11, 18, 32, 0.08);
+    }
+    .lg-preview-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.65rem 1rem;
-        background: var(--sunken);
+        gap: 0.75rem;
+        padding-bottom: 0.85rem;
         border-bottom: 1px solid var(--line);
-        font-size: 0.74rem;
+        font-size: 12px;
         color: var(--ink-3);
     }
-    .lg-dots { display: flex; gap: 6px; }
-    .lg-dots span { width: 9px; height: 9px; border-radius: 999px; background: var(--line-strong); }
-
-    .lg-preview-body { padding: 1.25rem; }
-    .lg-meter {
-        margin-top: 0.9rem;
-        height: 8px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, var(--ok) 0%, var(--ok) 28%, var(--warn) 28%, var(--warn) 58%, var(--bad) 58%, var(--bad) 100%);
-        opacity: 0.85;
+    .lg-bar-track {
         position: relative;
+        height: 8px;
+        border-radius: 9999px;
+        overflow: hidden;
+        display: flex;
+        gap: 2px;
+        margin-top: 0.9rem;
     }
-    .lg-meter-pin {
-        position: absolute;
-        top: -4px;
-        left: 16%;
-        width: 3px;
-        height: 16px;
-        border-radius: 2px;
-        background: var(--ink);
-    }
-
     .lg-metrics {
-        margin-top: 1.1rem;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.65rem;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--line);
     }
-    .lg-metric {
-        padding: 0.7rem 0.75rem;
+    .lg-feat-list {
+        margin-top: 1.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.95rem;
+    }
+    .lg-feat-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+    .lg-feat-ic {
+        width: 34px;
+        height: 34px;
         border-radius: 10px;
         border: 1px solid var(--line);
         background: var(--surface);
-    }
-    .lg-metric-label { font-size: 0.7rem; color: var(--ink-3); }
-    .lg-metric-val { margin-top: 0.2rem; font-size: 0.84rem; font-weight: 600; color: var(--ink); }
-
-    .lg-points {
-        margin-top: 1.75rem;
-        display: grid;
-        gap: 0.85rem;
-    }
-    .lg-point {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-    .lg-point-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: var(--bg);
         color: var(--accent);
-        display: grid;
-        place-items: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-        margin-top: 1px;
     }
 </style>
 
 <div class="lg-shell">
-    <section class="lg-left">
-        <div class="flex items-center justify-between gap-3">
+    <div class="lg-left">
+        <div class="lg-top">
             <a href="{{ route('landing') }}" class="lg-brand">
-                <x-brand-logo :size="36" />
-                <span>
-                    <span class="lg-brand-title" style="display:block;">Cegah Sebelum Terlambat</span>
-                    <span class="lg-brand-sub" style="display:block;">FTII UHAMKA</span>
-                </span>
+                <x-brand-logo :size="32" />
+                <span>Peringatan Dini</span>
             </a>
-            <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap">
-                <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
-            </button>
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+                <a href="{{ route('landing') }}" class="text-xs font-medium text-ink-2 hover:underline">&larr; Beranda</a>
+                <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema" style="min-height:34px;padding:0.3rem 0.55rem;">
+                    <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
+                </button>
+            </div>
         </div>
 
         <div class="lg-form-wrap">
-            <h1 class="rise text-3xl sm:text-4xl" style="letter-spacing:-0.03em;">Masuk ke akunmu</h1>
-            <p class="rise mt-2 text-sm text-ink-2" style="--i: 1">Gunakan NIM untuk mahasiswa, atau ID pegawai untuk DPA dan admin.</p>
+            <p class="lg-eyebrow">Portal Akademik FTII UHAMKA</p>
+            <h1 class="lg-title">Masuk ke akunmu</h1>
+            <p class="lg-sub">Gunakan NIM untuk mahasiswa, atau ID pegawai untuk DPA, Validator AI, dan Admin Sekretariat.</p>
 
-            <form id="login-form" method="POST" action="{{ route('login.store') }}" class="rise mt-7 space-y-5" style="--i: 2" novalidate>
+            @include('partials.flash')
+
+            <form id="login-form" method="POST" action="{{ route('login.store') }}" style="margin-top:1.5rem;display:flex;flex-direction:column;gap:1.05rem;" novalidate>
                 @csrf
                 <div>
                     <label for="username" class="label">NIM atau ID pegawai</label>
@@ -252,149 +263,117 @@
 
                 <div>
                     <label for="password" class="label">Kata sandi</label>
-                    <div class="lg-pwd-wrap">
+                    <div class="lg-pass-wrap">
                         <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Masukkan kata sandi" class="input">
-                        <button type="button" class="lg-pwd-toggle" id="toggle-pwd" aria-label="Tampilkan atau sembunyikan kata sandi">
-                            <svg id="eye-open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            <svg id="eye-closed" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
-                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-6.5 0-10-7-10-7a21.77 21.77 0 0 1 5.06-5.94"/>
-                                <path d="M9.9 4.24A10.94 10.94 0 0 1 12 5c6.5 0 10 7 10 7a21.8 21.8 0 0 1-3.17 4.49"/>
-                                <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
+                        <button type="button" class="lg-pass-toggle" id="toggle-pass-btn" aria-label="Tampilkan atau sembunyikan kata sandi">
+                            <x-icon name="eye" size="size-4" />
                         </button>
                     </div>
                     @error('password')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 
-                <button type="submit" class="btn btn-primary h-11 w-full">Masuk</button>
+                <button type="submit" class="lg-submit" style="margin-top:0.25rem;">
+                    <span>Masuk Portal</span>
+                    <span class="lg-submit-circle" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14L14 6M8 6h6v6"/></svg>
+                    </span>
+                </button>
             </form>
 
             <div class="lg-ticket-box">
-                <div style="min-width:0;">
-                    <p class="text-xs font-medium text-ink">Belum punya akun atau lupa sandi?</p>
-                    <p class="text-xs text-ink-3" style="margin-top:2px;">Aktivasi dikirim otomatis ke emailmu.</p>
+                <div style="min-width:0;flex:1 1 170px;">
+                    <p class="text-xs font-semibold text-ink">Belum punya akun atau lupa sandi?</p>
+                    <p class="text-xs text-ink-3" style="margin-top:2px;">Aktivasi dikirim otomatis ke email aktifmu.</p>
                 </div>
-                <a href="{{ route('tiket.form') }}" class="btn btn-quiet btn-sm" style="white-space:nowrap;">Ajukan E-Ticket &rarr;</a>
+                <a href="{{ route('tiket.form') }}" class="btn btn-quiet btn-sm" style="white-space:nowrap;font-size:12px;min-height:34px;padding:0.3rem 0.85rem;">Ajukan E-Ticket &nearr;</a>
             </div>
 
-            <p class="mt-4 text-xs text-ink-3">Sesi otomatis berakhir setelah 30 menit tanpa aktivitas demi keamanan akun.</p>
+            <p class="text-xs text-ink-3" style="margin-top:1.1rem;">Sesi otomatis berakhir setelah 30 menit tanpa aktivitas demi keamanan akun.</p>
         </div>
 
-        <div class="flex items-center justify-between gap-3 text-xs text-ink-3">
-            <span>Capstone Project Kelompok 12 &middot; FTII UHAMKA</span>
-            <a href="{{ route('landing') }}" class="hover:underline">Beranda</a>
+        <div class="lg-foot">
+            <span>Cegah Sebelum Terlambat &middot; FTII UHAMKA</span>
+            <span>Privasi Zero-PII</span>
         </div>
-    </section>
+    </div>
 
-    <aside class="lg-right">
-        <div class="lg-right-bg" aria-hidden="true"></div>
-        <div class="lg-showcase">
-            @if ($demo->isNotEmpty())
-                <h2 class="text-2xl">Akun contoh</h2>
-                <p class="mt-2 text-ink-2">Tampil hanya di lingkungan lokal. Semua data sintetis. Kata sandi: <span class="mono">password123</span></p>
-                <ul class="mt-6 divide-y divide-line border-y border-line">
-                    @foreach ($demo as $d)
-                        <li class="flex items-center justify-between gap-4 py-3">
-                            <div class="min-w-0">
-                                <p class="truncate font-medium">{{ $d->name }}</p>
-                                <p class="text-sm text-ink-2">{{ $d->roleLabel() }}<span class="mono ml-2 text-ink-3">{{ $d->username }}</span></p>
-                            </div>
-                            <button type="button" class="btn btn-quiet btn-sm" data-fill="{{ $d->username }}" data-password="password123">Isi</button>
-                        </li>
-                    @endforeach
-                </ul>
-                <p class="mt-5 text-sm text-ink-3">Akun mahasiswa pertama belum punya data, jadi alur impor bisa dicoba dari awal.</p>
-            @else
-                <span class="lg-pill">
-                    <span class="lg-pill-dot" aria-hidden="true"></span>
-                    Sistem Peringatan Dini Akademik
-                </span>
+    <div class="lg-right-wrap">
+        <div class="lg-right">
+            <div class="lg-right-inner">
+                <p class="lg-eyebrow">Sistem Peringatan Dini Akademik &middot; FTII UHAMKA</p>
+                <h2 class="lg-right-h2">Deteksi dini, <span>lulus tepat waktu.</span></h2>
+                <p class="lg-sub" style="margin-top:0.75rem;">Pantau risiko nilai semester lebih awal, hitung target UAS minimal, dan kawal progres 20 SKS Pengayaan serta 4 syarat SKPI dalam satu tempat yang tenang.</p>
 
-                <h2 class="mt-4 text-3xl sm:text-4xl" style="letter-spacing:-0.03em; line-height:1.15;">
-                    Deteksi dini, lulus tepat waktu.
-                </h2>
-                <p class="mt-3 text-sm text-ink-2" style="max-width:46ch; line-height:1.65;">
-                    Pantau risiko nilai semester lebih awal, hitung target UAS minimal, dan kawal progres 20 SKS Pengayaan dalam satu tempat.
-                </p>
-
-                <div class="lg-preview" aria-hidden="true">
-                    <div class="lg-preview-bar">
-                        <div class="lg-dots"><span></span><span></span><span></span></div>
+                <div class="lg-preview-card">
+                    <div class="lg-preview-head">
+                        <span class="font-medium text-ink-2">Pratinjau Status Semester Berjalan</span>
                         <span class="mono">peringatandini.online/mahasiswa/ringkasan</span>
                     </div>
-                    <div class="lg-preview-body">
-                        <div class="flex items-center justify-between gap-3">
-                            <div>
-                                <p class="text-xs text-ink-3">Status Risiko Semester Berjalan</p>
-                                <p class="mt-0.5 text-xl font-semibold" style="color:var(--ok);">Risiko rendah</p>
-                            </div>
-                            <span class="mono text-lg font-semibold text-ink">1,2 <span class="text-xs font-normal text-ink-3">/ 10</span></span>
+
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:1rem;">
+                        <div>
+                            <p class="text-xs text-ink-3">Status Risiko Semester Berjalan</p>
+                            <p style="font-size:1.55rem;font-weight:750;color:var(--ok);letter-spacing:-0.02em;margin-top:2px;">Risiko rendah</p>
                         </div>
-                        <div class="lg-meter"><span class="lg-meter-pin"></span></div>
-                        <div class="lg-metrics">
-                            <div class="lg-metric">
-                                <p class="lg-metric-label">Target UAS</p>
-                                <p class="lg-metric-val mono">C: 56 &middot; B: 68</p>
-                            </div>
-                            <div class="lg-metric">
-                                <p class="lg-metric-label">MK Pengayaan</p>
-                                <p class="lg-metric-val">20 SKS + PKM</p>
-                            </div>
-                            <div class="lg-metric">
-                                <p class="lg-metric-label">Pendampingan</p>
-                                <p class="lg-metric-val" style="color:var(--ok);">Terhubung DPA</p>
-                            </div>
+                        <p class="mono" style="font-size:1.75rem;font-weight:750;color:var(--ink);">1,2 <span class="text-sm font-normal text-ink-3">/ 10</span></p>
+                    </div>
+
+                    <div class="lg-bar-track" aria-hidden="true">
+                        <div style="width:25%;background:#10b981;border-radius:9999px;"></div>
+                        <div style="width:25%;background:#f59e0b;border-radius:9999px;"></div>
+                        <div style="width:50%;background:#ef4444;border-radius:9999px;"></div>
+                        <div style="position:absolute;left:12%;top:-2px;bottom:-2px;width:4px;background:var(--ink);border-radius:2px;"></div>
+                    </div>
+                    <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:6px;">
+                        <span>0</span><span>2,5</span><span>5,0</span><span>10</span>
+                    </div>
+
+                    <div class="lg-metrics">
+                        <div>
+                            <p class="text-xs text-ink-3">Target UAS</p>
+                            <p class="mono text-xs font-semibold text-ink" style="margin-top:3px;">C: 56 &middot; B: 68 &middot; A: 80</p>
+                        </div>
+                        <div style="border-left:1px solid var(--line);padding-left:0.75rem;">
+                            <p class="text-xs text-ink-3">MK Pengayaan</p>
+                            <p class="mono text-xs font-semibold text-ink" style="margin-top:3px;">20 SKS + 4 SKPI</p>
+                        </div>
+                        <div style="border-left:1px solid var(--line);padding-left:0.75rem;">
+                            <p class="text-xs text-ink-3">Pendampingan</p>
+                            <p class="text-xs font-semibold" style="margin-top:3px;color:var(--ok);">Terhubung DPA</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="lg-points">
-                    <div class="lg-point">
-                        <span class="lg-point-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                            </svg>
-                        </span>
+                <div class="lg-feat-list">
+                    <div class="lg-feat-item">
+                        <span class="lg-feat-ic"><x-icon name="shield-check" size="size-4" /></span>
                         <div>
-                            <p class="text-sm font-medium text-ink">Privasi terjaga penuh</p>
-                            <p class="text-xs text-ink-2">Identitas mahasiswa disamarkan saat analisis AI dan seluruh riwayat akses tersimpan rapi.</p>
+                            <p class="text-sm font-semibold text-ink">Privasi terjaga penuh</p>
+                            <p class="text-xs text-ink-2" style="margin-top:2px;line-height:1.5;">Identitas mahasiswa disamarkan dengan HMAC-SHA256 saat analisis berlangsung dan seluruh riwayat akses tersimpan rapi.</p>
                         </div>
                     </div>
-                    <div class="lg-point">
-                        <span class="lg-point-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                            </svg>
-                        </span>
+                    <div class="lg-feat-item">
+                        <span class="lg-feat-ic"><x-icon name="chart-line-up" size="size-4" /></span>
                         <div>
-                            <p class="text-sm font-medium text-ink">Deteksi dini berbasis data</p>
-                            <p class="text-xs text-ink-2">Menghitung kehadiran, nilai berjalan, dan progres MK Pengayaan beserta saran langkah perbaikan.</p>
+                            <p class="text-sm font-semibold text-ink">Deteksi dini berbasis data</p>
+                            <p class="text-xs text-ink-2" style="margin-top:2px;line-height:1.5;">Menghitung kehadiran, nilai berjalan, dan progres MK Pengayaan beserta saran langkah perbaikan sebelum UAS.</p>
                         </div>
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
-    </aside>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.getElementById('toggle-pwd');
-    var input = document.getElementById('password');
-    var openIcon = document.getElementById('eye-open');
-    var closedIcon = document.getElementById('eye-closed');
-    if (!btn || !input) return;
-    btn.addEventListener('click', function () {
-        var isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
-        if (openIcon && closedIcon) {
-            openIcon.style.display = isHidden ? 'none' : '';
-            closedIcon.style.display = isHidden ? '' : 'none';
-        }
-    });
+    const btn = document.getElementById('toggle-pass-btn');
+    const inp = document.getElementById('password');
+    if (btn && inp) {
+        btn.addEventListener('click', function () {
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        });
+    }
 });
 </script>
 @endsection

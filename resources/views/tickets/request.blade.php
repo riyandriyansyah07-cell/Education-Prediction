@@ -193,7 +193,7 @@
                 <div>
                     <label for="email" class="label">Email aktif <span style="color:var(--bad);">*</span></label>
                     <input id="email" name="email" type="email" value="{{ old('email') }}" placeholder="nama@uhamka.ac.id" class="input" required>
-                    <p class="mt-1.5 text-xs text-ink-3">Wajib diisi â€” tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
+                    <p class="mt-1.5 text-xs text-ink-3">Wajib diisi — tautan pengaturan kata sandi sekali pakai akan dikirim ke email ini setelah disetujui Admin.</p>
                     @error('email')<p class="field-error" role="alert">{{ $message }}</p>@enderror
                 </div>
 

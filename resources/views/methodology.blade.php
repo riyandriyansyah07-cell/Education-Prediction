@@ -13,7 +13,7 @@
     .mt-card {
         border: 1px solid var(--line);
         background: var(--surface);
-        border-radius: 12px;
+        border-radius: 18px;
         padding: 1.25rem;
     }
     .mt-level-ok { border-top: 3px solid var(--ok); }

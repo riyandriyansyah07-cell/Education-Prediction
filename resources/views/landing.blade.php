@@ -1,697 +1,684 @@
 @extends('layouts.base')
 
-@section('title', 'Tahu risikomu lebih awal')
+@section('title', 'Peringatan Dini Akademik FTII UHAMKA')
 
 @section('body')
 <style>
-    .px-wrap { width: 100%; max-width: 1140px; margin: 0 auto; padding: 0 1.25rem; }
-    @media (min-width: 640px) { .px-wrap { padding: 0 2rem; } }
-
-    /* Ambient Architectural Backdrop (Strictly Absolute — Zero Layout Shift) */
-    .px-stage {
-        position: relative;
-        overflow-x: clip;
+    .lp-page {
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
     }
-    .px-stage::before {
-        content: "";
-        position: absolute;
-        top: -80px; left: 0; right: 0;
-        height: 560px;
-        pointer-events: none;
-        background:
-            radial-gradient(52% 48% at 50% 10%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 72%),
-            radial-gradient(38% 36% at 78% 22%, color-mix(in srgb, var(--ok) 12%, transparent) 0%, transparent 70%);
-        z-index: 0;
+    .lp-wrap {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 clamp(1.1rem, 3.5vw, 2rem);
     }
-    .px-grid-bg {
-        position: absolute !important;
-        top: 0; left: 0; right: 0;
-        height: 520px;
-        pointer-events: none;
-        background-image:
-            linear-gradient(to right, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px),
-            linear-gradient(to bottom, color-mix(in srgb, var(--line) 55%, transparent) 1px, transparent 1px);
-        background-size: 44px 44px;
-        mask-image: radial-gradient(ellipse 72% 65% at 50% 12%, #000 10%, transparent 78%);
-        -webkit-mask-image: radial-gradient(ellipse 72% 65% at 50% 12%, #000 10%, transparent 78%);
-        z-index: 0;
-    }
-    .px-stage > :not(.px-grid-bg) { position: relative; z-index: 1; }
-
-    .px-nav {
-        position: sticky; top: 0; z-index: 30;
-        background: color-mix(in srgb, var(--bg) 82%, transparent);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+    .lp-nav {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: color-mix(in srgb, var(--surface) 92%, transparent);
+        backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--line);
     }
-    .px-nav-in { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-    .px-brand { display: flex; align-items: center; gap: 0.65rem; text-decoration: none; color: var(--ink); font-weight: 600; letter-spacing: -0.02em; }
-    .px-links { display: none; align-items: center; gap: 1.5rem; }
-    .px-links a { font-size: 0.88rem; color: var(--ink-2); text-decoration: none; transition: color 140ms ease; }
-    .px-links a:hover { color: var(--ink); }
-    @media (min-width: 768px) { .px-links { display: flex; } }
-
-    .px-win-scale { display: none; }
-    @media (min-width: 640px) { .px-win-scale { display: inline; } }
-    .px-ticket-btn { display: none; }
-    @media (min-width: 640px) { .px-ticket-btn { display: inline-flex; } }
-
-    /* Centered Editorial Hero */
-    .px-hero {
-        padding-top: 2.75rem;
-        padding-bottom: 3rem;
-    }
-    @media (min-width: 768px) {
-        .px-hero { padding-top: 4rem; padding-bottom: 3.75rem; }
-    }
-    .px-hero-center {
-        text-align: center;
-        max-width: 780px;
-        margin: 0 auto;
+    .lp-nav-in {
         display: flex;
-        flex-direction: column;
         align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        height: 68px;
     }
+    .lp-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: var(--ink);
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: -0.015em;
+    }
+    .lp-links {
+        display: none;
+        align-items: center;
+        gap: 1.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--ink-2);
+    }
+    @media (min-width: 820px) {
+        .lp-links { display: flex; }
+    }
+    .lp-links a { text-decoration: none; color: inherit; transition: color 140ms ease; }
+    .lp-links a:hover { color: var(--ink); }
 
-    /* Live Eyebrow Pill */
-    .px-eyebrow {
+    .lp-pill-cta {
         display: inline-flex;
         align-items: center;
         gap: 0.55rem;
-        padding: 0.34rem 0.9rem;
+        padding: 0.42rem 0.48rem 0.42rem 1.05rem;
         border-radius: 9999px;
-        border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
-        background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-        font-size: 0.72rem;
+        background: var(--ink);
+        color: var(--surface);
+        font-size: 0.84rem;
         font-weight: 600;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--ink);
-        box-shadow: 0 2px 10px -4px color-mix(in srgb, var(--accent) 30%, transparent);
+        text-decoration: none;
+        transition: opacity 140ms ease;
     }
-    .px-pulse-dot {
-        width: 8px; height: 8px; border-radius: 9999px; background: var(--ok);
-        position: relative; flex-shrink: 0;
-    }
-    .px-pulse-dot::after {
-        content: "";
-        position: absolute;
-        inset: -4px;
+    .lp-pill-cta:hover { opacity: 0.9; }
+    .lp-pill-cta-dot {
+        width: 26px;
+        height: 26px;
         border-radius: 9999px;
-        border: 2px solid var(--ok);
-        opacity: 0;
-        animation: pxPulse 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-    }
-    @keyframes pxPulse {
-        0% { transform: scale(0.7); opacity: 0.75; }
-        100% { transform: scale(1.9); opacity: 0; }
+        background: var(--surface);
+        color: var(--ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* Grand Display Headline with Kinetic Gradient & SVG Beam */
-    .px-h1 {
-        margin-top: 1.35rem;
-        font-size: clamp(2.25rem, 5.4vw, 4rem) !important;
-        font-weight: 700;
-        line-height: 1.08;
-        letter-spacing: -0.04em;
-        color: var(--ink);
-        max-width: 15ch;
+    /* Sections */
+    .lp-sec {
+        padding: clamp(2.5rem, 5vw, 4.5rem) 0;
     }
-    .px-h1-accent {
-        position: relative;
-        display: inline-block;
-        background: linear-gradient(115deg, var(--accent) 0%, #3b82f6 48%, var(--ok) 100%);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        animation: pxShimmer 6.5s ease-in-out infinite;
-    }
-    @keyframes pxShimmer {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-    .px-h1-underline {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -8px;
-        width: 100%;
-        height: 13px;
-        overflow: visible;
-        pointer-events: none;
-    }
-    .px-h1-underline path {
-        stroke-dasharray: 280;
-        stroke-dashoffset: 280;
-    }
-
-    /* Clean High-Contrast Subheadline */
-    .px-sub {
-        margin-top: 1.35rem;
-        font-size: clamp(0.98rem, 1.4vw, 1.12rem);
-        line-height: 1.65;
-        color: var(--ink-2);
-        max-width: 54ch;
-    }
-    .px-sub strong {
-        color: var(--ink);
+    .lp-eyebrow {
+        font-size: 12px;
         font-weight: 600;
-    }
-    .px-sub-accent {
         color: var(--accent);
-        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .lp-h1 {
+        font-size: clamp(2.1rem, 4.6vw, 3.35rem);
+        font-weight: 750;
+        letter-spacing: -0.035em;
+        line-height: 1.08;
+        color: var(--ink);
+    }
+    .lp-h1 span, .lp-h2 span { color: var(--accent); }
+    .lp-h2 {
+        font-size: clamp(1.6rem, 3vw, 2.25rem);
+        font-weight: 750;
+        letter-spacing: -0.028em;
+        line-height: 1.18;
+        color: var(--ink);
+    }
+    .lp-lead {
+        font-size: 0.96rem;
+        color: var(--ink-2);
+        line-height: 1.65;
     }
 
-    /* CTA Row */
-    .px-cta-row {
-        margin-top: 1.75rem;
+    /* Hero card */
+    .lp-hero-card {
+        margin-top: 1.5rem;
+        border-radius: 26px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: clamp(1.5rem, 4vw, 3rem);
+    }
+    .lp-hero-grid {
+        display: grid;
+        gap: 2rem;
+        align-items: center;
+    }
+    @media (min-width: 900px) {
+        .lp-hero-grid {
+            grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+        }
+    }
+    .lp-hero-visual {
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        padding: 1.4rem;
+    }
+    .lp-chip-row {
+        margin-top: 2rem;
+        padding-top: 1.35rem;
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 0.65rem;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .lp-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.6rem 0.85rem;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: var(--sunken);
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-2);
+    }
+
+    /* Simulator */
+    .lp-sim-wrap {
+        border-radius: 26px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: clamp(1.4rem, 3.5vw, 2.5rem);
+    }
+    .lp-sim-grid {
+        display: grid;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    @media (min-width: 860px) {
+        .lp-sim-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    }
+    .lp-sim-box {
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        padding: 1.35rem 1.45rem;
+    }
+    .lp-slider-row { margin-bottom: 1rem; }
+    .lp-slider-row:last-child { margin-bottom: 0; }
+    .lp-slider-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12.5px;
+        margin-bottom: 0.35rem;
+    }
+    .lp-slider {
+        width: 100%;
+        accent-color: var(--ink);
+        cursor: pointer;
+    }
+
+    /* 4 Rules Grid (02_metodologi.png style) */
+    .lp-rules-layout {
+        display: grid;
+        gap: 2rem;
+        align-items: start;
+    }
+    @media (min-width: 900px) {
+        .lp-rules-layout { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr); }
+    }
+    .lp-rules-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
+    .lp-rule-card {
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: 1.35rem 1.4rem;
+    }
+    .lp-rule-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 0.7rem;
+    }
+
+    /* Role Switcher */
+    .lp-tabs {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        padding: 0.25rem;
+        border-radius: 9999px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+    }
+    .lp-tab {
+        border: none;
+        background: transparent;
+        color: var(--ink-2);
+        padding: 0.42rem 0.95rem;
+        border-radius: 9999px;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 140ms ease;
+    }
+    .lp-tab.is-active {
+        background: var(--ink);
+        color: var(--surface);
+        font-weight: 600;
+    }
+    .lp-role-panel {
+        margin-top: 1.35rem;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: clamp(1.35rem, 3vw, 2.2rem);
+    }
+    .lp-role-items {
+        margin-top: 1.15rem;
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+    .lp-role-item {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        padding: 0.95rem 1.05rem;
+    }
+
+    /* Bottom CTA */
+    .lp-cta-banner {
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        padding: clamp(1.5rem, 3.5vw, 2.25rem);
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
+        justify-content: space-between;
+        gap: 1.25rem;
     }
-    .px-cta-primary {
-        min-height: 46px !important;
-        padding: 0.65rem 1.5rem !important;
-        font-size: 0.92rem !important;
-        box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--accent) 55%, rgba(0, 0, 0, 0.35));
-    }
-    .px-cta-secondary {
-        min-height: 46px !important;
-        padding: 0.65rem 1.35rem !important;
-        font-size: 0.92rem !important;
-    }
-
-    /* 4-Column Metric Strip */
-    .px-metrics {
-        margin-top: 2.25rem;
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-    }
-    @media (min-width: 768px) {
-        .px-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    }
-    .px-metric-card {
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        background: color-mix(in srgb, var(--surface) 88%, transparent);
-        backdrop-filter: blur(8px);
-        padding: 0.9rem 1rem;
-        text-align: center;
-        transition: border-color 180ms ease, transform 180ms ease;
-    }
-    .px-metric-card:hover {
-        border-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
-        transform: translateY(-2px);
-    }
-    .px-metric-val {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--ink);
-        letter-spacing: -0.02em;
-    }
-    .px-metric-lbl {
-        margin-top: 0.2rem;
-        font-size: 0.75rem;
+    .lp-footer {
+        padding: 2rem 0 2.5rem;
+        border-top: 1px solid var(--line);
+        font-size: 12.5px;
         color: var(--ink-3);
-    }
-
-    /* 3D Perspective Preview Window with Top Edge Beam */
-    .px-window-wrap {
-        perspective: 1400px;
-        margin-top: 2.5rem;
-    }
-    .px-window {
-        position: relative;
-        background: var(--surface);
-        border: 1px solid var(--line-strong);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 28px 65px -26px rgba(2, 6, 23, 0.34), 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
-        transform-style: preserve-3d;
-        transition: border-color 220ms ease, box-shadow 220ms ease;
-    }
-    .px-window::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 15%; right: 15%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, var(--accent), var(--ok), transparent);
-        opacity: 0.8;
-        pointer-events: none;
-    }
-    .px-winbar {
-        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-        padding: 0.72rem 1rem;
-        background: var(--sunken);
-        border-bottom: 1px solid var(--line);
-    }
-    .px-dots { display: flex; gap: 6px; }
-    .px-dots span { width: 10px; height: 10px; border-radius: 999px; background: var(--line-strong); }
-    .px-dots span:nth-child(1) { background: color-mix(in srgb, var(--bad) 75%, var(--line-strong)); }
-    .px-dots span:nth-child(2) { background: color-mix(in srgb, var(--warn) 80%, var(--line-strong)); }
-    .px-dots span:nth-child(3) { background: color-mix(in srgb, var(--ok) 80%, var(--line-strong)); }
-    .px-url {
-        font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-3);
-        background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
-        padding: 0.22rem 0.75rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-
-    /* Section Highlight */
-    .px-sec-hl {
-        background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 16%, transparent) 0%, color-mix(in srgb, var(--ok) 15%, transparent) 100%);
-        padding: 0.08rem 0.5rem;
-        border-radius: 8px;
-        color: var(--ink);
-    }
-
-    /* Bento Grid with Cursor-Tracking Spotlight */
-    .px-bento {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.1rem;
-        margin-top: 1.5rem;
-    }
-    @media (min-width: 768px) {
-        .px-bento { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-        .px-col-7 { grid-column: span 7; }
-        .px-col-5 { grid-column: span 5; }
-        .px-col-4 { grid-column: span 4; }
-        .px-col-8 { grid-column: span 8; }
-    }
-    .px-tile {
-        position: relative;
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 1.55rem;
-        overflow: hidden;
-        transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms ease, box-shadow 220ms ease;
-    }
-    .px-tile::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0;
-        background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--accent) 15%, transparent), transparent 65%);
-        transition: opacity 220ms ease;
-    }
-    .px-tile:hover {
-        transform: translateY(-3px);
-        border-color: color-mix(in srgb, var(--accent) 42%, var(--line-strong));
-        box-shadow: 0 18px 40px -24px rgba(2, 6, 23, 0.28);
-    }
-    .px-tile:hover::before { opacity: 1; }
-    .px-tile > * { position: relative; z-index: 1; }
-
-    /* Interactive Tabs */
-    .px-tabs {
-        display: inline-flex; flex-wrap: wrap; padding: 3px; border-radius: 10px;
-        background: var(--sunken); border: 1px solid var(--line);
-        gap: 2px;
-    }
-    .px-tab {
-        padding: 0.42rem 0.85rem; border-radius: 7px; font-size: 0.82rem; font-weight: 500;
-        color: var(--ink-2); background: transparent; border: 0; cursor: pointer;
-        transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
-    }
-    .px-tab:hover { color: var(--ink); }
-    .px-tab.is-active {
-        background: var(--surface); color: var(--ink);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-    }
-
-    /* Animated Live Data Pipeline */
-    .px-pipe {
-        display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-        margin-top: 1.15rem;
-        font-family: var(--font-mono); font-size: 0.78rem;
-    }
-    .px-node {
-        padding: 0.4rem 0.7rem; border-radius: 8px;
-        background: var(--sunken); border: 1px solid var(--line-strong); color: var(--ink);
-        transition: border-color 240ms ease, background-color 240ms ease, transform 240ms ease, box-shadow 240ms ease;
-    }
-    .px-node-accent {
-        border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
-        color: var(--accent);
-    }
-    .px-node.is-lit {
-        border-color: var(--accent);
-        background: color-mix(in srgb, var(--accent) 14%, var(--surface));
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent) 60%, transparent);
-    }
-
-    @media (max-width: 640px) {
-        .px-tile { padding: 1.25rem; }
-        .px-h1 { max-width: 100%; }
-        .px-cta-row { width: 100%; }
-        .px-cta-row .btn { flex: 1; min-width: 140px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .px-pulse-dot::after, .px-h1-accent { animation: none !important; }
-        .px-h1-underline path { stroke-dashoffset: 0 !important; }
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
     }
 </style>
 
-<header class="px-nav">
-    <div class="px-wrap px-nav-in">
-        <a href="{{ route('landing') }}" class="px-brand">
-            <x-brand-logo :size="28" />
-            <span style="font-size:0.95rem;white-space:nowrap;">Cegah Sebelum Terlambat</span>
-        </a>
+<div class="lp-page">
+    <header class="lp-nav">
+        <div class="lp-wrap lp-nav-in">
+            <a href="{{ route('landing') }}" class="lp-brand">
+                <x-brand-logo :size="32" />
+                <span>Peringatan Dini</span>
+            </a>
 
-        <div style="display:flex;align-items:center;gap:0.65rem;">
-            <nav class="px-links" aria-label="Navigasi utama">
-                <a href="#bento">Fitur</a>
+            <nav class="lp-links" aria-label="Navigasi utama">
+                <a href="#proyeksi">Proyeksi</a>
+                <a href="#simulasi">Simulasi</a>
+                <a href="#aturan">Aturan FTII</a>
                 <a href="#peran">Peran</a>
                 <a href="{{ route('metodologi') }}">Metodologi</a>
             </nav>
-            <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap">
-                <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
-            </button>
-            @auth
-                <a href="{{ route('beranda') }}" class="btn btn-primary btn-sm">Beranda</a>
-            @else
-                <a href="{{ route('tiket.form') }}" class="btn btn-quiet btn-sm px-ticket-btn">E-Ticket</a>
-                <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Masuk</a>
-            @endauth
-        </div>
-    </div>
-</header>
 
-<main class="px-stage">
-    <div class="px-grid-bg" aria-hidden="true"></div>
-
-    <section class="px-wrap px-hero">
-        <div class="px-hero-center">
-            <div class="px-eyebrow mono js-hero-item">
-                <span class="px-pulse-dot" aria-hidden="true"></span>
-                <span>FTII UHAMKA &middot; Peringatan Dini Berbasis AI</span>
-            </div>
-
-            <h1 class="px-h1 js-hero-item">
-                Ketahui
-                <span class="px-h1-accent">
-                    risiko nilaimu
-                    <svg class="px-h1-underline js-hero-beam" viewBox="0 0 260 14" preserveAspectRatio="none" fill="none" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="pxBeamGrad" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%" stop-color="#38bdf8"/>
-                                <stop offset="100%" stop-color="#34d399"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M3 10.5C68 3.2 184 2.5 257 9.5" stroke="url(#pxBeamGrad)" stroke-width="3.4" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                sebelum terlambat.
-            </h1>
-
-            <p class="px-sub js-hero-item">
-                Pantau <strong>proyeksi nilai</strong>, <strong>target UAS minimal</strong>, progres <strong>20 SKS pengayaan &amp; 4 syarat SKPI</strong>, hingga saran belajar adaptif bertenaga <span class="px-sub-accent">Gemini AI</span> dengan privasi Zero-PII.
-            </p>
-
-            <div class="px-cta-row js-hero-item">
+            <div style="display:flex;align-items:center;gap:0.55rem;">
+                <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema" style="min-height:36px;padding:0.35rem 0.6rem;">
+                    <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
+                </button>
                 @auth
-                    <a href="{{ route('beranda') }}" class="btn btn-primary px-cta-primary">Buka Beranda &rarr;</a>
+                    <a href="{{ route('beranda') }}" class="lp-pill-cta">
+                        <span>Buka Dasbor</span>
+                        <span class="lp-pill-cta-dot" aria-hidden="true">&nearr;</span>
+                    </a>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-primary px-cta-primary">Masuk Sekarang &rarr;</a>
-                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet px-cta-secondary">Ajukan Akun</a>
+                    <a href="{{ route('login') }}" class="lp-pill-cta">
+                        <span>Masuk Portal</span>
+                        <span class="lp-pill-cta-dot" aria-hidden="true">&nearr;</span>
+                    </a>
                 @endauth
             </div>
-
-            <div class="px-metrics js-hero-item">
-                <div class="px-metric-card">
-                    <div class="px-metric-val mono">10 Variabel</div>
-                    <div class="px-metric-lbl">Indikator Risiko Akademik</div>
-                </div>
-                <div class="px-metric-card">
-                    <div class="px-metric-val mono">4 Peran</div>
-                    <div class="px-metric-lbl">Mhs, DPA, Validator, Admin</div>
-                </div>
-                <div class="px-metric-card">
-                    <div class="px-metric-val mono">75% Hadir</div>
-                    <div class="px-metric-lbl">Guardrail Otomatis UHAMKA</div>
-                </div>
-                <div class="px-metric-card">
-                    <div class="px-metric-val mono" style="color:var(--ok);">Zero-PII</div>
-                    <div class="px-metric-lbl">HMAC-SHA256 ke Gemini AI</div>
-                </div>
-            </div>
         </div>
+    </header>
 
-        <div class="px-window-wrap">
-            <div class="px-window js-hero-window" id="js-tilt-window">
-                <div class="px-winbar">
-                    <div class="px-dots"><span></span><span></span><span></span></div>
-                    <span class="px-url">peringatandini.online/mahasiswa/ringkasan</span>
-                    <span class="mono px-win-scale" style="font-size:0.72rem;color:var(--ink-3);white-space:nowrap;">Gemini AI &middot; Skala UHAMKA</span>
-                </div>
-                <div style="padding:1.5rem 1.75rem;">
-                    <x-risk-panel :result="$sample" version="gemini-uhamka" compact />
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="bento" class="px-wrap" style="padding-bottom:4.5rem;">
-        <div class="js-section-head" style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1rem;">
-            <h2 style="font-size:clamp(1.35rem, 2.4vw, 1.65rem);font-weight:650;letter-spacing:-0.025em;">
-                Transparan, aman, dan <span class="px-sec-hl">sesuai aturan FTII</span>
-            </h2>
-            <a href="{{ route('metodologi') }}" class="mono" style="font-size:0.82rem;color:var(--accent);text-decoration:none;">Lihat rumus lengkap &rarr;</a>
-        </div>
-
-        <div class="px-bento">
-            <div class="px-tile px-col-7 js-bento-tile">
-                <p class="mono" style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Privacy-by-Design</p>
-                <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Zero-PII ke layanan AI + Guardrail</h3>
-                <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.6;">
-                    NIM disamarkan dengan <strong style="color:var(--ink);">HMAC-SHA256</strong>. Gemini AI hanya memproses angka statistik anonim dan disaring otomatis dari halusinasi.
-                </p>
-                <div class="px-pipe" id="js-live-pipe">
-                    <span class="px-node js-pipe-step">NIM</span>
-                    <span style="color:var(--ink-3);">&rarr;</span>
-                    <span class="px-node px-node-accent js-pipe-step">HMAC-SHA256</span>
-                    <span style="color:var(--ink-3);">&rarr;</span>
-                    <span class="px-node js-pipe-step">10 Variabel</span>
-                    <span style="color:var(--ink-3);">&rarr;</span>
-                    <span class="px-node px-node-accent js-pipe-step">Gemini + Guardrail</span>
-                </div>
-            </div>
-
-            <div class="px-tile px-col-5 js-bento-tile">
-                <p class="mono" style="font-size:0.72rem;color:var(--ok);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Aturan UHAMKA</p>
-                <h3 style="margin-top:0.45rem;font-size:1.15rem;font-weight:600;">Skala Nilai &amp; Hadir 75%</h3>
-                <p style="margin-top:0.4rem;font-size:0.9rem;color:var(--ink-2);line-height:1.6;">
-                    UAS 40% &middot; UTS 30% &middot; Tugas 20% &middot; Hadir 10%. Hadir <strong style="color:var(--ink);">&lt; 75%</strong> otomatis menaikkan status waspada.
-                </p>
-                <div style="margin-top:1.1rem;display:flex;flex-wrap:wrap;gap:0.5rem;" class="mono">
-                    <span class="px-node" style="border-color:color-mix(in srgb, var(--ok) 35%, var(--line));">A &ge; 80</span>
-                    <span class="px-node">B &ge; 68</span>
-                    <span class="px-node">C &ge; 56</span>
-                    <span class="px-node" style="border-color:color-mix(in srgb, var(--warn) 35%, var(--line));">D &ge; 45</span>
-                </div>
-            </div>
-
-            <div class="px-tile px-col-4 js-bento-tile">
-                <p class="mono" style="font-size:0.72rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Cakupan Fakultas</p>
-                <h3 style="margin-top:0.45rem;font-size:1.1rem;font-weight:600;">5 Program Studi FTII</h3>
-                <ul style="margin-top:0.8rem;font-size:0.86rem;color:var(--ink-2);list-style:none;padding:0;">
-                    <li style="padding:0.32rem 0;border-bottom:1px solid var(--line);">Teknik Informatika</li>
-                    <li style="padding:0.32rem 0;border-bottom:1px solid var(--line);">Sistem &amp; Teknologi Informasi</li>
-                    <li style="padding:0.32rem 0;border-bottom:1px solid var(--line);">Teknik Elektro</li>
-                    <li style="padding:0.32rem 0;border-bottom:1px solid var(--line);">Teknik Mesin</li>
-                    <li style="padding:0.32rem 0;">Teknologi Rekayasa Mekatronika</li>
-                </ul>
-            </div>
-
-            <div id="peran" class="px-tile px-col-8 js-bento-tile">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
+    <main class="lp-wrap">
+        {{-- 1. HERO --}}
+        <section id="proyeksi" class="lp-sec" style="padding-top:1.75rem;">
+            <div class="lp-hero-card">
+                <div class="lp-hero-grid">
                     <div>
-                        <p class="mono" style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;">Alur 4 Peran</p>
-                        <h3 style="margin-top:0.3rem;font-size:1.15rem;font-weight:600;">Peran dalam sistem</h3>
+                        <p class="lp-eyebrow">FTII UHAMKA &middot; Sistem Peringatan Dini Akademik</p>
+                        <h1 class="lp-h1">Pantau <span>Risiko Nilaimu</span> Lebih Awal</h1>
+                        <p class="lp-lead" style="margin-top:1rem;max-width:490px;">
+                            Cek proyeksi nilai semester berjalan, hitung target UAS minimal agar lulus aman, dan pantau 20 SKS Pengayaan serta 4 syarat wajib SKPI sebelum nilai akhir terbit.
+                        </p>
+
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-top:1.5rem;">
+                            @auth
+                                <a href="{{ route('beranda') }}" class="lp-pill-cta" style="padding:0.5rem 0.55rem 0.5rem 1.25rem;font-size:0.9rem;">
+                                    <span>Lanjut ke Dasbor</span>
+                                    <span class="lp-pill-cta-dot">&nearr;</span>
+                                </a>
+                            @else
+                                <a href="{{ route('login') }}" class="lp-pill-cta" style="padding:0.5rem 0.55rem 0.5rem 1.25rem;font-size:0.9rem;">
+                                    <span>Masuk dengan NIM</span>
+                                    <span class="lp-pill-cta-dot">&nearr;</span>
+                                </a>
+                                <a href="{{ route('tiket.form') }}" class="btn btn-quiet">Ajukan Akun (E-Ticket)</a>
+                            @endauth
+                        </div>
+
+                        <p class="text-xs text-ink-3" style="margin-top:1rem;">
+                            Cakupan 5 prodi FTII: Teknik Informatika &middot; STI &middot; Teknik Elektro &middot; Teknik Mesin &middot; Teknik Industri
+                        </p>
                     </div>
-                    <div class="px-tabs" role="tablist" aria-label="Pilih peran pengguna">
-                        <button type="button" class="px-tab is-active" data-role-tab="mhs">Mahasiswa</button>
-                        <button type="button" class="px-tab" data-role-tab="dpa">DPA</button>
-                        <button type="button" class="px-tab" data-role-tab="validator">Validator AI</button>
-                        <button type="button" class="px-tab" data-role-tab="admin">Sekretariat</button>
+
+                    <div class="lp-hero-visual">
+                        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink-3);padding-bottom:0.75rem;border-bottom:1px solid var(--line);">
+                            <span class="font-medium text-ink-2">Ringkasan Proyeksi Semester</span>
+                            <span class="mono">Skala 0 – 10</span>
+                        </div>
+
+                        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:0.9rem;">
+                            <div>
+                                <p class="text-xs text-ink-3">Status Berjalan</p>
+                                <p style="font-size:1.35rem;font-weight:750;color:var(--ok);">Risiko rendah</p>
+                            </div>
+                            <p class="mono" style="font-size:1.85rem;font-weight:750;">1,2 <span class="text-xs font-normal text-ink-3">/ 10</span></p>
+                        </div>
+
+                        <div style="display:flex;gap:3px;height:7px;margin-top:0.75rem;">
+                            <div style="flex:25;background:#10b981;border-radius:9999px;"></div>
+                            <div style="flex:25;background:#f59e0b;border-radius:9999px;"></div>
+                            <div style="flex:50;background:#ef4444;border-radius:9999px;"></div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0.6rem;margin-top:1rem;">
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.7rem;">
+                                <p class="text-xs text-ink-3">Target UAS</p>
+                                <p class="mono text-xs font-semibold text-ink" style="margin-top:3px;">A &ge; 65</p>
+                            </div>
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.7rem;">
+                                <p class="text-xs text-ink-3">Pengayaan</p>
+                                <p class="mono text-xs font-semibold text-ink" style="margin-top:3px;">14/20 SKS</p>
+                            </div>
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.7rem;">
+                                <p class="text-xs text-ink-3">Syarat SKPI</p>
+                                <p class="mono text-xs font-semibold" style="margin-top:3px;color:var(--ok);">4/4 Tuntas</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div id="role-panel" style="margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid var(--line);">
-                    <p id="role-title" style="font-weight:600;font-size:1rem;color:var(--ink);"></p>
-                    <p id="role-desc" style="margin-top:0.35rem;font-size:0.88rem;color:var(--ink-2);line-height:1.6;"></p>
-                    <div id="role-bullets" style="margin-top:0.95rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.65rem;"></div>
+                <div class="lp-chip-row">
+                    <div class="lp-chip"><x-icon name="chart-line-up" size="size-4" /><span>Proyeksi Target UAS</span></div>
+                    <div class="lp-chip"><x-icon name="brain" size="size-4" /><span>Analisis AI Zero-PII</span></div>
+                    <div class="lp-chip"><x-icon name="graduation-cap" size="size-4" /><span>20 SKS &amp; 4 Syarat SKPI</span></div>
+                    <div class="lp-chip"><x-icon name="users" size="size-4" /><span>Pendampingan DPA</span></div>
+                    <div class="lp-chip"><x-icon name="shield-check" size="size-4" /><span>Audit Validator AI</span></div>
                 </div>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
 
-<footer style="border-top:1px solid var(--line);padding:1.75rem 0;font-size:0.82rem;color:var(--ink-3);">
-    <div class="px-wrap" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
-        <p>Cegah Sebelum Terlambat &bull; FTII UHAMKA</p>
-        <div style="display:flex;gap:1.5rem;">
-            <a href="{{ route('metodologi') }}" style="color:var(--ink-2);text-decoration:none;">Metodologi</a>
-            <a href="{{ route('tiket.form') }}" style="color:var(--ink-2);text-decoration:none;">E-Ticket</a>
-            <a href="{{ route('login') }}" style="color:var(--ink-2);text-decoration:none;">Masuk</a>
-        </div>
-    </div>
-</footer>
+        {{-- 2. SIMULATOR INTERAKTIF --}}
+        <section id="simulasi" class="lp-sec" style="padding-top:1rem;">
+            <div class="lp-sim-wrap">
+                <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;">
+                    <div>
+                        <p class="lp-eyebrow">Simulasi Langsung Rumus FTII UHAMKA</p>
+                        <h2 class="lp-h2">Geser angka untuk cek <span>target UAS minimal</span> kamu.</h2>
+                    </div>
+                    <button type="button" id="sim-reset" class="btn btn-quiet btn-sm">Reset Contoh</button>
+                </div>
+
+                <div class="lp-sim-grid">
+                    <div class="lp-sim-box">
+                        <div class="lp-slider-row">
+                            <div class="lp-slider-head"><span class="font-medium">Keaktifan (10%)</span><strong class="mono" id="v-akt">85</strong></div>
+                            <input type="range" id="s-akt" min="0" max="100" value="85" class="lp-slider">
+                        </div>
+                        <div class="lp-slider-row">
+                            <div class="lp-slider-head"><span class="font-medium">Tugas (20%)</span><strong class="mono" id="v-tgs">80</strong></div>
+                            <input type="range" id="s-tgs" min="0" max="100" value="80" class="lp-slider">
+                        </div>
+                        <div class="lp-slider-row">
+                            <div class="lp-slider-head"><span class="font-medium">UTS (30%)</span><strong class="mono" id="v-uts">75</strong></div>
+                            <input type="range" id="s-uts" min="0" max="100" value="75" class="lp-slider">
+                        </div>
+                        <div class="lp-slider-row">
+                            <div class="lp-slider-head"><span class="font-medium">Kehadiran (% syarat ujian min. 75%)</span><strong class="mono" id="v-hdr">88%</strong></div>
+                            <input type="range" id="s-hdr" min="40" max="100" value="88" class="lp-slider">
+                        </div>
+                    </div>
+
+                    <div class="lp-sim-box" style="display:flex;flex-direction:column;justify-content:space-between;gap:1rem;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                            <div>
+                                <p class="text-xs text-ink-3">Rata-rata Sementara</p>
+                                <p class="mono" id="out-avg" style="font-size:2rem;font-weight:750;color:var(--ink);margin-top:2px;">78,3</p>
+                                <p class="text-xs font-semibold" id="out-status" style="color:var(--ok);">Jalur aman</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-ink-3">Target UAS Terbaik</p>
+                                <p class="mono" id="out-best" style="font-size:1.55rem;font-weight:750;color:var(--accent);margin-top:6px;">A &ge; 83</p>
+                                <p class="text-xs text-ink-3" id="out-cheer">Fokus kejar A!</p>
+                            </div>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;padding-top:1rem;border-top:1px solid var(--line);">
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.65rem;text-align:center;">
+                                <p class="text-xs text-ink-3">Lulus C (56)</p>
+                                <p class="mono text-sm font-bold text-ink" id="out-c" style="margin-top:2px;">23</p>
+                            </div>
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.65rem;text-align:center;">
+                                <p class="text-xs text-ink-3">Target B (68)</p>
+                                <p class="mono text-sm font-bold text-ink" id="out-b" style="margin-top:2px;">53</p>
+                            </div>
+                            <div style="border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0.65rem;text-align:center;">
+                                <p class="text-xs text-ink-3">Target A (80)</p>
+                                <p class="mono text-sm font-bold" id="out-a" style="margin-top:2px;color:var(--ok);">83</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-ink-3" id="out-note">Bobot resmi KHS UHAMKA: Keaktifan 10% + Tugas 20% + UTS 30% + UAS 40%.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{-- 3. ATURAN FTII (02_metodologi.png layout) --}}
+        <section id="aturan" class="lp-sec">
+            <div class="lp-rules-layout">
+                <div>
+                    <p class="lp-eyebrow">Cara Skor 0–10 Dihitung</p>
+                    <h2 class="lp-h2">Transparan dan sesuai <span>aturan FTII UHAMKA.</span></h2>
+                    <p class="lp-lead" style="margin-top:0.85rem;">
+                        Semakin kecil angkanya, semakin santai dan aman jalur kuliahmu. Nilai yang belum keluar tidak pernah dihitung nol — sistem hanya membaca komponen yang sudah tersedia.
+                    </p>
+                    <a href="{{ route('metodologi') }}" class="btn btn-quiet btn-sm" style="margin-top:1.25rem;">Baca Metodologi Lengkap &rarr;</a>
+                </div>
+
+                <div class="lp-rules-grid">
+                    <div class="lp-rule-card">
+                        <div class="lp-rule-top"><span class="mono font-bold text-accent">01.</span><span class="mono text-ink-3">Bobot 75%</span></div>
+                        <h3 class="text-base font-semibold text-ink">Nilai &amp; Absensi Semester Berjalan</h3>
+                        <p class="text-xs text-ink-2" style="margin-top:0.5rem;line-height:1.6;">Memakai komposisi resmi FTII: UAS 40%, UTS 30%, Tugas 20%, dan Keaktifan 10%. Hadir &lt; 75% pada kelas reguler langsung menaikkan skor minimal ke 3,0 (Sedang).</p>
+                    </div>
+                    <div class="lp-rule-card">
+                        <div class="lp-rule-top"><span class="mono font-bold text-accent">02.</span><span class="mono text-ink-3">Bobot 25%</span></div>
+                        <h3 class="text-base font-semibold text-ink">Riwayat Akademik Semester Lalu</h3>
+                        <p class="text-xs text-ink-2" style="margin-top:0.5rem;line-height:1.6;">Menganalisis IPK kumulatif (aman &ge; 3,00), tren IPS, jumlah mata kuliah mengulang (D/E), dan lonjakan SKS. Di awal semester, bobot otomatis seimbang 50% : 50%.</p>
+                    </div>
+                    <div class="lp-rule-card">
+                        <div class="lp-rule-top"><span class="mono font-bold text-accent">03.</span><span class="mono text-ink-3">+0 s.d. 1,0 poin</span></div>
+                        <h3 class="text-base font-semibold text-ink">Pendampingan &amp; Catatan DPA</h3>
+                        <p class="text-xs text-ink-2" style="margin-top:0.5rem;line-height:1.6;">DPA mendokumentasikan perwalian dan memberi saran tindak lanjut. Khusus semester 7 ke atas, jeda bimbingan tugas akhir di atas 30 hingga 60 hari menambah indikator peringatan.</p>
+                    </div>
+                    <div class="lp-rule-card">
+                        <div class="lp-rule-top"><span class="mono font-bold text-accent">04.</span><span class="mono text-ink-3">+0 s.d. 2,0 poin</span></div>
+                        <h3 class="text-base font-semibold text-ink">MK Pengayaan 20 SKS &amp; 4 Syarat SKPI</h3>
+                        <p class="text-xs text-ink-2" style="margin-top:0.5rem;line-height:1.6;">Memantau cicilan 20 SKS MK Pengayaan (19 non-kelas bebas absen 75%, 3 coaching reguler) serta unggah bukti &amp; verifikasi 4 syarat wajib SKPI (IT, BAPS, PKM min. Universitas, TOEFL UHAMKA).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{-- 4. 4 PERAN --}}
+        <section id="peran" class="lp-sec" style="padding-top:1rem;">
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;">
+                <div>
+                    <p class="lp-eyebrow">Empat Peran Terintegrasi</p>
+                    <h2 class="lp-h2">Satu sistem yang nyaman dipakai <span>mahasiswa hingga fakultas.</span></h2>
+                </div>
+                <div class="lp-tabs" role="tablist" aria-label="Pilih peran">
+                    <button type="button" class="lp-tab is-active" data-role="mhs">Mahasiswa</button>
+                    <button type="button" class="lp-tab" data-role="dpa">DPA</button>
+                    <button type="button" class="lp-tab" data-role="val">Validator AI</button>
+                    <button type="button" class="lp-tab" data-role="adm">Admin FTII</button>
+                </div>
+            </div>
+
+            <div class="lp-role-panel" id="role-panel"></div>
+        </section>
+
+        {{-- 5. BOTTOM CTA --}}
+        <section class="lp-sec" style="padding-top:1rem;">
+            <div class="lp-cta-banner">
+                <div>
+                    <h2 class="text-xl font-bold text-ink">Siap pantau nilaimu dengan lebih tenang?</h2>
+                    <p class="text-sm text-ink-2" style="margin-top:0.3rem;">Masuk dengan NIM/ID pegawai FTII UHAMKA atau ajukan aktivasi akun lewat E-Ticket.</p>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.65rem;">
+                    <a href="{{ route('login') }}" class="lp-pill-cta" style="padding:0.48rem 0.55rem 0.48rem 1.15rem;">
+                        <span>Masuk Portal</span>
+                        <span class="lp-pill-cta-dot">&nearr;</span>
+                    </a>
+                    <a href="{{ route('tiket.form') }}" class="btn btn-quiet">Ajukan E-Ticket</a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="lp-footer">
+            <span>Cegah Sebelum Terlambat &middot; Fakultas Teknologi Industri dan Informatika UHAMKA</span>
+            <div style="display:flex;gap:1.25rem;">
+                <a href="{{ route('metodologi') }}" class="hover:underline" style="color:inherit;text-decoration:none;">Metodologi</a>
+                <a href="{{ route('tiket.form') }}" class="hover:underline" style="color:inherit;text-decoration:none;">E-Ticket Akun</a>
+                <a href="{{ route('login') }}" class="hover:underline" style="color:inherit;text-decoration:none;">Masuk</a>
+            </div>
+        </footer>
+    </main>
+</div>
 
 <script>
-document.body.dataset.customMotion = '1';
+(function () {
+    const sAkt = document.getElementById('s-akt');
+    const sTgs = document.getElementById('s-tgs');
+    const sUts = document.getElementById('s-uts');
+    const sHdr = document.getElementById('s-hdr');
+    function calcSim() {
+        const akt = Number(sAkt.value), tgs = Number(sTgs.value), uts = Number(sUts.value), hdr = Number(sHdr.value);
+        document.getElementById('v-akt').textContent = akt;
+        document.getElementById('v-tgs').textContent = tgs;
+        document.getElementById('v-uts').textContent = uts;
+        document.getElementById('v-hdr').textContent = hdr + '%';
 
-window.addEventListener('DOMContentLoaded', function () {
+        const pre = 0.10 * akt + 0.20 * tgs + 0.30 * uts;
+        const avg = (pre / 0.60).toFixed(1).replace('.', ',');
+        const minC = Math.max(0, Math.ceil((56 - pre) / 0.40));
+        const minB = Math.max(0, Math.ceil((68 - pre) / 0.40));
+        const minA = Math.max(0, Math.ceil((80 - pre) / 0.40));
+
+        document.getElementById('out-avg').textContent = avg;
+        document.getElementById('out-c').textContent = minC > 100 ? '>100' : minC;
+        document.getElementById('out-b').textContent = minB > 100 ? '>100' : minB;
+        document.getElementById('out-a').textContent = minA > 100 ? '>100' : minA;
+
+        const stEl = document.getElementById('out-status');
+        if (hdr < 75) {
+            stEl.textContent = 'Waspada: Hadir < 75%';
+            stEl.style.color = 'var(--bad)';
+        } else if (minC > 70) {
+            stEl.textContent = 'Risiko tinggi';
+            stEl.style.color = 'var(--bad)';
+        } else if (minC >= 40) {
+            stEl.textContent = 'Risiko sedang';
+            stEl.style.color = 'var(--warn)';
+        } else {
+            stEl.textContent = 'Jalur aman';
+            stEl.style.color = 'var(--ok)';
+        }
+
+        const bestEl = document.getElementById('out-best');
+        const cheerEl = document.getElementById('out-cheer');
+        if (minA <= 100) {
+            bestEl.textContent = 'A ≥ ' + minA;
+            bestEl.style.color = 'var(--ok)';
+            cheerEl.textContent = minA <= 75 ? 'Jaga tetap ≥ 80!' : 'Fokus kejar A!';
+        } else if (minB <= 100) {
+            bestEl.textContent = 'B ≥ ' + minB;
+            bestEl.style.color = 'var(--accent)';
+            cheerEl.textContent = 'Jangan lengah, kejar B!';
+        } else if (minC <= 100) {
+            bestEl.textContent = 'C ≥ ' + minC;
+            bestEl.style.color = 'var(--warn)';
+            cheerEl.textContent = 'Fokus UAS, jangan lengah!';
+        } else {
+            bestEl.textContent = 'Evaluasi';
+            bestEl.style.color = 'var(--bad)';
+            cheerEl.textContent = 'Diskusi bersama DPA!';
+        }
+    }
+    [sAkt, sTgs, sUts, sHdr].forEach(el => el.addEventListener('input', calcSim));
+    document.getElementById('sim-reset').addEventListener('click', () => {
+        sAkt.value = 85; sTgs.value = 80; sUts.value = 75; sHdr.value = 88; calcSim();
+    });
+    calcSim();
+
     const roles = {
         mhs: {
-            title: 'Pantau nilai berjalan, 20 SKS pengayaan & 4 syarat SKPI',
-            desc: 'Impor KHS (CSV/XLSX/PDF) atau isi nilai langsung untuk melihat target UAS minimal, progres 20 SKS, dan 4 syarat wajib SKPI (Kompetensi IT, BAPS, PKM min. Universitas, TOEFL UHAMKA).',
-            items: ['Rincian Nilai & Proyeksi N', 'Target UAS Minimal (U_min)', 'Pelacak 20 SKS & 4 Syarat SKPI']
+            eyebrow: 'Peran Mahasiswa',
+            title: 'Pantau nilai berjalan, 20 SKS pengayaan & 4 syarat SKPI.',
+            desc: 'Impor PDF KHS UHAMKA atau input manual langsung dari HP untuk mengetahui target UAS, menerima saran belajar AI, mengunggah bukti SKPI, dan membaca catatan bimbingan dari DPA.',
+            items: [
+                ['Target UAS Minimal', 'Otomatis menghitung skor UAS untuk mencapai A, B, atau C berdasarkan bobot 40/30/20/10.'],
+                ['20 SKS & 4 Syarat SKPI', 'Lacak 22 katalog MK Pengayaan serta unggah bukti sertifikat IT, BAPS, PKM, dan TOEFL UHAMKA.'],
+                ['Catatan & Pengingat', 'Baca catatan bimbingan terbaru dari DPA dan aktifkan notifikasi email bila risiko meningkat.']
+            ]
         },
         dpa: {
-            title: 'Dasbor visual bimbingan, antrean prioritas & catatan perwalian',
-            desc: 'Pantau grafik distribusi risiko mahasiswa bimbingan, tindak lanjuti mahasiswa prioritas, dan dokumentasikan bimbingan.',
-            items: ['Grafik Risiko & Progres Tugas', 'Antrean Prioritas Segera Dihubungi', 'Checklist SKPI & Catatan Bimbingan']
+            eyebrow: 'Peran Dosen Pembimbing Akademik (DPA)',
+            title: 'Pendampingan bimbingan yang fokus, cepat, dan terdokumentasi.',
+            desc: 'Pantau seluruh mahasiswa bimbingan secara langsung, telusuri riwayat nilai lintas semester, verifikasi bukti sertifikat SKPI, dan arsipkan seluruh catatan konsultasi.',
+            items: [
+                ['Antrean Prioritas', 'Langsung melihat mahasiswa berisiko tinggi yang perlu segera dihubungi untuk bimbingan.'],
+                ['Verifikasi Bukti SKPI', 'Buka berkas sertifikat privat mahasiswa dan beri keputusan Verifikasi atau Minta Perbaiki.'],
+                ['Riwayat Bimbingan', 'Menu arsip khusus dengan pencarian nama/NIM/topik, filter status, dan periode waktu.']
+            ]
         },
-        validator: {
-            title: 'Audit Human-in-the-Loop hasil Gemini AI vs pembanding matematis',
-            desc: 'Bandingkan skor dan faktor risiko dari Gemini AI secara berdampingan terhadap rumus RiskModel untuk memastikan akurasi evaluasi.',
-            items: ['Bandingkan Gemini vs RiskModel', 'Tandai Sesuai / Perlu Koreksi', 'Ekspor Laporan Audit CSV']
+        val: {
+            eyebrow: 'Peran Validator AI (Human-in-the-Loop)',
+            title: 'Audit kebenaran skor AI secara objektif dan terukur.',
+            desc: 'Bandingkan skor Gemini AI berdampingan dengan Pembanding Matematis (RiskModel) beserta 5 indikator akademik, lalu ekspor laporan akurasi CSV.',
+            items: [
+                ['Perbandingan Side-by-Side', 'Melihat skor AI vs rumus matematis serta menandai prioritas bila selisih ≥ 1,5.'],
+                ['Panduan Koreksi Jelas', 'Keputusan Sesuai atau Perlu Koreksi dilengkapi opsi terapkan koreksi langsung ke mahasiswa.'],
+                ['Laporan Audit CSV', 'Rekam jejak validasi akurasi AI siap diunduh untuk evaluasi prodi dan penjaminan mutu.']
+            ]
         },
-        admin: {
-            title: 'Dasbor eksekutif fakultas, E-Ticket, model & kesehatan AI',
-            desc: 'Pantau kohort Prodi × Angkatan, verifikasi pengajuan akun, monitor status kesehatan Gemini AI, dan latih model ML anonim.',
-            items: ['Dasbor Kohort Prodi & Angkatan', 'Indikator Kesehatan Mesin AI', 'E-Ticket Aman & Log Akses NIM']
+        adm: {
+            eyebrow: 'Peran Admin Sekretariat FTII',
+            title: 'Kendali penuh dasbor fakultas, E-Ticket akun, dan verifikasi SKPI.',
+            desc: 'Kelola seluruh akun pengguna, setujui pengajuan E-Ticket sambil menetapkan DPA, tinjau antrean bukti SKPI, serta pantau statistik risiko lintas prodi.',
+            items: [
+                ['Dasbor Eksekutif FTII', 'Sebaran risiko per prodi/angkatan, rekap beban DPA, kesehatan mesin AI, dan ekspor CSV.'],
+                ['E-Ticket Tanpa Sandi Mentah', 'Persetujuan akun dengan badge antrean di sidebar dan tautan atur sandi sekali pakai ke email.'],
+                ['Verifikasi SKPI Terpusat', 'Pencarian nama/NIM, filter periode & jenis SKPI, serta paginasi agar tetap cepat lintas angkatan.']
+            ]
         }
     };
 
-    const tabs = document.querySelectorAll('[data-role-tab]');
-    const title = document.getElementById('role-title');
-    const desc = document.getElementById('role-desc');
-    const bullets = document.getElementById('role-bullets');
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    function showRole(key, animate) {
-        const r = roles[key];
-        if (!r) return;
-        tabs.forEach(t => t.classList.toggle('is-active', t.dataset.roleTab === key));
-        title.textContent = r.title;
-        desc.textContent = r.desc;
-        bullets.innerHTML = r.items.map(item =>
-            '<div class="js-role-pill" style="padding:0.58rem 0.8rem;border-radius:9px;background:var(--sunken);border:1px solid var(--line);font-size:0.82rem;color:var(--ink);font-weight:500;">' + item + '</div>'
-        ).join('');
-
-        if (animate && !reduceMotion && typeof window.gsap !== 'undefined') {
-            window.gsap.fromTo([title, desc, '.js-role-pill'], { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.28, stagger: 0.04, ease: 'power2.out', force3D: true });
-        }
+    const panel = document.getElementById('role-panel');
+    function renderRole(key) {
+        const r = roles[key] || roles.mhs;
+        panel.innerHTML = `
+            <p class="lp-eyebrow">${r.eyebrow}</p>
+            <h3 class="text-xl font-bold text-ink">${r.title}</h3>
+            <p class="text-sm text-ink-2" style="margin-top:0.45rem;max-width:680px;line-height:1.6;">${r.desc}</p>
+            <div class="lp-role-items">
+                ${r.items.map(([t, d]) => `<div class="lp-role-item"><p class="text-sm font-semibold text-ink">${t}</p><p class="text-xs text-ink-2" style="margin-top:0.35rem;line-height:1.55;">${d}</p></div>`).join('')}
+            </div>
+        `;
     }
-
-    tabs.forEach(t => t.addEventListener('click', () => showRole(t.dataset.roleTab, true)));
-    showRole('mhs', false);
-
-    // Cursor-tracking spotlight on Bento tiles + subtle 3D tilt on preview window (desktop pointer)
-    if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
-        document.querySelectorAll('.px-tile').forEach(function (tile) {
-            tile.addEventListener('pointermove', function (e) {
-                const rect = tile.getBoundingClientRect();
-                tile.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-                tile.style.setProperty('--my', (e.clientY - rect.top) + 'px');
-            }, { passive: true });
+    document.querySelectorAll('.lp-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.lp-tab').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            renderRole(btn.dataset.role);
         });
-
-        const win = document.getElementById('js-tilt-window');
-        if (win && typeof window.gsap !== 'undefined') {
-            win.addEventListener('pointermove', function (e) {
-                const r = win.getBoundingClientRect();
-                const rx = ((e.clientY - r.top) / r.height - 0.5) * -3.5;
-                const ry = ((e.clientX - r.left) / r.width - 0.5) * 3.5;
-                window.gsap.to(win, { rotateX: rx, rotateY: ry, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
-            }, { passive: true });
-            win.addEventListener('pointerleave', function () {
-                window.gsap.to(win, { rotateX: 0, rotateY: 0, duration: 0.55, ease: 'power3.out' });
-            });
-        }
-    }
-
-    // Live sequential pulse on Zero-PII data pipeline
-    if (!reduceMotion) {
-        const steps = Array.from(document.querySelectorAll('.js-pipe-step'));
-        if (steps.length) {
-            let activeIdx = 0;
-            setInterval(function () {
-                steps.forEach((el, i) => el.classList.toggle('is-lit', i === activeIdx));
-                activeIdx = (activeIdx + 1) % steps.length;
-            }, 950);
-        }
-    }
-
-    if (reduceMotion || typeof window.gsap === 'undefined') return;
-    const gsap = window.gsap;
-    const hasST = typeof window.ScrollTrigger !== 'undefined';
-    if (hasST) gsap.registerPlugin(window.ScrollTrigger);
-
-    // 1. Staggered kinetic hero entrance + SVG beam draw + 3D preview reveal
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
-    tl.from('.js-hero-item', {
-        y: 22,
-        opacity: 0,
-        duration: 0.55,
-        stagger: 0.08,
-        clearProps: 'transform,opacity'
-    })
-    .to('.js-hero-beam path', {
-        strokeDashoffset: 0,
-        duration: 0.78,
-        ease: 'power2.out'
-    }, '-=0.35')
-    .from('.js-hero-window', {
-        y: 30,
-        rotateX: 7,
-        scale: 0.97,
-        opacity: 0,
-        duration: 0.72,
-        ease: 'power3.out',
-        clearProps: 'transform,opacity'
-    }, '-=0.48');
-
-    if (!hasST) return;
-
-    // 2. Scroll-triggered section heading + Bento reveal
-    gsap.from('.js-section-head', {
-        y: 18,
-        opacity: 0,
-        duration: 0.48,
-        ease: 'power2.out',
-        clearProps: 'transform,opacity',
-        scrollTrigger: { trigger: '#bento', start: 'top 88%', once: true }
     });
-
-    gsap.from('.js-bento-tile', {
-        y: 24,
-        scale: 0.985,
-        opacity: 0,
-        duration: 0.52,
-        stagger: 0.08,
-        ease: 'power3.out',
-        force3D: true,
-        clearProps: 'transform,opacity',
-        scrollTrigger: {
-            trigger: '.px-bento',
-            start: 'top 88%',
-            once: true,
-            fastScrollEnd: true
-        }
-    });
-});
+    renderRole('mhs');
+})();
 </script>
 @endsection

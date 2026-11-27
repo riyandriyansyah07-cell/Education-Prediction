@@ -10,30 +10,30 @@
         (function () {
             try {
                 var t = localStorage.getItem('theme');
-                if (!t) t = 'dark';
+                if (!t) t = 'light';
                 document.documentElement.dataset.theme = t;
-            } catch (e) { document.documentElement.dataset.theme = 'dark'; }
+            } catch (e) { document.documentElement.dataset.theme = 'light'; }
         })();
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         /* === UNIFIED EDITORIAL ARCHITECTURAL SYSTEM (ANTI-SLOP · DESKTOP & MOBILE) === */
         :root {
-            --bg: #f7f8fa;
+            --bg: #f7f9fc;
             --surface: #ffffff;
-            --sunken: #f1f5f9;
-            --ink: #0f172a;
+            --sunken: #f3f7fc;
+            --ink: #0b1220;
             --ink-2: #475569;
-            --ink-3: #64748b;
-            --line: #e2e8f0;
-            --line-strong: #cbd5e1;
-            --accent: #0284c7;
+            --ink-3: #7c8aa0;
+            --line: #e2eaf5;
+            --line-strong: #cdd9ea;
+            --accent: #1d4e89;
             --accent-ink: #ffffff;
-            --accent-soft: #e0f2fe;
-            --ok: #059669;
-            --warn: #d97706;
+            --accent-soft: #eef4fb;
+            --ok: #0f766e;
+            --warn: #b45309;
             --bad: #dc2626;
-            --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
+            --shadow-card: 0 1px 2px rgba(11, 18, 32, 0.03);
         }
 
         :root[data-theme='dark'] {
@@ -101,7 +101,7 @@
             align-items: center;
             gap: 0.7rem;
             padding: 0.62rem 0.85rem !important;
-            border-radius: 10px !important;
+            border-radius: 9999px !important;
             font-size: 0.875rem;
             font-weight: 500;
             color: var(--ink-2);
@@ -114,10 +114,11 @@
         }
         .nav-link[aria-current='page'],
         .nav-link.is-active {
-            background: var(--surface) !important;
-            color: var(--ink) !important;
-            border-left: 2px solid var(--accent) !important;
-            box-shadow: var(--shadow-card);
+            background: var(--accent-soft) !important;
+            color: var(--accent) !important;
+            font-weight: 600;
+            border-left: 2px solid transparent !important;
+            box-shadow: none;
         }
 
         /* Backdrop Mobile Sidebar */
@@ -143,7 +144,7 @@
         main .bg-surface {
             background: var(--surface) !important;
             border: 1px solid var(--line) !important;
-            border-radius: 14px !important;
+            border-radius: 20px !important;
             box-shadow: var(--shadow-card);
             transition: border-color 150ms ease;
         }
@@ -208,9 +209,9 @@
             width: 100%;
             min-height: 42px;
             padding: 0.55rem 0.85rem;
-            border-radius: 10px !important;
+            border-radius: 12px !important;
             background: var(--sunken) !important;
-            border: 1px solid var(--line-strong) !important;
+            border: 1px solid var(--line) !important;
             color: var(--ink);
             font-size: 0.875rem;
             line-height: 1.45;
