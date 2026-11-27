@@ -391,7 +391,7 @@
                                 <th class="px-2 py-3 text-center">UTS</th>
                                 <th class="px-2 py-3 text-center">UAS</th>
                                 <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
-                                <th class="px-3 py-3 text-center whitespace-nowrap">UAS Min</th>
+                                <th class="px-3 py-3 text-center whitespace-nowrap">Target UAS</th>
                                 <th class="px-3 py-3 text-center">Risiko</th>
                             </tr>
                         </thead>
@@ -427,12 +427,45 @@
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
                                     <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Nilai N">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
-                                    <td class="sum-td-meta sum-td-uasmin num mono px-3 py-3 text-center text-xs whitespace-nowrap" data-label="UAS Min">
+                                    <td class="sum-td-meta sum-td-uasmin num px-3 py-3 text-center text-xs" data-label="Target UAS">
                                         @if ($c->min_uas_for_c !== null)
-                                            @php $minUasA = round((float) ($c->min_uas_for_b ?? 0) + 30.0, 2); @endphp
-                                            C: <strong>{{ \App\Support\Fmt::num($c->min_uas_for_c, 0) }}</strong> / B: {{ \App\Support\Fmt::num($c->min_uas_for_b ?? 0, 0) }} / A: <strong style="color:var(--ok);">{{ $minUasA > 100 ? '>100' : \App\Support\Fmt::num($minUasA, 0) }}</strong>
+                                            @php
+                                                $minUasC = (float) $c->min_uas_for_c;
+                                                $minUasB = (float) ($c->min_uas_for_b ?? 0);
+                                                $minUasA = round($minUasB + 30.0, 2);
+                                                if ($minUasA <= 100) {
+                                                    $bestGrade = 'A';
+                                                    $bestScore = \App\Support\Fmt::num($minUasA, 0);
+                                                    $bestColor = 'var(--ok)';
+                                                    $bestCheer = 'Semangat, bisa dapat A!';
+                                                } elseif ($minUasB <= 100) {
+                                                    $bestGrade = 'B';
+                                                    $bestScore = \App\Support\Fmt::num($minUasB, 0);
+                                                    $bestColor = 'var(--accent)';
+                                                    $bestCheer = 'Gas kejar B, pasti bisa!';
+                                                } elseif ($minUasC <= 100) {
+                                                    $bestGrade = 'C';
+                                                    $bestScore = \App\Support\Fmt::num($minUasC, 0);
+                                                    $bestColor = 'var(--warn)';
+                                                    $bestCheer = 'Fokus UAS, aman lulus!';
+                                                } else {
+                                                    $bestGrade = null;
+                                                    $bestScore = null;
+                                                    $bestColor = 'var(--bad)';
+                                                    $bestCheer = 'Tetap semangat, diskusi DPA!';
+                                                }
+                                                $uasTooltip = 'C: ' . \App\Support\Fmt::num($minUasC, 0) . ' | B: ' . \App\Support\Fmt::num($minUasB, 0) . ' | A: ' . ($minUasA > 100 ? '>100' : \App\Support\Fmt::num($minUasA, 0));
+                                            @endphp
+                                            <div title="{{ $uasTooltip }}" style="line-height:1.35;">
+                                                @if ($bestGrade)
+                                                    <span class="mono" style="font-weight:700;color:{{ $bestColor }};">Target {{ $bestGrade }}: min {{ $bestScore }}</span>
+                                                @else
+                                                    <span style="font-weight:700;color:{{ $bestColor }};">Perlu evaluasi</span>
+                                                @endif
+                                                <span style="display:block;font-size:11px;color:var(--ink-3);margin-top:2px;">{{ $bestCheer }}</span>
+                                            </div>
                                         @else
-                                            KHS ({{ $c->grade_input ?? '-' }})
+                                            <span class="mono">KHS ({{ $c->grade_input ?? '-' }})</span>
                                         @endif
                                     </td>
                                     <td class="sum-td-risk px-3 py-3 text-center whitespace-nowrap"><x-risk :level="$c->course_risk_level ?? 'rendah'" /></td>
