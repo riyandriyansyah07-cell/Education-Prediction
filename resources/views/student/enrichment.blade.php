@@ -182,9 +182,16 @@
         </form>
 
         {{-- Referensi Katalog & Jalur Rekognisi Khusus (Bab 2) --}}
-        <details class="mt-4 rounded-md border border-line bg-surface" style="padding:1.1rem 1.25rem;">
-            <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">
-                Lihat Katalog Lengkap 22 MK Pengayaan &amp; Jalur Rekognisi Khusus (Hafiz / PKM / KRI)
+        <details class="ui-acc mt-4" style="padding:1rem 1.15rem;">
+            <summary class="ui-acc-head">
+                <span class="ui-acc-left">
+                    <span class="ui-acc-icon"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5h5a2.5 2.5 0 0 1 2.5 2.5v9a2 2 0 0 0-2-2h-5.5v-9.5z"/><path d="M16.5 4.5h-5a2.5 2.5 0 0 0-2.5 2.5v9a2 2 0 0 1 2-2h5.5v-9.5z"/></svg></span>
+                    <span>
+                        <span class="ui-acc-title">Katalog 22 MK Pengayaan &amp; Jalur Rekognisi Khusus</span>
+                        <span class="ui-acc-sub">Daftar lengkap mata kuliah pengayaan, Hafiz, PKM, dan KRI FTII UHAMKA</span>
+                    </span>
+                </span>
+                <svg class="ui-acc-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
             </summary>
             <div class="mt-4 space-y-5 text-sm">
                 <div class="rounded-md border border-line bg-bg p-4">

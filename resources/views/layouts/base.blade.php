@@ -364,6 +364,98 @@
         ::-webkit-scrollbar-corner {
             background: transparent;
         }
+
+        /* Clean Accordion & Action-Add Trigger (tanpa panah segitiga bawaan browser) */
+        details.ui-acc {
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            padding: 0.9rem 1.15rem;
+            transition: border-color 160ms ease, background-color 160ms ease;
+        }
+        details.ui-acc.is-add {
+            border: 1.5px dashed color-mix(in srgb, var(--accent) 42%, var(--line));
+            background: color-mix(in srgb, var(--accent) 4%, var(--bg));
+        }
+        details.ui-acc.is-add:hover,
+        details.ui-acc.is-add[open] {
+            border-style: solid;
+            border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+            background: var(--bg);
+        }
+        details.ui-acc > summary.ui-acc-head {
+            list-style: none;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+        details.ui-acc > summary.ui-acc-head::-webkit-details-marker {
+            display: none;
+        }
+        .ui-acc-left {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            min-width: 0;
+        }
+        .ui-acc-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+            color: var(--accent);
+            border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+        }
+        .ui-acc-title {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.3;
+        }
+        .ui-acc-sub {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--ink-3);
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+        .ui-acc-chev {
+            width: 18px;
+            height: 18px;
+            color: var(--ink-3);
+            flex-shrink: 0;
+            transition: transform 180ms ease, color 180ms ease;
+        }
+        details.ui-acc[open] > summary.ui-acc-head .ui-acc-chev {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+        .btn-add-soft {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+            border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+            cursor: pointer;
+            transition: background-color 140ms ease, border-color 140ms ease;
+        }
+        .btn-add-soft:hover {
+            background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+            border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+        }
     </style>
 </head>
 <body class="min-h-dvh">

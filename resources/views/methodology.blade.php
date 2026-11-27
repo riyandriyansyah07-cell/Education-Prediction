@@ -234,8 +234,17 @@
 
     {{-- 4. Detail Teknis (Opsional untuk Dosen / Penguji) --}}
     <section class="mt-12">
-        <details class="mt-card" style="padding:1.4rem 1.5rem;">
-            <summary class="cursor-pointer text-base font-medium text-ink">Lihat rincian ambang angka &amp; skala nilai UHAMKA</summary>
+        <details class="ui-acc mt-card" style="padding:1.15rem 1.35rem;">
+            <summary class="ui-acc-head">
+                <span class="ui-acc-left">
+                    <span class="ui-acc-icon"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5h5a2.5 2.5 0 0 1 2.5 2.5v9a2 2 0 0 0-2-2h-5.5v-9.5z"/><path d="M16.5 4.5h-5a2.5 2.5 0 0 0-2.5 2.5v9a2 2 0 0 1 2-2h5.5v-9.5z"/></svg></span>
+                    <span>
+                        <span class="ui-acc-title">Rincian Ambang Angka &amp; Skala Nilai UHAMKA</span>
+                        <span class="ui-acc-sub">Tabel konversi huruf A–E, batas kehadiran, dan band riwayat akademik</span>
+                    </span>
+                </span>
+                <svg class="ui-acc-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
+            </summary>
 
             <div class="mt-grades">
                 <span class="mt-grade-chip"><strong>A</strong> 80–100 (4,0)</span>

@@ -250,7 +250,7 @@
             </div>
 
             <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <button type="button" class="btn btn-quiet btn-sm" onclick="addManualRow()">+ Tambah Baris</button>
+                <button type="button" class="btn-add-soft" onclick="addManualRow()"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11"/></svg><span>Tambah Baris</span></button>
                 <button type="submit" class="btn btn-primary">Simpan &amp; Hitung</button>
             </div>
         </form>
@@ -327,8 +327,17 @@
             @endif
 
             @if ($snapshots->isNotEmpty())
-                <details class="rounded-md border border-line bg-surface p-5">
-                    <summary class="cursor-pointer text-sm font-medium text-ink">Jejak cek berkala Sem {{ $latest->semester }} ({{ $snapshots->count() }})</summary>
+                <details class="ui-acc" style="padding:1rem 1.15rem;">
+                    <summary class="ui-acc-head">
+                        <span class="ui-acc-left">
+                            <span class="ui-acc-icon"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6.5v3.8l2.5 1.5"/></svg></span>
+                            <span>
+                                <span class="ui-acc-title">Jejak cek berkala Sem {{ $latest->semester }}</span>
+                                <span class="ui-acc-sub">{{ $snapshots->count() }} riwayat pengecekan tersimpan</span>
+                            </span>
+                        </span>
+                        <svg class="ui-acc-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
+                    </summary>
                     <ul class="mt-3 divide-y divide-line text-xs">
                         @foreach ($snapshots as $snap)
                             <li class="py-2">
@@ -425,8 +434,17 @@
                 </div>
             </form>
 
-            <details class="mt-6 rounded-md border border-line bg-bg" style="padding:1.15rem 1.25rem;">
-                <summary class="cursor-pointer text-sm font-semibold text-accent hover:underline">+ Tambah Mata Kuliah Baru</summary>
+            <details class="ui-acc is-add mt-6" style="padding:1rem 1.15rem;">
+                <summary class="ui-acc-head">
+                    <span class="ui-acc-left">
+                        <span class="ui-acc-icon"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11"/></svg></span>
+                        <span>
+                            <span class="ui-acc-title">Tambah Mata Kuliah Baru</span>
+                            <span class="ui-acc-sub">Tambahkan mata kuliah manual untuk menghitung proyeksi nilai &amp; target UAS</span>
+                        </span>
+                    </span>
+                    <svg class="ui-acc-chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5L10 12.5L15 7.5"/></svg>
+                </summary>
                 <form method="POST" action="{{ route('mhs.tambah-mk') }}" class="mt-4">
                     @csrf
                     <div class="mb-4 flex items-center gap-3">
@@ -465,7 +483,7 @@
                         </table>
                     </div>
                     <div class="mt-4 flex flex-wrap justify-between gap-2">
-                        <button type="button" class="btn btn-quiet btn-sm" onclick="addManualRow()">+ Tambah Baris</button>
+                        <button type="button" class="btn-add-soft" onclick="addManualRow()"><svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11"/></svg><span>Tambah Baris</span></button>
                         <button type="submit" class="btn btn-primary btn-sm">Simpan</button>
                     </div>
                 </form>
