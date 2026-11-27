@@ -455,17 +455,17 @@
                                                     $bestGrade = 'A';
                                                     $bestScore = \App\Support\Fmt::num($minUasA, 0);
                                                     $bestColor = 'var(--ok)';
-                                                    $bestCheer = 'Bisa dapat A!';
+                                                    $bestCheer = $minUasA <= 75 ? 'Jaga tetap ≥ 80!' : 'Fokus kejar A!';
                                                 } elseif ($minUasB <= 100) {
                                                     $bestGrade = 'B';
                                                     $bestScore = \App\Support\Fmt::num($minUasB, 0);
                                                     $bestColor = 'var(--accent)';
-                                                    $bestCheer = 'Gas kejar B!';
+                                                    $bestCheer = 'Jangan lengah, kejar B!';
                                                 } elseif ($minUasC <= 100) {
                                                     $bestGrade = 'C';
                                                     $bestScore = \App\Support\Fmt::num($minUasC, 0);
                                                     $bestColor = 'var(--warn)';
-                                                    $bestCheer = 'Aman lulus!';
+                                                    $bestCheer = 'Fokus UAS, jangan lengah!';
                                                 } else {
                                                     $bestGrade = null;
                                                     $bestScore = null;
@@ -477,7 +477,7 @@
                                             <div title="{{ $uasTooltip }}" style="display:inline-flex;flex-direction:column;align-items:center;">
                                                 @if ($bestGrade)
                                                     <span class="uas-target-pill mono" style="color:{{ $bestColor }};border:1px solid color-mix(in srgb, {{ $bestColor }} 35%, var(--line));background:color-mix(in srgb, {{ $bestColor }} 10%, var(--surface));">
-                                                        {{ $bestGrade }} &middot; min {{ $bestScore }}
+                                                        {{ $bestGrade }} &middot; &ge; {{ $bestScore }}
                                                     </span>
                                                 @else
                                                     <span class="uas-target-pill" style="color:{{ $bestColor }};border:1px solid color-mix(in srgb, {{ $bestColor }} 35%, var(--line));background:color-mix(in srgb, {{ $bestColor }} 10%, var(--surface));">
