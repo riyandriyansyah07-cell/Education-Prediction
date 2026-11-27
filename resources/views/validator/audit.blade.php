@@ -126,6 +126,8 @@
     }
 </style>
 
+{{-- Isi di dalam #audit-root diperbarui tanpa memuat ulang halaman (posisi scroll tetap). --}}
+<div id="audit-root">
 {{-- HERO BANNER + ALUR VALIDASI 3 LANGKAH --}}
 <section class="val-hero" aria-label="Ringkasan dan alur validasi AI">
     <div class="flex flex-wrap items-start justify-between gap-4">
@@ -268,7 +270,7 @@
 </section>
 
 {{-- FILTER & PENCARIAN --}}
-<section class="val-card mt-6">
+<section class="val-card mt-6" data-audit-filter style="scroll-margin-top:4.5rem;">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="val-chip-row">
             @php
@@ -342,7 +344,7 @@
 </section>
 
 @if ($errors->any())
-    <div class="mt-4 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm" style="color:var(--bad);" role="alert">
+    <div class="mt-4 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm" style="color:var(--bad);" role="alert" data-audit-error>
         {{ $errors->first() }}
     </div>
 @endif
@@ -627,6 +629,11 @@
     </nav>
 @endif
 
+</div>{{-- /#audit-root --}}
+
+<div id="audit-toast" class="no-print" role="status" aria-live="polite" hidden
+     style="position:fixed;right:1rem;bottom:1rem;z-index:60;max-width:min(26rem,calc(100vw - 2rem));padding:0.8rem 1.05rem;border-radius:12px;border:1px solid var(--line-strong);border-left:4px solid var(--ok);background:var(--surface);color:var(--ink);font-size:13px;line-height:1.5;box-shadow:0 12px 32px -12px rgba(0,0,0,0.35);"></div>
+
 <script>
 function toggleExpectedLevel(val, id) {
     const isKoreksi = val === 'perlu_koreksi';
@@ -635,5 +642,119 @@ function toggleExpectedLevel(val, id) {
     if (w1) w1.style.display = isKoreksi ? '' : 'none';
     if (w2) w2.style.display = isKoreksi ? '' : 'none';
 }
+
+// Filter, mode tampilan, paginasi, dan simpan validasi tanpa reload.
+// Tanpa JavaScript, semua tautan dan form tetap berjalan seperti biasa.
+(function () {
+    const root = document.getElementById('audit-root');
+    const toast = document.getElementById('audit-toast');
+    if (!root || !window.fetch || !window.DOMParser) return;
+
+    const auditPath = new URL(@json(route('validator.audit')), location.href).pathname;
+    let controller = null;
+    let saving = false;
+    let toastTimer = null;
+
+    function notify(message, isError) {
+        toast.textContent = message;
+        toast.style.borderLeftColor = isError ? 'var(--bad)' : 'var(--ok)';
+        toast.hidden = false;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.hidden = true; }, 5000);
+    }
+
+    function setBusy(busy) {
+        root.setAttribute('aria-busy', String(busy));
+        root.style.opacity = busy ? '0.6' : '';
+        root.style.cursor = busy ? 'progress' : '';
+    }
+
+    // Ganti isi #audit-root dengan versi dari server. Mengembalikan false jika respons bukan halaman audit.
+    function swap(doc) {
+        const next = doc.getElementById('audit-root');
+        if (!next) return false;
+        const guideOpen = root.querySelector('details')?.open;
+        root.replaceChildren(...next.childNodes);
+        const guide = root.querySelector('details');
+        if (guide && guideOpen) guide.open = true;
+        root.querySelectorAll('form').forEach(function (f) { f.setAttribute('novalidate', 'novalidate'); });
+        return true;
+    }
+
+    async function fetchPage(url, options) {
+        const res = await fetch(url, Object.assign({ credentials: 'same-origin', headers: { 'Accept': 'text/html' } }, options));
+        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+        return { res: res, doc: doc };
+    }
+
+    async function load(url, push, toList) {
+        if (controller) controller.abort();
+        const current = controller = new AbortController();
+        setBusy(true);
+        try {
+            const { res, doc } = await fetchPage(url, { signal: current.signal });
+            if (!res.ok || !swap(doc)) { location.assign(url); return; }
+            if (push) {
+                history.scrollRestoration = 'manual';
+                history.pushState({}, '', url);
+            }
+            // Pindah halaman: arahkan ke awal daftar, bukan ke atas halaman.
+            if (toList) root.querySelector('[data-audit-filter]')?.scrollIntoView({ block: 'start' });
+        } catch (err) {
+            if (err.name !== 'AbortError') location.assign(url);
+        } finally {
+            if (controller === current) setBusy(false);
+        }
+    }
+
+    async function save(form) {
+        saving = true;
+        setBusy(true);
+        const button = form.querySelector('[type=submit]');
+        if (button) button.disabled = true;
+        // Jaga kartu berikutnya tetap di posisi layar yang sama setelah daftar diperbarui.
+        const y = window.scrollY;
+        try {
+            const { res, doc } = await fetchPage(form.action, { method: 'POST', body: new FormData(form) });
+            if (!res.ok || !swap(doc)) throw new Error('gagal');
+            window.scrollTo({ top: y, behavior: 'instant' });
+            const error = doc.querySelector('#audit-root [data-audit-error]');
+            const status = doc.querySelector('main [role=status]:not(#audit-toast) p');
+            if (error) notify(error.textContent.trim(), true);
+            else notify(status ? status.textContent.trim() : 'Validasi tersimpan.', false);
+        } catch (err) {
+            notify('Validasi belum tentu tersimpan. Muat ulang halaman lalu periksa kembali.', true);
+        } finally {
+            saving = false;
+            setBusy(false);
+            if (button) button.disabled = false;
+        }
+    }
+
+    root.addEventListener('click', function (e) {
+        const link = e.target.closest('a[href]');
+        if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || link.target) return;
+        const url = new URL(link.href, location.href);
+        if (url.origin !== location.origin || url.pathname !== auditPath) return;
+        e.preventDefault();
+        if (!saving) load(url.href, true, Boolean(link.closest('.val-pager')));
+    });
+
+    root.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;
+        const form = e.target;
+        e.preventDefault();
+        if (saving) return;
+        if (form.method.toLowerCase() === 'get') {
+            const url = new URL(form.action, location.href);
+            url.search = new URLSearchParams(new FormData(form)).toString();
+            load(url.href, true, false);
+        } else {
+            save(form);
+        }
+    });
+
+    window.addEventListener('popstate', function () { load(location.href, false, false); });
+})();
 </script>
 @endsection
