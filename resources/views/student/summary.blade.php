@@ -17,12 +17,30 @@
 @section('content')
 <style>
     .sum-tbl .sum-inp {
-        min-height: 36px !important;
-        height: 36px;
-        width: 4.1rem;
-        padding: 0.25rem 0.35rem !important;
+        min-height: 35px !important;
+        height: 35px;
+        width: 3.6rem;
+        padding: 0.2rem 0.3rem !important;
         text-align: center;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
+    }
+    .uas-target-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.16rem 0.55rem;
+        border-radius: 9999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        white-space: nowrap;
+        line-height: 1.3;
+    }
+    .uas-target-sub {
+        display: block;
+        font-size: 10.5px;
+        color: var(--ink-3);
+        margin-top: 3px;
+        white-space: nowrap;
     }
     @media (max-width: 860px) {
         .sum-card-wrap {
@@ -437,32 +455,36 @@
                                                     $bestGrade = 'A';
                                                     $bestScore = \App\Support\Fmt::num($minUasA, 0);
                                                     $bestColor = 'var(--ok)';
-                                                    $bestCheer = 'Semangat, bisa dapat A!';
+                                                    $bestCheer = 'Bisa dapat A!';
                                                 } elseif ($minUasB <= 100) {
                                                     $bestGrade = 'B';
                                                     $bestScore = \App\Support\Fmt::num($minUasB, 0);
                                                     $bestColor = 'var(--accent)';
-                                                    $bestCheer = 'Gas kejar B, pasti bisa!';
+                                                    $bestCheer = 'Gas kejar B!';
                                                 } elseif ($minUasC <= 100) {
                                                     $bestGrade = 'C';
                                                     $bestScore = \App\Support\Fmt::num($minUasC, 0);
                                                     $bestColor = 'var(--warn)';
-                                                    $bestCheer = 'Fokus UAS, aman lulus!';
+                                                    $bestCheer = 'Aman lulus!';
                                                 } else {
                                                     $bestGrade = null;
                                                     $bestScore = null;
                                                     $bestColor = 'var(--bad)';
-                                                    $bestCheer = 'Tetap semangat, diskusi DPA!';
+                                                    $bestCheer = 'Diskusi DPA!';
                                                 }
                                                 $uasTooltip = 'C: ' . \App\Support\Fmt::num($minUasC, 0) . ' | B: ' . \App\Support\Fmt::num($minUasB, 0) . ' | A: ' . ($minUasA > 100 ? '>100' : \App\Support\Fmt::num($minUasA, 0));
                                             @endphp
-                                            <div title="{{ $uasTooltip }}" style="line-height:1.35;">
+                                            <div title="{{ $uasTooltip }}" style="display:inline-flex;flex-direction:column;align-items:center;">
                                                 @if ($bestGrade)
-                                                    <span class="mono" style="font-weight:700;color:{{ $bestColor }};">Target {{ $bestGrade }}: min {{ $bestScore }}</span>
+                                                    <span class="uas-target-pill mono" style="color:{{ $bestColor }};border:1px solid color-mix(in srgb, {{ $bestColor }} 35%, var(--line));background:color-mix(in srgb, {{ $bestColor }} 10%, var(--surface));">
+                                                        {{ $bestGrade }} &middot; min {{ $bestScore }}
+                                                    </span>
                                                 @else
-                                                    <span style="font-weight:700;color:{{ $bestColor }};">Perlu evaluasi</span>
+                                                    <span class="uas-target-pill" style="color:{{ $bestColor }};border:1px solid color-mix(in srgb, {{ $bestColor }} 35%, var(--line));background:color-mix(in srgb, {{ $bestColor }} 10%, var(--surface));">
+                                                        Evaluasi
+                                                    </span>
                                                 @endif
-                                                <span style="display:block;font-size:11px;color:var(--ink-3);margin-top:2px;">{{ $bestCheer }}</span>
+                                                <span class="uas-target-sub">{{ $bestCheer }}</span>
                                             </div>
                                         @else
                                             <span class="mono">KHS ({{ $c->grade_input ?? '-' }})</span>
