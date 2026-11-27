@@ -94,7 +94,7 @@ class ImportService
         $lines = explode("\n", $text);
 
         $rows = [
-            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen', 'nilai_uts', 'nilai_tugas', 'nilai_uas'],
+            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen', 'nilai_keaktifan', 'nilai_tugas', 'nilai_uts', 'nilai_uas'],
         ];
 
         $entryYear = 2000 + (int) substr(preg_replace('/[^0-9]/', '', $studentUsername), 0, 2);
@@ -220,12 +220,14 @@ class ImportService
                 }
 
                 // Petakan komponen [Keaktifan, Tugas, UTS, UAS] secara dinamis sesuai jumlah kolom yang terisi
+                $nilaiKeaktifan = '';
                 $nilaiTugas = '';
                 $nilaiUts = '';
                 $nilaiUas = '';
                 $countScores = count($componentScores);
                 if ($countScores >= 4) {
                     // Urutan lengkap KHS UHAMKA: Keaktifan, Tugas, UTS, UAS
+                    $nilaiKeaktifan = $this->formatScore($componentScores[0]);
                     $nilaiTugas = $this->formatScore($componentScores[1]);
                     $nilaiUts = $this->formatScore($componentScores[2]);
                     $nilaiUas = $this->formatScore($componentScores[3]);
@@ -269,8 +271,9 @@ class ImportService
                     $sks,
                     $nilaiHuruf,
                     $kehadiran,
-                    $nilaiUts,
+                    $nilaiKeaktifan,
                     $nilaiTugas,
+                    $nilaiUts,
                     $nilaiUas,
                 ];
             }

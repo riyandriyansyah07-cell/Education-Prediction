@@ -104,6 +104,7 @@ class SummaryController extends Controller
             'courses.*.course_name' => ['required', 'string', 'max:120'],
             'courses.*.credits' => ['required', 'integer', 'min:1', 'max:6'],
             'courses.*.attendance' => ['required', 'numeric', 'min:0', 'max:100'],
+            'courses.*.activity_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.uts_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.assignment_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.uas_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -118,6 +119,7 @@ class SummaryController extends Controller
 
         foreach ($data['courses'] as $item) {
             $code = strtoupper(trim($item['course_code']));
+            $aktif = isset($item['activity_score']) && $item['activity_score'] !== '' ? round((float) $item['activity_score'], 2) : null;
             $uts = isset($item['uts_score']) && $item['uts_score'] !== '' ? round((float) $item['uts_score'], 2) : null;
             $tugas = isset($item['assignment_score']) && $item['assignment_score'] !== '' ? round((float) $item['assignment_score'], 2) : null;
             $uas = isset($item['uas_score']) && $item['uas_score'] !== '' ? round((float) $item['uas_score'], 2) : null;
@@ -136,6 +138,7 @@ class SummaryController extends Controller
             $proj = RiskModel::projectCourse([
                 'credits' => (int) $item['credits'],
                 'attendance' => $att,
+                'activity_score' => $aktif,
                 'grade_point' => $preservedGradePoint,
                 'grade_input' => $preservedGradeInput,
                 'uts_score' => $uts,
@@ -157,6 +160,7 @@ class SummaryController extends Controller
                     'grade_point' => $preservedGradePoint,
                     'grade_input' => $preservedGradeInput,
                     'attendance' => $att,
+                    'activity_score' => $aktif,
                     'uts_score' => $uts,
                     'assignment_score' => $tugas,
                     'uas_score' => $uas,
@@ -199,6 +203,7 @@ class SummaryController extends Controller
             'courses' => ['required', 'array', 'min:1'],
             'courses.*.id' => ['required', 'integer'],
             'courses.*.attendance' => ['required', 'numeric', 'min:0', 'max:100'],
+            'courses.*.activity_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.uts_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.assignment_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'courses.*.uas_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -220,6 +225,7 @@ class SummaryController extends Controller
 
             $targetSemester ??= (int) $record->semester;
 
+            $aktif = isset($item['activity_score']) && $item['activity_score'] !== '' ? (float) $item['activity_score'] : null;
             $uts = isset($item['uts_score']) && $item['uts_score'] !== '' ? (float) $item['uts_score'] : null;
             $tugas = isset($item['assignment_score']) && $item['assignment_score'] !== '' ? (float) $item['assignment_score'] : null;
             $uas = isset($item['uas_score']) && $item['uas_score'] !== '' ? (float) $item['uas_score'] : null;
@@ -227,6 +233,7 @@ class SummaryController extends Controller
 
             $record->update([
                 'attendance' => round((float) $item['attendance'], 2),
+                'activity_score' => $aktif !== null ? round($aktif, 2) : null,
                 'uts_score' => $uts !== null ? round($uts, 2) : null,
                 'assignment_score' => $tugas !== null ? round($tugas, 2) : null,
                 'uas_score' => $uas !== null ? round($uas, 2) : null,

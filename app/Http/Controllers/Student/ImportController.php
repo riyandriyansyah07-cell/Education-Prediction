@@ -52,9 +52,9 @@ class ImportController extends Controller
     public function template(Request $request): StreamedResponse|BinaryFileResponse
     {
         $rows = [
-            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen', 'nilai_uts', 'nilai_tugas', 'nilai_uas'],
-            [1, 'IF101', 'Algoritma dan Pemrograman', 3, 'A', 95, '', '', ''],
-            [6, 'IF601', 'Pemrograman Mobile', 3, '', 90, 60, 70, ''],
+            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran_persen', 'nilai_keaktifan', 'nilai_tugas', 'nilai_uts', 'nilai_uas'],
+            [1, 'IF101', 'Algoritma dan Pemrograman', 3, 'A', 95, 85, 95, 87, 55],
+            [6, 'IF601', 'Pemrograman Mobile', 3, '', 90, 85, 70, 60, ''],
         ];
 
         if ($request->query('format') === 'xlsx') {

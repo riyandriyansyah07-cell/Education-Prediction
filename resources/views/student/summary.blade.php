@@ -43,7 +43,7 @@
         }
         .sum-tbl tbody tr {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
             gap: 0.75rem 0.55rem;
             padding: 1.05rem;
             margin-bottom: 0.95rem;
@@ -74,6 +74,11 @@
         }
         .sum-tbl tbody td.sum-td-inp {
             order: 3;
+            grid-column: span 2;
+        }
+        .sum-tbl tbody td.sum-td-inp-wide {
+            order: 3;
+            grid-column: span 3;
         }
         .sum-tbl tbody td.sum-td-inp::before {
             content: attr(data-label);
@@ -94,7 +99,7 @@
         }
         .sum-tbl tbody td.sum-td-meta {
             order: 4;
-            grid-column: span 1;
+            grid-column: span 2;
             padding-top: 0.65rem !important;
             margin-top: 0.25rem;
             border-top: 1px solid var(--line) !important;
@@ -220,8 +225,9 @@
                             <th class="px-3 py-2.5">Mata Kuliah</th>
                             <th class="px-3 py-2.5 text-center">SKS</th>
                             <th class="px-3 py-2.5 text-center">Hadir (%)</th>
-                            <th class="px-3 py-2.5 text-center">UTS</th>
+                            <th class="px-3 py-2.5 text-center">Keaktifan</th>
                             <th class="px-3 py-2.5 text-center">Tugas</th>
+                            <th class="px-3 py-2.5 text-center">UTS</th>
                             <th class="px-3 py-2.5"></th>
                         </tr>
                     </thead>
@@ -234,8 +240,9 @@
                             <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[0][course_name]" value="{{ old('courses.0.course_name') }}" placeholder="Seminar Capstone Project" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
                             <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[0][credits]" min="1" max="6" value="{{ old('courses.0.credits', 3) }}" class="input h-9 w-16 mono text-center text-sm" required></td>
                             <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="{{ old('courses.0.attendance', 90) }}" class="input h-9 w-20 mono text-center text-sm" required></td>
-                            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" value="{{ old('courses.0.uts_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="Keaktifan"><input type="number" step="0.1" name="courses[0][activity_score]" min="0" max="100" value="{{ old('courses.0.activity_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                             <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" value="{{ old('courses.0.assignment_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" value="{{ old('courses.0.uts_score') }}" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                             <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                         </tr>
                     </tbody>
@@ -357,8 +364,9 @@
                                 <th class="px-3 py-3">Mata Kuliah</th>
                                 <th class="px-2 py-3 text-center">SKS</th>
                                 <th class="px-2 py-3 text-center">Hadir (%)</th>
-                                <th class="px-2 py-3 text-center">UTS</th>
+                                <th class="px-2 py-3 text-center">Keaktifan</th>
                                 <th class="px-2 py-3 text-center">Tugas</th>
+                                <th class="px-2 py-3 text-center">UTS</th>
                                 <th class="px-2 py-3 text-center">UAS</th>
                                 <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
                                 <th class="px-3 py-3 text-center whitespace-nowrap">UAS Min</th>
@@ -384,13 +392,16 @@
                                     <td class="sum-td-inp px-2 py-3 text-center" data-label="Hadir %">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][attendance]" value="{{ $c->attendance }}" class="input sum-inp mono" required>
                                     </td>
-                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="UTS">
-                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uts_score]" value="{{ $c->uts_score }}" placeholder="-" class="input sum-inp mono">
+                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="Keaktifan">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][activity_score]" value="{{ $c->activity_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
                                     <td class="sum-td-inp px-2 py-3 text-center" data-label="Tugas">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][assignment_score]" value="{{ $c->assignment_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
-                                    <td class="sum-td-inp px-2 py-3 text-center" data-label="UAS">
+                                    <td class="sum-td-inp sum-td-inp-wide px-2 py-3 text-center" data-label="UTS">
+                                        <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uts_score]" value="{{ $c->uts_score }}" placeholder="-" class="input sum-inp mono">
+                                    </td>
+                                    <td class="sum-td-inp sum-td-inp-wide px-2 py-3 text-center" data-label="UAS">
                                         <input type="number" step="0.1" min="0" max="100" name="courses[{{ $idx }}][uas_score]" value="{{ $c->uas_score }}" placeholder="-" class="input sum-inp mono">
                                     </td>
                                     <td class="sum-td-meta num mono px-3 py-3 text-center font-semibold whitespace-nowrap" data-label="Nilai N">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
@@ -429,8 +440,9 @@
                                     <th class="px-3 py-2.5">Mata Kuliah</th>
                                     <th class="px-3 py-2.5 text-center">SKS</th>
                                     <th class="px-3 py-2.5 text-center">Hadir (%)</th>
-                                    <th class="px-3 py-2.5 text-center">UTS</th>
+                                    <th class="px-3 py-2.5 text-center">Keaktifan</th>
                                     <th class="px-3 py-2.5 text-center">Tugas</th>
+                                    <th class="px-3 py-2.5 text-center">UTS</th>
                                     <th class="px-3 py-2.5"></th>
                                 </tr>
                             </thead>
@@ -443,8 +455,9 @@
                                     <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[0][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
                                     <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[0][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
                                     <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[0][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
-                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="Keaktifan"><input type="number" step="0.1" name="courses[0][activity_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                                     <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[0][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+                                    <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[0][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
                                     <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
                                 </tr>
                             </tbody>
@@ -475,8 +488,9 @@
             <td class="addmk-name px-3 py-2.5" data-label="Nama Mata Kuliah"><input type="text" name="courses[${idx}][course_name]" placeholder="Nama mata kuliah" class="input h-9 w-full min-w-[12rem] text-sm" required></td>
             <td class="addmk-num px-3 py-2.5 text-center" data-label="SKS"><input type="number" name="courses[${idx}][credits]" min="1" max="6" value="3" class="input h-9 w-16 mono text-center text-sm" required></td>
             <td class="addmk-num px-3 py-2.5 text-center" data-label="Hadir (%)"><input type="number" step="0.1" name="courses[${idx}][attendance]" min="0" max="100" value="85" class="input h-9 w-20 mono text-center text-sm" required></td>
-            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[${idx}][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="Keaktifan"><input type="number" step="0.1" name="courses[${idx}][activity_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
             <td class="addmk-num px-3 py-2.5 text-center" data-label="Tugas"><input type="number" step="0.1" name="courses[${idx}][assignment_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
+            <td class="addmk-num px-3 py-2.5 text-center" data-label="UTS"><input type="number" step="0.1" name="courses[${idx}][uts_score]" min="0" max="100" placeholder="-" class="input h-9 w-20 mono text-center text-sm"></td>
             <td class="addmk-act px-3 py-2.5 text-right"><button type="button" class="btn btn-quiet btn-sm text-ink-3" onclick="removeManualRow(this)">Hapus</button></td>
         `;
         tbody.appendChild(tr);

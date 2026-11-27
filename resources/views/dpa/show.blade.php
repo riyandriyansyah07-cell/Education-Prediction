@@ -113,7 +113,7 @@
                             <th class="px-4 py-3">Mata Kuliah</th>
                             <th class="px-3 py-3 text-center">SKS</th>
                             <th class="px-3 py-3 text-center">Hadir</th>
-                            <th class="px-3 py-3 text-center whitespace-nowrap">UTS / Tugas / UAS</th>
+                            <th class="px-3 py-3 text-center whitespace-nowrap">Aktif / Tugas / UTS / UAS</th>
                             <th class="px-3 py-3 text-center whitespace-nowrap">Nilai N</th>
                             <th class="px-3 py-3 text-center whitespace-nowrap">UAS Min</th>
                             <th class="px-4 py-3 text-center">Risiko</th>
@@ -134,7 +134,7 @@
                                 </td>
                                 <td class="num px-3 py-3 text-center">{{ $c->credits }}</td>
                                 <td class="num px-3 py-3 text-center whitespace-nowrap">{{ \App\Support\Fmt::pct($c->attendance) }}</td>
-                                <td class="mono px-3 py-3 text-center text-xs whitespace-nowrap">{{ $c->uts_score ?? '-' }} / {{ $c->assignment_score ?? '-' }} / {{ $c->uas_score ?? ($c->grade_input ?? '-') }}</td>
+                                <td class="mono px-3 py-3 text-center text-xs whitespace-nowrap">{{ $c->activity_score ?? '-' }} / {{ $c->assignment_score ?? '-' }} / {{ $c->uts_score ?? '-' }} / {{ $c->uas_score ?? ($c->grade_input ?? '-') }}</td>
                                 <td class="num mono px-3 py-3 text-center font-semibold whitespace-nowrap">{{ $c->projected_score !== null ? \App\Support\Fmt::num($c->projected_score, 1) : '-' }}</td>
                                 <td class="mono px-3 py-3 text-center text-xs whitespace-nowrap">
                                     @if ($c->min_uas_for_c !== null)

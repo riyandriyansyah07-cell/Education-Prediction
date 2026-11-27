@@ -30,6 +30,9 @@ final class SheetValidator
         'nilai_angka' => 'nilai',
         'nilai_bobot' => 'nilai',
         'bobot' => 'nilai',
+        'keaktifan' => 'nilai_keaktifan',
+        'aktif' => 'nilai_keaktifan',
+        'skor_keaktifan' => 'nilai_keaktifan',
         'uts' => 'nilai_uts',
         'skor_uts' => 'nilai_uts',
         'tugas' => 'nilai_tugas',
@@ -104,14 +107,16 @@ final class SheetValidator
                 $rowErrors[] = 'SKS harus bilangan 1 sampai 6.';
             }
 
-            // Komponen opsional: UTS, Tugas, UAS, dan Sumber Tugas
-            $utsRaw = $get('nilai_uts');
+            // Komponen opsional: Keaktifan, Tugas, UTS, UAS, dan Sumber Tugas
+            $keaktifanRaw = $get('nilai_keaktifan');
             $tugasRaw = $get('nilai_tugas');
+            $utsRaw = $get('nilai_uts');
             $uasRaw = $get('nilai_uas');
             $sumberRaw = strtolower($get('sumber_tugas'));
 
-            $utsScore = self::parseOptionalScore($utsRaw, 'Nilai UTS', $rowErrors);
+            $activityScore = self::parseOptionalScore($keaktifanRaw, 'Nilai keaktifan', $rowErrors);
             $assignmentScore = self::parseOptionalScore($tugasRaw, 'Nilai tugas', $rowErrors);
+            $utsScore = self::parseOptionalScore($utsRaw, 'Nilai UTS', $rowErrors);
             $uasScore = self::parseOptionalScore($uasRaw, 'Nilai UAS', $rowErrors);
 
             $assignmentSource = null;
@@ -175,6 +180,7 @@ final class SheetValidator
             $proj = RiskModel::projectCourse([
                 'credits' => (int) $sks,
                 'attendance' => (float) $attendance,
+                'activity_score' => $activityScore,
                 'grade_point' => $point,
                 'grade_input' => $gradeInput,
                 'uts_score' => $utsScore,
@@ -193,6 +199,7 @@ final class SheetValidator
                 'grade_point' => $point,
                 'grade_input' => $gradeInput,
                 'attendance' => $attendance,
+                'activity_score' => $activityScore,
                 'uts_score' => $utsScore,
                 'assignment_score' => $assignmentScore,
                 'uas_score' => $uasScore,

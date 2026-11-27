@@ -107,6 +107,7 @@ class RiskService
                     'grade_point' => $r->grade_point !== null ? (float) $r->grade_point : null,
                     'grade_input' => $r->grade_input,
                     'attendance' => $effectiveAttendance,
+                    'activity_score' => $r->activity_score !== null ? (float) $r->activity_score : null,
                     'uts_score' => $r->uts_score !== null ? (float) $r->uts_score : null,
                     'assignment_score' => $r->assignment_score !== null ? (float) $r->assignment_score : null,
                     'uas_score' => $r->uas_score !== null ? (float) $r->uas_score : null,

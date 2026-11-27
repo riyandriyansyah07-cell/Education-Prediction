@@ -28,6 +28,7 @@ class AcademicRecord extends Model
             'credits' => 'integer',
             'grade_point' => 'float',
             'attendance' => 'float',
+            'activity_score' => 'float',
             'uts_score' => 'float',
             'assignment_score' => 'float',
             'uas_score' => 'float',

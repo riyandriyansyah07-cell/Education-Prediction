@@ -79,6 +79,7 @@ final class RiskModel
     public static function projectCourse(array $course): array
     {
         $attendance = max(0.0, min(100.0, (float) ($course['attendance'] ?? 0.0)));
+        $activity = isset($course['activity_score']) && $course['activity_score'] !== null ? max(0.0, min(100.0, (float) $course['activity_score'])) : null;
         $uts = isset($course['uts_score']) && $course['uts_score'] !== null ? (float) $course['uts_score'] : null;
         $assignment = isset($course['assignment_score']) && $course['assignment_score'] !== null ? (float) $course['assignment_score'] : null;
         $uas = isset($course['uas_score']) && $course['uas_score'] !== null ? (float) $course['uas_score'] : null;
@@ -102,7 +103,8 @@ final class RiskModel
         }
 
         // 2. Hitung nilai sementara N = (\sum w_i s_i) / (\sum w_i) dari komponen yang sudah terisi
-        $weightedSum = self::COURSE_WEIGHTS['attendance'] * $attendance;
+        $activityComponent = $activity ?? $attendance;
+        $weightedSum = self::COURSE_WEIGHTS['attendance'] * $activityComponent;
         $totalWeight = self::COURSE_WEIGHTS['attendance'];
         $componentsCount = 1;
 
