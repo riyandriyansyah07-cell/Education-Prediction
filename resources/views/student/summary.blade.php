@@ -99,21 +99,34 @@
         }
         .sum-tbl tbody td.sum-td-meta {
             order: 4;
-            grid-column: span 2;
+            grid-column: span 3;
             padding-top: 0.65rem !important;
-            margin-top: 0.25rem;
+            margin-top: 0.2rem;
             border-top: 1px solid var(--line) !important;
-            font-size: 12px !important;
+            font-size: 12.5px !important;
+        }
+        .sum-tbl tbody td.sum-td-meta:nth-of-type(8) {
+            text-align: right !important;
         }
         .sum-tbl tbody td.sum-td-meta::before {
             content: attr(data-label) " ";
-            font-size: 10.5px;
+            font-size: 11px;
             color: var(--ink-3);
             font-weight: 500;
         }
         .sum-tbl tbody td.sum-td-uasmin {
-            grid-column: span 2;
+            order: 5;
+            grid-column: 1 / -1;
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-top: 0;
+            padding-top: 0.55rem !important;
+            border-top: 1px dashed var(--line) !important;
+            white-space: normal !important;
             text-align: right !important;
+            font-size: 12.5px !important;
         }
         /* Responsive Card untuk Tabel Tambah Mata Kuliah Baru di HP */
         .addmk-box {
