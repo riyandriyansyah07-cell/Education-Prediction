@@ -254,9 +254,21 @@ final class EnrichmentCatalog
      */
     public static function matchCourseName(string $courseName): ?array
     {
-        $withoutParens = (string) preg_replace('/\([^)]*\)/u', ' ', $courseName);
+        // Hapus isi tanda kurung termasuk yang terpotong di KHS (mis. "(Ko)", "(Komp.)", "(Kompetensi")
+        $withoutParens = (string) preg_replace('/\([^)]*\)?/u', ' ', $courseName);
         $normalized = self::normalizeName($withoutParens);
         if ($normalized === '') {
+            return null;
+        }
+
+        // Hindari salah cocok dengan mata kuliah reguler FTII yang namanya mirip
+        $excludedRegular = [
+            'etika profesi',
+            'metodologi penelitian',
+            'penelitian operasional',
+            'riset operasional',
+        ];
+        if (in_array($normalized, $excludedRegular, true)) {
             return null;
         }
 
@@ -264,6 +276,7 @@ final class EnrichmentCatalog
             'penelitian 1' => 'penelitian',
             'publikasi 1' => 'publikasi-nasional',
             'empati dan kecedasan sosial' => 'empati-kecerdasan-sosial',
+            'empati kecedasan sosial' => 'empati-kecerdasan-sosial',
             'ketrampilan komunikasi' => 'keterampilan-komunikasi',
             'keteramp berbicara bhs jepan' => 'keterampilan-berbicara-jepang',
             'keteramp berbicara bhs jepang' => 'keterampilan-berbicara-jepang',
@@ -273,19 +286,97 @@ final class EnrichmentCatalog
             return self::find($aliases[$normalized]);
         }
 
-        // 1. Pencocokan persis setelah normalisasi & penghapusan tanda kurung
+        $inputTokens = self::significantTokens($normalized);
+        if ($inputTokens === []) {
+            return null;
+        }
+        $inputJoined = implode(' ', $inputTokens);
+
+        // 1. Pencocokan persis (mengabaikan perbedaan "&" vs "dan" serta tanda kurung)
         foreach (self::all() as $item) {
-            if (self::normalizeName($item['name']) === $normalized) {
+            $itemTokens = self::significantTokens(self::normalizeName($item['name']));
+            if ($itemTokens === $inputTokens) {
                 return $item;
             }
         }
 
         // 2. Pencocokan awalan nama (misal "Etika Profesional Kompetensi" atau "Pengembangan Profesi 1")
         foreach (self::all() as $item) {
-            $itemNorm = self::normalizeName($item['name']);
-            if ($itemNorm !== '' && str_starts_with($normalized, $itemNorm.' ')) {
+            $itemJoined = implode(' ', self::significantTokens(self::normalizeName($item['name'])));
+            if ($itemJoined !== '' && str_starts_with($inputJoined, $itemJoined.' ')) {
                 return $item;
             }
+        }
+
+        // 3. Pencocokan singkatan KHS berbasis awalan kata (misal "Keteramp. Ret. & Presen. Publ." atau "Empati & Kecerd. Sosial")
+        $rawHasAbbrevDot = str_contains($withoutParens, '.');
+        $shortMap = [
+            'bhs' => 'bahasa',
+            'ket' => 'keterampilan',
+            'ketrampilan' => 'keterampilan',
+            'keteramp' => 'keterampilan',
+            'kew' => 'kewirausahaan',
+            'kewiraus' => 'kewirausahaan',
+            'komp' => 'kompetensi',
+            'pengemb' => 'pengembangan',
+            'pemik' => 'pemikiran',
+            'kepemimp' => 'kepemimpinan',
+            'kecerd' => 'kecerdasan',
+            'kecedasan' => 'kecerdasan',
+            'presen' => 'presentasi',
+            'publ' => 'publik',
+            'ret' => 'retorika',
+            'nas' => 'nasional',
+            'inter' => 'internasional',
+            'internas' => 'internasional',
+            'prof' => 'profesi',
+            'mas' => 'masalah',
+            'neg' => 'negosiasi',
+        ];
+
+        $matchedItems = [];
+        foreach (self::all() as $item) {
+            $catTokens = self::significantTokens(self::normalizeName($item['name']));
+            $catCount = count($catTokens);
+            if ($catCount < 2 || count($inputTokens) < $catCount) {
+                continue;
+            }
+
+            // Hanya izinkan akhiran tambahan yang umum di KHS (angka, "kompetensi", "ko", "konversi")
+            if (count($inputTokens) > $catCount) {
+                $extra = array_slice($inputTokens, $catCount);
+                $allowedExtra = ['1', '2', 'ko', 'komp', 'kompetensi', 'konversi'];
+                if (array_diff($extra, $allowedExtra) !== []) {
+                    continue;
+                }
+            }
+
+            $allMatch = true;
+            $hasStrictPrefix = false;
+            for ($i = 0; $i < $catCount; $i++) {
+                $inTok = $inputTokens[$i];
+                $inTok = $shortMap[$inTok] ?? $inTok;
+                $catTok = $catTokens[$i];
+
+                if ($inTok === $catTok) {
+                    continue;
+                }
+                if (mb_strlen($inTok) >= 3 && str_starts_with($catTok, $inTok)) {
+                    $hasStrictPrefix = true;
+                    continue;
+                }
+                $allMatch = false;
+                break;
+            }
+
+            if ($allMatch && ($catCount >= 3 || $rawHasAbbrevDot || ! $hasStrictPrefix)) {
+                $matchedItems[] = $item;
+            }
+        }
+
+        // Kembalikan hanya jika unik (tidak ambigu dengan MK lain)
+        if (count($matchedItems) === 1) {
+            return $matchedItems[0];
         }
 
         return null;
@@ -302,10 +393,25 @@ final class EnrichmentCatalog
     private static function normalizeName(string $raw): string
     {
         $s = mb_strtolower(trim($raw));
-        $s = str_replace(['&', '-', '_', '/', '(', ')', '.'], ' ', $s);
+        $s = str_replace(['&', '-', '_', '/', '(', ')', '.', ','], ' ', $s);
         $s = (string) preg_replace('/\s+/u', ' ', $s);
 
         return trim($s);
+    }
+
+    /** @return list<string> */
+    private static function significantTokens(string $normalized): array
+    {
+        $parts = preg_split('/\s+/u', trim($normalized)) ?: [];
+        $out = [];
+        foreach ($parts as $tok) {
+            if ($tok === '' || $tok === 'dan') {
+                continue;
+            }
+            $out[] = $tok;
+        }
+
+        return $out;
     }
 
     /**
