@@ -12,7 +12,10 @@ use App\Models\StudentSetting;
 use App\Models\User;
 use App\Services\Pseudonym;
 use App\Services\RiskService;
+use App\Support\SheetValidator;
+use App\Support\ThresholdTrainer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -307,5 +310,78 @@ class AuditFixesTest extends TestCase
         $this->assertSame(3.0, (float) $updated->grade_point);
         $this->assertSame('B', $updated->grade_input);
         $this->assertTrue((bool) $updated->is_official_khs);
+    }
+
+    public function test_m4_pesan_error_ukuran_berkas_mengikuti_konfigurasi(): void
+    {
+        [$student] = $this->seedRuleAndUsers();
+        config(['risk.import_max_kb' => 512]);
+
+        $oversized = UploadedFile::fake()->create('khs.csv', 600, 'text/csv');
+
+        $this->actingAs($student)
+            ->post(route('mhs.impor.store'), ['file' => $oversized])
+            ->assertSessionHasErrors(['file' => 'Ukuran berkas maksimal 512 KB (512 KB).']);
+    }
+
+    public function test_m5_ekspor_templat_csv_menggunakan_escaping_valid(): void
+    {
+        [$student] = $this->seedRuleAndUsers();
+
+        $response = $this->actingAs($student)->get(route('mhs.templat'));
+        $response->assertOk();
+        $content = $response->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $content);
+        $this->assertStringContainsString('semester,kode_mk,nama_mk', $content);
+    }
+
+    public function test_c1_dan_c2_validasi_bobot_ip_dan_strip_apostrof_awal(): void
+    {
+        $checked = SheetValidator::validate([
+            ['semester', 'kode_mk', 'nama_mk', 'sks', 'nilai', 'kehadiran'],
+            ['5', 'IF501', 'Big Data', '3', '3.5', '90'],
+        ], '2303045999');
+
+        $this->assertNotEmpty($checked['errors']);
+        $this->assertStringContainsString('0–4,0', $checked['errors'][0]['message']);
+
+        $this->assertSame('IF501', SheetValidator::neutralize("'IF501"));
+        $this->assertSame("'=SUM(A1)", SheetValidator::neutralize("'=SUM(A1)"));
+    }
+
+    public function test_c3_split_threshold_trainer_diacak_deterministik(): void
+    {
+        $rows = [];
+        for ($i = 0; $i < 100; $i++) {
+            $rows[] = ['id' => $i, 'attendance' => 80, 'ips' => 3.0, 'failed_ratio' => 0.0, 'ips_delta' => 0.0, 'label' => 'rendah'];
+        }
+
+        [$train1, $test1] = ThresholdTrainer::split($rows, 2026);
+        [$train2, $test2] = ThresholdTrainer::split($rows, 2026);
+
+        $this->assertSame($train1, $train2);
+        $this->assertSame($test1, $test2);
+        $this->assertNotSame(range(0, 6), array_column(array_slice($train1, 0, 7), 'id'));
+    }
+
+    public function test_s1_persetujuan_tiket_menolak_email_duplikat_dengan_rapi(): void
+    {
+        [$student, $admin] = $this->seedRuleAndUsers();
+
+        $dupTicket = AccountTicket::create([
+            'ticket_code' => 'TKT-20261125-DUPEMAIL01',
+            'request_type' => AccountTicket::TYPE_STUDENT,
+            'name' => 'Pemohon Email Duplikat',
+            'username' => '2303045888',
+            'program_studi' => AccountTicket::PROGRAMS[0],
+            'email' => $student->email,
+            'status' => AccountTicket::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.tiket.setujui', $dupTicket))
+            ->assertSessionHasErrors('ticket');
+
+        $this->assertDatabaseMissing('users', ['username' => '2303045888']);
     }
 }

@@ -17,18 +17,19 @@ class ImportController extends Controller
 {
     public function show(Request $request): View
     {
+        $maxKb = (int) config('risk.import_max_kb', 2048);
+
         return view('student.import', [
             'batches' => ImportBatch::where('student_ref', $request->user()->student_ref)->latest('id')->limit(5)->get(),
-            'maxKb' => (int) config('risk.import_max_kb', 2048),
+            'maxKb' => $maxKb,
+            'maxLabel' => self::formatMaxSize($maxKb),
         ]);
     }
 
     public function store(Request $request, ImportService $import): RedirectResponse
     {
         $maxKb = (int) config('risk.import_max_kb', 2048);
-        $maxLabel = $maxKb >= 1024 && $maxKb % 1024 === 0
-            ? ($maxKb / 1024).' MB'
-            : $maxKb.' KB';
+        $maxLabel = self::formatMaxSize($maxKb);
 
         $request->validate([
             'file' => ['required', 'file', 'max:'.$maxKb],
@@ -95,5 +96,12 @@ class ImportController extends Controller
         fclose($stream);
 
         return $csv;
+    }
+
+    private static function formatMaxSize(int $maxKb): string
+    {
+        return $maxKb >= 1024 && $maxKb % 1024 === 0
+            ? ($maxKb / 1024).' MB'
+            : $maxKb.' KB';
     }
 }

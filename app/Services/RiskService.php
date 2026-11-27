@@ -77,6 +77,16 @@ class RiskService
                         ->where('course_code', $enrichmentMatch['code'])
                         ->first();
 
+                    $defaultActivity = $isFailed ? 'Belum lulus KHS (perlu mengulang)' : 'Terkonversi otomatis dari KHS';
+                    $defaultNotes = $isFailed
+                        ? "Nilai E pada KHS semester {$semester} (tidak dihitung sebagai konversi SKS, perlu mengulang)."
+                        : "Tersinkron otomatis dari KHS semester {$semester}.";
+
+                    $keepActivity = $existingEnr?->activity_type
+                        && ! (! $isFailed && $existingEnr->activity_type === 'Belum lulus KHS (perlu mengulang)');
+                    $keepNotes = $existingEnr?->evidence_notes
+                        && ! (! $isFailed && str_starts_with($existingEnr->evidence_notes, 'Nilai E pada KHS'));
+
                     EnrichmentRecord::updateOrCreate(
                         [
                             'student_ref' => $ref,
@@ -87,14 +97,12 @@ class RiskService
                             'credits' => $enrichmentMatch['credits'],
                             'competency' => $enrichmentMatch['competency'],
                             'lecturer' => $enrichmentMatch['lecturer'],
-                            'activity_type' => $existingEnr?->activity_type ?: ($isFailed ? 'Belum lulus KHS (perlu mengulang)' : 'Terkonversi otomatis dari KHS'),
+                            'activity_type' => $keepActivity ? $existingEnr->activity_type : $defaultActivity,
                             'activity_semester' => $existingEnr?->activity_semester ?? (int) $semester,
                             'conversion_semester' => $isFailed ? null : (int) $semester,
                             'status' => $isFailed ? EnrichmentRecord::STATUS_DICICIL : EnrichmentRecord::STATUS_DIKONVERSI,
                             'grade' => $letter,
-                            'evidence_notes' => $existingEnr?->evidence_notes ?: ($isFailed
-                                ? "Nilai E pada KHS semester {$semester} (tidak dihitung sebagai konversi SKS, perlu mengulang)."
-                                : "Tersinkron otomatis dari KHS semester {$semester}."),
+                            'evidence_notes' => $keepNotes ? $existingEnr->evidence_notes : $defaultNotes,
                         ]
                     );
                 }

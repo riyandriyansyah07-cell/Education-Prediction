@@ -194,6 +194,18 @@ class AccountTicketController extends Controller
         $rawToken = Str::random(64);
         $targetEmail = strtolower(trim((string) $ticket->email));
 
+        if ($ticket->request_type !== AccountTicket::TYPE_RESET && $targetEmail !== '') {
+            $existingByUsername = User::where('username', $ticket->username)->first();
+            if (! $existingByUsername) {
+                $emailOwner = User::whereRaw('LOWER(email) = ?', [$targetEmail])->first();
+                if ($emailOwner) {
+                    return back()->withErrors([
+                        'ticket' => "Email {$targetEmail} sudah digunakan oleh akun lain ({$emailOwner->username}). Tolak tiket ini atau minta pemohon memakai email lain.",
+                    ]);
+                }
+            }
+        }
+
         DB::transaction(function () use ($ticket, $data, $request, $rawToken, &$targetEmail) {
             $existingUser = User::where('username', $ticket->username)->first();
             $placeholderPassword = Str::random(32);

@@ -165,7 +165,7 @@ class DatabaseSeeder extends Seeder
         if (app()->environment('local') && is_file($envPath) && is_writable($envPath)) {
             $envContent = (string) file_get_contents($envPath);
             if (preg_match('/^PSEUDONYM_SALT=.*$/m', $envContent)) {
-                $updated = preg_replace('/^PSEUDONYM_SALT=\s*$/m', 'PSEUDONYM_SALT='.$salt, $envContent);
+                $updated = preg_replace('/^PSEUDONYM_SALT=\s*(?:""|\'\')?\s*$/m', 'PSEUDONYM_SALT='.$salt, $envContent);
                 if (is_string($updated)) {
                     file_put_contents($envPath, $updated);
                 }

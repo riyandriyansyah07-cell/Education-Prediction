@@ -72,7 +72,7 @@
     <section class="lg:col-span-6">
         <div class="bg-surface" style="padding:1.5rem 1.6rem;">
             <h2 class="text-base font-semibold text-ink">Unggah berkas KHS / nilai</h2>
-            <p class="mt-1 text-xs text-ink-3">Maks. {{ number_format($maxKb / 1024, 0) }} MB &middot; Maks. 500 baris &middot; Menimpa data semester yang sama.</p>
+            <p class="mt-1 text-xs text-ink-3">Maks. {{ $maxLabel ?? (number_format($maxKb / 1024, 0).' MB') }} &middot; Maks. 500 baris &middot; Menimpa data semester yang sama.</p>
 
             <form method="POST" action="{{ route('mhs.impor.store') }}" enctype="multipart/form-data" class="mt-4">
                 @csrf
