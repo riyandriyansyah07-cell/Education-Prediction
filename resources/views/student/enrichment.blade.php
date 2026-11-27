@@ -378,7 +378,7 @@
                             </div>
 
                             @if ($r->status !== 'dikonversi')
-                                <div class="mt-3.5" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.55rem;">
+                                <div style="margin-top:0.875rem;" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.55rem;">
                                     @if ($r->status === 'dicicil')
                                         <form method="POST" action="{{ route('mhs.pengayaan.status', $r) }}">
                                             @csrf
@@ -433,7 +433,7 @@
         </span>
     </div>
 
-    <div class="mt-3.5" style="height:6px;width:100%;border-radius:9999px;background:var(--sunken);overflow:hidden;">
+    <div style="margin-top:0.875rem;" style="height:6px;width:100%;border-radius:9999px;background:var(--sunken);overflow:hidden;">
         <div style="height:100%;width:{{ $skpi['pct'] }}%;background:var(--ok);border-radius:9999px;transition:width 0.3s ease;"></div>
     </div>
 
@@ -477,9 +477,14 @@
                             <span style="font-weight:600;color:{{ $doc_it->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_it->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
                                 {{ $doc_it->statusLabel() }}@if ($doc_it->verifier) &middot; {{ $doc_it->verifier->name }} @endif
                             </span>
-                            <a href="{{ route('skpi.dokumen.show', $doc_it) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
-                                Lihat Bukti ({{ $doc_it->formattedSize() }}) &rarr;
-                            </a>
+                            <span style="display:inline-flex;align-items:center;gap:0.65rem;">
+                                <a href="{{ route('skpi.dokumen.show', $doc_it) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                    Lihat Bukti ({{ $doc_it->formattedSize() }}) &rarr;
+                                </a>
+                                @if ($doc_it->verification_status !== 'terverifikasi')
+                                    <button type="submit" form="delete-skpi-{{ $doc_it->id }}" style="background:none;border:none;padding:0;color:var(--bad);font-size:11px;font-weight:600;cursor:pointer;" onclick="return confirm('Hapus berkas bukti ini?')">Hapus</button>
+                                @endif
+                            </span>
                         </div>
                         @if ($doc_it->verification_note)
                             <p class="text-xs" style="color:{{ $doc_it->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
@@ -523,9 +528,14 @@
                             <span style="font-weight:600;color:{{ $doc_baps->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_baps->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
                                 {{ $doc_baps->statusLabel() }}@if ($doc_baps->verifier) &middot; {{ $doc_baps->verifier->name }} @endif
                             </span>
-                            <a href="{{ route('skpi.dokumen.show', $doc_baps) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
-                                Lihat Bukti ({{ $doc_baps->formattedSize() }}) &rarr;
-                            </a>
+                            <span style="display:inline-flex;align-items:center;gap:0.65rem;">
+                                <a href="{{ route('skpi.dokumen.show', $doc_baps) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                    Lihat Bukti ({{ $doc_baps->formattedSize() }}) &rarr;
+                                </a>
+                                @if ($doc_baps->verification_status !== 'terverifikasi')
+                                    <button type="submit" form="delete-skpi-{{ $doc_baps->id }}" style="background:none;border:none;padding:0;color:var(--bad);font-size:11px;font-weight:600;cursor:pointer;" onclick="return confirm('Hapus berkas bukti ini?')">Hapus</button>
+                                @endif
+                            </span>
                         </div>
                         @if ($doc_baps->verification_note)
                             <p class="text-xs" style="color:{{ $doc_baps->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
@@ -575,9 +585,14 @@
                             <span style="font-weight:600;color:{{ $doc_pkm->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_pkm->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
                                 {{ $doc_pkm->statusLabel() }}@if ($doc_pkm->verifier) &middot; {{ $doc_pkm->verifier->name }} @endif
                             </span>
-                            <a href="{{ route('skpi.dokumen.show', $doc_pkm) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
-                                Lihat Bukti ({{ $doc_pkm->formattedSize() }}) &rarr;
-                            </a>
+                            <span style="display:inline-flex;align-items:center;gap:0.65rem;">
+                                <a href="{{ route('skpi.dokumen.show', $doc_pkm) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                    Lihat Bukti ({{ $doc_pkm->formattedSize() }}) &rarr;
+                                </a>
+                                @if ($doc_pkm->verification_status !== 'terverifikasi')
+                                    <button type="submit" form="delete-skpi-{{ $doc_pkm->id }}" style="background:none;border:none;padding:0;color:var(--bad);font-size:11px;font-weight:600;cursor:pointer;" onclick="return confirm('Hapus berkas bukti ini?')">Hapus</button>
+                                @endif
+                            </span>
                         </div>
                         @if ($doc_pkm->verification_note)
                             <p class="text-xs" style="color:{{ $doc_pkm->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
@@ -628,9 +643,14 @@
                             <span style="font-weight:600;color:{{ $doc_toefl->verification_status === 'terverifikasi' ? 'var(--ok)' : ($doc_toefl->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--warn)') }};">
                                 {{ $doc_toefl->statusLabel() }}@if ($doc_toefl->verifier) &middot; {{ $doc_toefl->verifier->name }} @endif
                             </span>
-                            <a href="{{ route('skpi.dokumen.show', $doc_toefl) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
-                                Lihat Bukti ({{ $doc_toefl->formattedSize() }}) &rarr;
-                            </a>
+                            <span style="display:inline-flex;align-items:center;gap:0.65rem;">
+                                <a href="{{ route('skpi.dokumen.show', $doc_toefl) }}" target="_blank" rel="noopener" class="text-accent hover:underline" style="font-weight:600;">
+                                    Lihat Bukti ({{ $doc_toefl->formattedSize() }}) &rarr;
+                                </a>
+                                @if ($doc_toefl->verification_status !== 'terverifikasi')
+                                    <button type="submit" form="delete-skpi-{{ $doc_toefl->id }}" style="background:none;border:none;padding:0;color:var(--bad);font-size:11px;font-weight:600;cursor:pointer;" onclick="return confirm('Hapus berkas bukti ini?')">Hapus</button>
+                                @endif
+                            </span>
                         </div>
                         @if ($doc_toefl->verification_note)
                             <p class="text-xs" style="color:{{ $doc_toefl->verification_status === 'ditolak' ? 'var(--bad)' : 'var(--ink-3)' }};margin:0;">
@@ -654,6 +674,15 @@
             <button type="submit" class="btn btn-primary btn-sm" style="border-radius:9999px !important;padding:0.5rem 1.25rem;font-weight:600;">Simpan Status &amp; Bukti SKPI</button>
         </div>
     </form>
+
+    @foreach ($skpiDocs as $sDoc)
+        @if ($sDoc->verification_status !== 'terverifikasi')
+            <form id="delete-skpi-{{ $sDoc->id }}" method="POST" action="{{ route('mhs.pengayaan.skpi.hapus', $sDoc) }}" style="display:none;">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endif
+    @endforeach
 </section>
 
 <script>

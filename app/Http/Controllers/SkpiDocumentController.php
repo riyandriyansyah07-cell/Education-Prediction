@@ -78,6 +78,11 @@ class SkpiDocumentController extends Controller
     {
         abort_unless($document->student_ref === $request->user()->student_ref, 403);
 
+        if ($document->verification_status === SkpiDocument::STATUS_TERVERIFIKASI) {
+            return redirect()->route('mhs.pengayaan')
+                ->with('status', 'Berkas bukti yang sudah terverifikasi tidak dapat dihapus.');
+        }
+
         $label = $document->typeLabel();
         if ($document->file_path && Storage::disk('local')->exists($document->file_path)) {
             Storage::disk('local')->delete($document->file_path);

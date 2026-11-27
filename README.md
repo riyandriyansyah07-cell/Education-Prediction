@@ -1,12 +1,24 @@
 # Cegah Sebelum Terlambat
 
-Sistem peringatan dini akademik berbasis AI untuk mahasiswa FTII UHAMKA. Capstone Project Kelompok 12.
-Implementasi dari dokumen Tugas Pertemuan 6 (kebutuhan, arsitektur, use case, DFD Level 0 dan 1).
+Sistem peringatan dini akademik berbasis AI untuk mahasiswa **FTII UHAMKA** (`https://peringatandini.online`). Capstone Project Kelompok 12.
 
-Stack: Laravel 13, Tailwind CSS 4 (Vite), PostgreSQL (SQLite untuk prototipe), PHP 8.4 atau lebih baru,
-layanan model Python (FastAPI, scikit-learn, XGBoost, SHAP) di folder `ml-service`.
+Stack: **Laravel 13**, **PHP 8.4+**, **Tailwind CSS 4 (Vite)**, **MySQL / PostgreSQL** (SQLite untuk pengujian), serta layanan model Python (**FastAPI, scikit-learn, XGBoost, SHAP**) di folder `ml-service`.
 
-## Menjalankan
+## Fitur Utama
+
+- **4 Peran Terisolasi (`EnsureRole`)**:
+  - **Mahasiswa**: impor KHS (PDF resmi UHAMKA, XLSX, CSV), pemantauan skor risiko 0–10, kalkulator **Target UAS** tertinggi yang bisa diraih, riwayat semester + grafik IPS, pelacak **20 SKS MK Pengayaan** (termasuk deteksi otomatis singkatan nama KHS), **4 Syarat Wajib SKPI** beserta unggah bukti sertifikat privat (maks. 2 MB), catatan bimbingan DPA, serta pengingat risiko.
+  - **DPA (Dosen Pembimbing Akademik)**: akses otomatis khusus mahasiswa bimbingannya (terisolasi 403 dari DPA lain), detail faktor risiko & target UAS, pencatatan + riwayat bimbingan, serta verifikasi bukti SKPI.
+  - **Admin Sekretariat**: dasbor ringkasan fakultas (filter Prodi, Angkatan, DPA, Risiko + ekspor CSV), kelola akun & peran, antrean **Tiket Pengajuan Akun (E-Ticket)** dengan tautan atur sandi 24 jam, **Verifikasi SKPI**, unggah data historis anonim, pelatihan/aktivasi model ML, serta audit **Catatan akses**.
+  - **Validator AI**: audit kesesuaian penjelasan AI Gemini terhadap perhitungan matematis + panduan koreksi dan ekspor laporan akurasi CSV.
+- **Bobot Resmi FTII UHAMKA**:
+  - **Komponen Mata Kuliah (KHS)**: UAS **40%** · UTS **30%** · Tugas **20%** · Keaktifan/Kehadiran **10%** (ambang huruf: A ≥ 80, B ≥ 68, C ≥ 56, D ≥ 45; hadir < 75% pada kelas reguler memicu peringatan minimal 3,0).
+  - **Skor Risiko Mahasiswa (0–10)**: **75%** Nilai & Absensi Semester Berjalan + **25%** Riwayat Semester Lalu (50:50 di awal semester), ditambah indikator aditif TA Sem 7+ (`+0–1,0`) serta Progres 20 SKS Pengayaan & 4 Syarat SKPI Sem 5+ (`+0–2,0`).
+- **Notifikasi Luar Website**:
+  - **Pop-up Browser / OS** (Desktop & Android via Service Worker `/sw.js` dan polling `/notifikasi/cek`) untuk antrean E-Ticket, bukti SKPI, dan pengingat risiko.
+  - **Email Instan ke Admin** (`AdminNewTicketMail`) setiap kali E-Ticket baru masuk, tetap diterima meski browser ditutup.
+
+## Menjalankan Lokal
 
 ```bash
 composer install
@@ -14,10 +26,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Buat database di pgAdmin 4: klik kanan **Databases**, **Create**, **Database**, beri nama `peringatan_dini`.
-Lalu isi `DB_USERNAME`, `DB_PASSWORD`, dan `PSEUDONYM_SALT` (string acak panjang, misalnya 32 karakter) di `.env` **sebelum** menjalankan migrasi dan seeder.
-Jangan mengubah `PSEUDONYM_SALT` setelah data nyata masuk karena mengubahnya membuat kode samar lama tidak cocok dengan NIM.
-(Pada lingkungan `APP_ENV=local`, bila `PSEUDONYM_SALT` dibiarkan kosong, seeder otomatis membangkitkan dan menyimpannya ke `.env`.)
+Isi koneksi database dan `PSEUDONYM_SALT` (string acak 32+ karakter) di `.env` **sebelum** migrasi. Jangan mengubah `PSEUDONYM_SALT` setelah data nyata masuk karena mengubahnya memutus kecocokan `student_ref` (HMAC-SHA256 dari NIM).
 
 ```bash
 php artisan migrate --seed
@@ -26,73 +35,28 @@ npm run build        # atau npm run dev saat mengembangkan
 php artisan serve
 ```
 
-Buka http://localhost:8000. Halaman Masuk menampilkan akun contoh (hanya saat `APP_ENV=local`).
-Kata sandi semua akun contoh: `password123`. Akun admin: `admin`.
+## Peta Modul Utama
 
-Akun mahasiswa pertama (Riyan, 2303045009) sengaja kosong agar alur impor bisa dicoba dari awal.
-Pakai tombol **Unduh templat** di halaman Impor untuk berkas contoh.
-
-## Alur dan peta ke dokumen
-
-| Proses DFD | Halaman | Kode |
+| Proses / Modul | Halaman | Kode Utama |
 |---|---|---|
-| 1.0 Autentikasi dan hak akses | Masuk, Akun dan peran | `AuthController`, `EnsureRole`, `Admin\AccountController` |
-| 2.0 Impor dan validasi | Impor data | `ImportService`, `SheetValidator`, `SheetReader` |
-| 3.0 Hitung dan tampilkan risiko | Ringkasan risiko | `RiskService`, `RiskEngine`, `RiskModel`, `ml-service/risk_ml.py` |
-| 4.0 Persetujuan dan pengingat | Privasi dan izin | `Student\PrivacyController` |
-| 5.0 Dasbor DPA | Mahasiswa bimbingan | `Dpa\GuidanceController` |
-| 6.0 Riwayat dan catatan akses | Riwayat, Catatan akses | `Student\HistoryController`, `AccessLogController`, `AccessLogger` |
-| 7.0 Data historis dan model | Data historis, Model prediksi | `Admin\HistoricalDataController`, `ModelService`, `ThresholdTrainer`, `ml-service` |
-
-Penyimpanan D1 sampai D6 ada di `database/migrations`. Tabel `users` menyimpan akun (D1).
-Data akademik, hasil risiko, dan log hanya memuat `student_ref`, yaitu HMAC-SHA256 dari NIM.
-
-Kebutuhan fungsional FR-01 sampai FR-11 tercakup.
-
-## Perhitungan risiko dan model (FR-03, FR-06, FR-11, NFR-02)
-
-Fitur per semester dihitung dari berkas impor: kehadiran tertimbang SKS, IPS, rasio SKS bernilai di bawah C,
-dan perubahan IPS dari semester sebelumnya. Dua model menghitungnya:
-
-| Model | Peran | Penjelasan faktor |
-|---|---|---|
-| Random Forest dan XGBoost (`ml-service`) | Model utama. Dilatih admin pada data historis anonim. Yang terbaik menurut validasi silang disimpan sebagai versi. | SHAP pada skor risiko |
-| Aturan berbobot (`RiskModel`) | Pembanding dan cadangan bila layanan Python mati atau tidak ada versi ML aktif | Poin aturan |
-
-Skor risiko 0 sampai 10 = 10 x (0,5 x P(sedang) + P(tinggi)). Dua ambang skor (sedang, tinggi) dikalibrasi pada
-prediksi out-of-fold data latih dengan tujuan macro-F1 + 0,5 x recall Tinggi, supaya kelas Tinggi yang jarang tidak
-terlewat. Data uji terpisah (30% setelah pengacakan deterministik) hanya dipakai sekali untuk menilai versi.
-Versi hanya bisa diaktifkan bila macro-F1 >= 0,70 dan recall Tinggi >= 0,80 (`config/risk.php`).
-Halaman Model prediksi menampilkan matriks kebingungan, kedua kandidat, dan metrik model aturan pada data uji yang sama.
-
-Semua semester seorang mahasiswa dinilai dalam satu permintaan ke layanan model (NFR-04).
-Layanan hanya menerima empat angka per semester, tanpa NIM atau nama.
-
-### Menjalankan layanan model
-
-```bash
-cd ml-service
-python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 127.0.0.1 --port 8001
-```
-
-Lalu di `.env` Laravel: `RISK_ENGINE=http` (dan `RISK_SERVICE_URL`, `RISK_SERVICE_TOKEN` bila perlu).
-Alurnya: unggah data historis (menu Data historis) -> Latih dan uji (menu Model prediksi) -> Aktifkan versi ->
-mahasiswa menekan Hitung ulang di Ringkasan risiko. Format data historis ada di templat unduhan
-(`kehadiran, ips, rasio_sks_tidak_lulus, perubahan_ips, label`), minimal 100 baris dan 5 baris per kelas.
+| Autentikasi, E-Ticket & Hak Akses | Masuk, Ajukan E-Ticket, Akun dan peran | `AuthController`, `AccountTicketController`, `EnsureRole`, `Admin\AccountController` |
+| Impor & Validasi KHS | Impor data | `ImportService`, `SheetValidator`, `SheetReader` |
+| Skor Risiko, Target UAS & AI | Ringkasan risiko, Metodologi | `RiskService`, `RiskModel`, `LlmAdvisor`, `ml-service/risk_ml.py` |
+| 20 SKS Pengayaan & 4 Syarat SKPI | Pengayaan & SKPI, Verifikasi SKPI | `EnrichmentCatalog`, `Student\EnrichmentController`, `SkpiDocumentController` |
+| Pendampingan DPA & Privasi | Mahasiswa bimbingan, Riwayat bimbingan, Privasi & pengingat | `Dpa\GuidanceController`, `Student\PrivacyController` |
+| Notifikasi & Audit Akses | Sidebar Notifikasi, Catatan akses, Audit AI | `NotificationPollController`, `AccessLogController`, `Validator\AuditController` |
+| Data Historis & Model ML | Data historis, Model prediksi | `Admin\HistoricalDataController`, `ModelService`, `ThresholdTrainer` |
 
 ## Pengujian
 
 ```bash
-php artisan test                    # Laravel: unit dan fitur (hak akses, impor, persetujuan DPA, mesin ML dan cadangan)
-cd ml-service && python -m pytest   # layanan model: pelatihan, target NFR-02, SHAP aditif, API, token
+php artisan test                    # Unit & Feature tests Laravel
+cd ml-service && python -m pytest   # Pengujian layanan ML Python
 ```
 
-## Catatan keamanan
+## Catatan Keamanan & Privasi (Zero-PII)
 
-- Hak akses diperiksa di server pada setiap permintaan (`EnsureRole`, pemeriksaan izin di `GuidanceController`).
-- Kata sandi di-hash bcrypt. Login dibatasi 5 percobaan per menit. Sesi kedaluwarsa 30 menit.
-- Persetujuan E-Ticket mengirim tautan pengaturan kata sandi sekali pakai bertoken (berlaku 24 jam), tanpa mengirim kata sandi plaintext melalui email.
-- Berkas impor dibaca dari folder sementara PHP dan tidak pernah disimpan. Sel berawalan `=`, `+`, `-`, `@` dinetralkan dan tanda petik awal dibersihkan.
-- Pakai HTTPS di produksi.
+- Hak akses diverifikasi di server pada setiap permintaan (`EnsureRole` dan pemeriksaan kepemilikan DPA/mahasiswa).
+- Data akademik, hasil risiko, dan layanan ML/LLM hanya menggunakan `student_ref` (HMAC-SHA256) tanpa mengirim Nama atau NIM.
+- Berkas impor KHS dibaca dari memori/temp lalu langsung dihapus (tidak disimpan di server); bukti sertifikat SKPI disimpan di disk `local` privat dengan kontrol akses pemilik, DPA pembimbing, dan Admin.
+- Login dibatasi 5 percobaan per menit, sesi kedaluwarsa 30 menit, dan persetujuan E-Ticket mengirim tautan pengaturan kata sandi sekali pakai (berlaku 24 jam) tanpa password plaintext.

@@ -344,7 +344,7 @@
                         <div class="val-mini-bar"><div class="val-mini-fill" style="width:{{ $aiPct }}%; background:{{ $aiColor }};"></div></div>
                     </div>
 
-                    <div class="mt-3.5 pt-3 border-t border-line space-y-1.5 text-xs">
+                    <div class="mt-3 pt-3 border-t border-line space-y-1.5 text-xs">
                         <p class="text-ink-2">
                             <strong class="text-ink">Faktor utama:</strong>
                             {{ $item['factors'] !== [] ? collect($item['factors'])->take(2)->pluck('label')->implode('; ') : 'Tidak ada faktor risiko signifikan.' }}
