@@ -178,7 +178,7 @@
             var btn = document.querySelector('[data-notif-enable]');
             var lbl = document.querySelector('[data-notif-label]');
             var pollUrl = @json(route('notifikasi.cek'));
-            var iconUrl = @json(asset('favicon.svg'));
+            var iconUrl = @json(asset('notif-icon.png') . '?v=2');
             var SEEN_KEY = 'cst_seen_notif_keys_v1';
             var swReg = null;
 
