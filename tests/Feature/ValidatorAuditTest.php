@@ -143,4 +143,34 @@ class ValidatorAuditTest extends TestCase
             'role' => User::ROLE_VALIDATOR,
         ]);
     }
+
+    public function test_validator_mendukung_mode_tabel_paginasi_ekspor_xlsx_dan_print(): void
+    {
+        [, $validator] = $this->seedAuditUsersAndResult();
+
+        // Mode tabel laporan + paginasi & sorting
+        $this->actingAs($validator)->get(route('validator.audit', [
+            'tampilan' => 'tabel',
+            'sort' => 'delta',
+            'per_page' => 10,
+            'page' => 1,
+        ]))
+            ->assertOk()
+            ->assertSee('Aulia Azzahra')
+            ->assertSee('Mode Tabel Laporan');
+
+        // Ekspor Excel (.xlsx) 2-sheet
+        $xlsx = $this->actingAs($validator)->get(route('validator.audit.ekspor', ['format' => 'xlsx']));
+        $xlsx->assertOk();
+        $this->assertStringContainsString(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            (string) $xlsx->headers->get('Content-Type')
+        );
+
+        // Pratinjau cetak / PDF
+        $this->actingAs($validator)->get(route('validator.audit.ekspor', ['format' => 'print']))
+            ->assertOk()
+            ->assertSee('Laporan Audit')
+            ->assertSee('Aulia Azzahra');
+    }
 }

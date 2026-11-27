@@ -87,6 +87,28 @@
         border: 1px solid var(--line); background: var(--bg); color: var(--ink-2); text-decoration: none;
     }
     .val-chip.is-active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+    .val-export-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+    .val-filter-grid-ext { display: grid; gap: 0.75rem; grid-template-columns: 1.35fr 0.9fr 0.9fr 0.9fr 0.7fr auto; align-items: end; }
+    .val-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; width: 100%; }
+    .val-tbl th, .val-tbl td { padding: 0.65rem 0.7rem; vertical-align: middle; }
+    .val-tbl th.num, .val-tbl td.num { text-align: right; white-space: nowrap; }
+    .val-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 0.75rem; margin-top: 1.25rem; padding: 0.9rem 1.2rem;
+        border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 12px;
+    }
+    .val-pager-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+    .val-page-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 32px; height: 32px; padding: 0 0.6rem; border-radius: 7px;
+        border: 1px solid var(--line); background: var(--bg); color: var(--ink-2);
+        font-size: 12px; font-weight: 500; text-decoration: none;
+    }
+    .val-page-btn:hover { border-color: var(--accent); color: var(--ink); }
+    .val-page-btn.is-current { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; pointer-events: none; }
+    .val-page-btn.is-disabled { opacity: 0.45; pointer-events: none; }
+    @media (max-width: 960px) { .val-filter-grid-ext { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 640px) { .val-filter-grid-ext { grid-template-columns: 1fr; } }
 
     @media (max-width: 960px) {
         .val-steps { grid-template-columns: 1fr; }
@@ -113,9 +135,26 @@
                 Verifikasi kebenaran penilaian risiko AI Gemini dengan membandingkannya langsung terhadap rumus matematis standar FTII UHAMKA.
             </p>
         </div>
-        <a href="{{ route('validator.audit.ekspor', array_filter($filters)) }}" class="btn btn-primary btn-sm">
-            <x-icon name="download-simple" /> Unduh Laporan CSV
-        </a>
+        @php
+            $exportQuery = array_filter([
+                'status' => $filters['status'],
+                'sumber' => $filters['sumber'],
+                'q' => $filters['q'],
+                'cakupan' => $filters['cakupan'],
+                'sort' => $filters['sort'],
+            ]);
+        @endphp
+        <div class="val-export-group">
+            <a href="{{ route('validator.audit.ekspor', $exportQuery) }}" class="btn btn-quiet btn-sm" title="Streaming CSV hemat memori untuk ribuan data">
+                <x-icon name="download-simple" /> CSV
+            </a>
+            <a href="{{ route('validator.audit.ekspor', $exportQuery + ['format' => 'xlsx']) }}" class="btn btn-primary btn-sm" title="Excel 2-sheet dengan ringkasan akurasi AI & warna status">
+                <x-icon name="download-simple" /> Excel (.xlsx)
+            </a>
+            <a href="{{ route('validator.audit.ekspor', $exportQuery + ['format' => 'print']) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" title="Pratinjau laporan audit siap cetak atau simpan PDF">
+                Pratinjau / Cetak
+            </a>
+        </div>
     </div>
 
     <div class="val-steps" aria-label="Alur kerja validator">
@@ -245,8 +284,23 @@
         @endforeach
     </div>
 
-    <form method="GET" action="{{ route('validator.audit') }}" class="val-filter-grid mt-4">
+    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-2">
+        <span>
+            Menampilkan <strong>{{ $pagination['from'] }}&ndash;{{ $pagination['to'] }}</strong> dari
+            <strong>{{ number_format($pagination['total']) }}</strong> hasil terfilter
+            (paginasi server siap untuk ribuan data).
+        </span>
+        <div class="val-export-group">
+            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'kartu', 'page' => 1]))) }}"
+               class="val-chip {{ $filters['tampilan'] === 'kartu' ? 'is-active' : '' }}">Mode Kartu Audit</a>
+            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'tabel', 'page' => 1]))) }}"
+               class="val-chip {{ $filters['tampilan'] === 'tabel' ? 'is-active' : '' }}">Mode Tabel Laporan</a>
+        </div>
+    </div>
+
+    <form method="GET" action="{{ route('validator.audit') }}" class="val-filter-grid-ext mt-4">
         <input type="hidden" name="status" value="{{ $filters['status'] }}">
+        <input type="hidden" name="tampilan" value="{{ $filters['tampilan'] }}">
         <div>
             <label for="v-q" class="label text-xs">Cari nama / NIM</label>
             <input id="v-q" name="q" type="text" value="{{ $filters['q'] }}" placeholder="Ketik nama atau NIM..." class="input h-9 text-sm">
@@ -266,6 +320,25 @@
                 <option value="semua" @selected($filters['cakupan'] === 'semua')>Semua semester</option>
             </select>
         </div>
+        <div>
+            <label for="v-sort" class="label text-xs">Urutkan</label>
+            <select id="v-sort" name="sort" class="input h-9 text-xs">
+                <option value="prioritas" @selected($filters['sort'] === 'prioritas')>Prioritas audit</option>
+                <option value="delta" @selected($filters['sort'] === 'delta')>Selisih skor terbesar</option>
+                <option value="ai_score" @selected($filters['sort'] === 'ai_score')>Skor AI tertinggi</option>
+                <option value="rule_score" @selected($filters['sort'] === 'rule_score')>Skor Rumus tertinggi</option>
+                <option value="nama" @selected($filters['sort'] === 'nama')>Nama mahasiswa (A–Z)</option>
+                <option value="semester" @selected($filters['sort'] === 'semester')>Semester terbaru</option>
+            </select>
+        </div>
+        <div>
+            <label for="v-per-page" class="label text-xs">Per Halaman</label>
+            <select id="v-per-page" name="per_page" class="input h-9 text-xs">
+                @foreach ([10, 25, 50, 100] as $pp)
+                    <option value="{{ $pp }}" @selected($filters['per_page'] === $pp)>{{ $pp }} baris</option>
+                @endforeach
+            </select>
+        </div>
         <button type="submit" class="btn btn-primary btn-sm h-9 w-full">
             <x-icon name="magnifying-glass" /> Saring
         </button>
@@ -278,6 +351,79 @@
     </div>
 @endif
 
+{{-- MODE TABEL LAPORAN RINGKAS ATAU KARTU AUDIT --}}
+@if ($filters['tampilan'] === 'tabel')
+    <section class="val-card mt-6" aria-label="Tabel laporan perbandingan AI vs Rumus">
+        @if ($items->isEmpty())
+            <p class="text-center text-sm text-ink-2 py-6">Belum ada hasil analisis risiko yang cocok dengan filter ini.</p>
+        @else
+            <div class="val-scroll">
+                <table class="tbl val-tbl w-full text-xs" style="min-width: 64rem;">
+                    <thead>
+                        <tr>
+                            <th>Mahasiswa</th>
+                            <th class="num">Sem</th>
+                            <th>Sumber</th>
+                            <th>AI / Sistem</th>
+                            <th>Rumus</th>
+                            <th class="num">&Delta; Skor</th>
+                            <th class="num">IPS</th>
+                            <th class="num">Hadir</th>
+                            <th>Status Validasi</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($items as $item)
+                            @php
+                                $res = $item['result'];
+                                $stu = $item['student'];
+                                $val = $item['validation'];
+                            @endphp
+                            <tr>
+                                <td>
+                                    <p class="font-medium text-sm">{{ $stu?->name ?? 'Mahasiswa' }}</p>
+                                    <p class="mono text-ink-3">{{ $stu?->username ?? substr((string) $res->student_ref, 0, 10) }} &middot; {{ $stu?->program_studi ?: '-' }}</p>
+                                </td>
+                                <td class="num mono">{{ $res->semester }}</td>
+                                <td>{{ $item['source_label'] }}</td>
+                                <td style="white-space:nowrap;">
+                                    <x-risk :level="$item['ai_level']" />
+                                    <span class="mono ml-1 font-semibold">{{ number_format($item['ai_score'], 2) }}</span>
+                                </td>
+                                <td style="white-space:nowrap;">
+                                    <x-risk :level="$item['rule_level']" />
+                                    <span class="mono ml-1">{{ number_format($item['rule_score'], 2) }}</span>
+                                </td>
+                                <td class="num mono font-semibold" style="{{ $item['is_disagreement'] ? 'color:var(--bad);' : 'color:var(--ok);' }}">
+                                    {{ number_format($item['score_delta'], 2) }}
+                                </td>
+                                <td class="num mono">{{ $item['ips'] !== null ? number_format($item['ips'], 2) : '-' }}</td>
+                                <td class="num mono" style="{{ $item['attendance'] !== null && $item['attendance'] < 75 ? 'color:var(--bad);font-weight:600;' : '' }}">
+                                    {{ $item['attendance'] !== null ? number_format($item['attendance'], 1).'%' : '-' }}
+                                </td>
+                                <td>
+                                    @if ($val)
+                                        <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" style="background: color-mix(in srgb, {{ $val->verdict === 'sesuai' ? 'var(--ok)' : 'var(--warn)' }} 16%, transparent); color: {{ $val->verdict === 'sesuai' ? 'var(--ok)' : 'var(--warn)' }};">
+                                            {{ $val->verdictLabel() }}
+                                        </span>
+                                    @else
+                                        <span class="text-ink-3">Belum</span>
+                                    @endif
+                                </td>
+                                <td style="white-space:nowrap;">
+                                    <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'kartu', 'q' => $stu?->username ?? '', 'page' => 1]))) }}" class="btn btn-quiet btn-sm">
+                                        Audit &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
+@else
 {{-- DAFTAR KARTU PERBANDINGAN AI VS RUMUS MATEMATIS --}}
 <div class="mt-6 space-y-5">
     @forelse ($items as $item)
@@ -450,6 +596,40 @@
         </div>
     @endforelse
 </div>
+
+@endif
+
+{{-- PAGINASI SERVER-SIDE UNTUK RIBUAN DATA --}}
+@if ($pagination['total'] > 0)
+    @php
+        $cur = $pagination['page'];
+        $last = $pagination['last_page'];
+        $startPage = max(1, $cur - 2);
+        $endPage = min($last, $cur + 2);
+        $pageUrl = fn (int $p) => route('validator.audit', array_filter(array_merge($filters, ['page' => $p])));
+    @endphp
+    <nav class="val-pager" aria-label="Navigasi halaman audit">
+        <span class="text-ink-2">
+            Halaman <strong>{{ $cur }}</strong> dari <strong>{{ $last }}</strong>
+            &middot; {{ number_format($pagination['total']) }} hasil
+        </span>
+        <div class="val-pager-links">
+            <a href="{{ $pageUrl(max(1, $cur - 1)) }}" class="val-page-btn {{ $cur <= 1 ? 'is-disabled' : '' }}">&larr; Sebelumnya</a>
+            @if ($startPage > 1)
+                <a href="{{ $pageUrl(1) }}" class="val-page-btn">1</a>
+                @if ($startPage > 2)<span class="px-1 text-ink-3">&hellip;</span>@endif
+            @endif
+            @for ($p = $startPage; $p <= $endPage; $p++)
+                <a href="{{ $pageUrl($p) }}" class="val-page-btn {{ $p === $cur ? 'is-current' : '' }}">{{ $p }}</a>
+            @endfor
+            @if ($endPage < $last)
+                @if ($endPage < $last - 1)<span class="px-1 text-ink-3">&hellip;</span>@endif
+                <a href="{{ $pageUrl($last) }}" class="val-page-btn">{{ $last }}</a>
+            @endif
+            <a href="{{ $pageUrl(min($last, $cur + 1)) }}" class="val-page-btn {{ $cur >= $last ? 'is-disabled' : '' }}">Berikutnya &rarr;</a>
+        </div>
+    </nav>
+@endif
 
 <script>
 function toggleExpectedLevel(val, id) {
