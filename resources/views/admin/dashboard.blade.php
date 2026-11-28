@@ -123,35 +123,50 @@
     .adm-mobile-hint { display: none; }
 
     .adm-section-gap { margin-top: 1.5rem; }
-    .adm-panel-airy { padding: 1.55rem 1.75rem; }
-    .adm-wave-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
-    .adm-wave-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; }
-    .adm-wave-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; font-size: 12px; color: var(--ink-2); }
-    .adm-wave-wrap { position: relative; width: 100%; margin-top: 0.25rem; }
+    .adm-panel-airy { padding: 1.5rem 1.7rem; }
+    .adm-wave-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.9rem; margin-bottom: 1.15rem; }
+    .adm-wave-stats { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1.4rem; margin-bottom: 1rem; }
+    .adm-wave-stat-sep { padding-left: 1.4rem; border-left: 1px solid var(--line); }
+    .adm-wave-wrap { position: relative; width: 100%; }
+    .adm-wave-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
     .adm-wave-svg { width: 100%; height: auto; display: block; overflow: visible; }
     .adm-wave-dot { cursor: pointer; transition: stroke-width 0.15s ease; }
     .adm-wave-dot:hover { stroke-width: 3.5; }
     .adm-wave-tip {
         position: absolute; pointer-events: none; z-index: 25; display: none;
-        min-width: 185px; max-width: 240px; padding: 0.65rem 0.8rem; border-radius: 10px;
+        min-width: 175px; max-width: 230px; padding: 0.6rem 0.75rem; border-radius: 10px;
         background: var(--surface); border: 1px solid var(--line-strong);
-        box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.22);
-        font-size: 11.5px; line-height: 1.5; color: var(--ink);
+        box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.2);
+        font-size: 11.5px; line-height: 1.45; color: var(--ink);
     }
-    .adm-ready-grid { display: grid; gap: 1rem; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 1.15rem; }
-    .adm-fu-grid { display: grid; gap: 1rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 1.15rem; }
+    .adm-wave-mobile-bar {
+        display: none; margin-top: 0.65rem; padding: 0.55rem 0.75rem; border-radius: 9px;
+        border: 1px solid var(--line); background: var(--bg);
+        font-size: 12px; color: var(--ink-2); align-items: center; justify-content: space-between; gap: 0.5rem;
+    }
+    .adm-ready-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 1.1rem; }
+    .adm-fu-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 1.1rem; }
     .adm-ready-card {
-        padding: 0.95rem 1.05rem; border-radius: 12px; border: 1px solid var(--line);
-        background: var(--bg); display: flex; flex-direction: column; gap: 0.55rem;
+        padding: 0.9rem 1rem; border-radius: 11px; border: 1px solid var(--line);
+        background: var(--bg); display: flex; flex-direction: column; gap: 0.5rem; min-width: 0;
     }
-    .adm-ready-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+    .adm-ready-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
     @media (max-width: 960px) {
         .adm-analytics-grid { grid-template-columns: 1fr; }
-        .adm-panel-airy { padding: 1.25rem; }
-        .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .adm-fu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .adm-panel-airy { padding: 1.2rem; }
+        .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+        .adm-fu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 640px) {
+        .adm-panel-airy { padding: 1.05rem; }
+        .adm-wave-svg { min-width: 500px; }
+        .adm-wave-tip { display: none !important; }
+        .adm-wave-mobile-bar { display: flex; }
+        .adm-wave-stats { gap: 1rem; }
+        .adm-wave-stat-sep { padding-left: 1rem; }
+        .adm-ready-card { padding: 0.75rem 0.85rem; gap: 0.4rem; }
+    }
+    @media (max-width: 340px) {
         .adm-ready-grid, .adm-fu-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
@@ -468,24 +483,23 @@
     </div>
 </section>
 
-{{-- BLOK 2B: GRAFIK GELOMBANG DISTRIBUSI FULL-WIDTH (1 SUMBU, SKALABEL) --}}
+{{-- BLOK 2B: GRAFIK GELOMBANG DISTRIBUSI FULL-WIDTH (1 SUMBU, SKALABEL & MOBILE-SAFE) --}}
 @php
     $distWaves = $distributionWaves ?? [];
 
-    $buildDistSvg = function (array $series, int $w = 960, int $h = 250) {
+    $buildDistSvg = function (array $series, int $w = 780, int $h = 230) {
         $buckets = $series['buckets'] ?? [];
-        $padL = 44; $padR = 28; $padT = 30; $padB = 38;
-        $innerPadX = 36;
+        $padL = 40; $padR = 26; $padT = 32; $padB = 38;
+        $innerPadX = 44;
         $plotW = $w - $padL - $padR;
         $plotH = $h - $padT - $padB;
         $n = count($buckets);
 
         $counts = array_map(fn ($b) => (int) ($b['count'] ?? 0), $buckets);
         $maxVal = max(1, $counts !== [] ? max($counts) : 1);
-        // Bulatkan puncak sumbu Y ke kelipatan rapi agar lega
         $yMax = $maxVal <= 4 ? 4 : (int) (ceil($maxVal / 4) * 4);
         if ($yMax === $maxVal) {
-            $yMax += max(1, (int) ceil($maxVal * 0.2));
+            $yMax += max(1, (int) ceil($maxVal * 0.25));
         }
 
         $ticks = [];
@@ -497,9 +511,15 @@
 
         $coords = [];
         $usableW = max(1, $plotW - ($innerPadX * 2));
+        $peakIdx = 0;
+        $peakCount = -1;
         foreach ($buckets as $i => $b) {
             $x = $n > 1 ? round($padL + $innerPadX + ($i / ($n - 1)) * $usableW, 1) : round($padL + ($plotW / 2), 1);
             $cnt = (int) ($b['count'] ?? 0);
+            if ($cnt > $peakCount) {
+                $peakCount = $cnt;
+                $peakIdx = $i;
+            }
             $y = round($padT + (1.0 - ($cnt / $yMax)) * $plotH, 1);
             $coords[] = ['x' => $x, 'y' => $y, 'label' => $b['label'], 'count' => $cnt];
         }
@@ -520,7 +540,7 @@
 
         return [
             'w' => $w, 'h' => $h, 'padL' => $padL, 'padR' => $padR, 'padT' => $padT, 'padB' => $padB,
-            'plotW' => $plotW, 'plotH' => $plotH,
+            'plotW' => $plotW, 'plotH' => $plotH, 'peakIdx' => $peakIdx,
             'ticks' => $ticks, 'coords' => $coords, 'line' => $line, 'area' => $area,
         ];
     };
@@ -536,7 +556,7 @@
     <div class="adm-wave-head">
         <div>
             <h2 class="text-base font-semibold">Sebaran Akademik Mahasiswa</h2>
-            <p class="mt-0.5 text-xs text-ink-3">Jumlah mahasiswa pada tiap rentang nilai &middot; tetap rapi untuk data sedikit maupun banyak.</p>
+            <p class="mt-0.5 text-xs text-ink-3">Jumlah mahasiswa pada tiap rentang nilai.</p>
         </div>
 
         <div class="adm-tabs" role="tablist" aria-label="Pilih metrik sebaran">
@@ -554,55 +574,68 @@
             $svg = $buildDistSvg($series);
             $color = $series['color'];
             $totalN = max(0, (int) ($series['total'] ?? 0));
+            $peakPt = $svg['coords'][$svg['peakIdx']] ?? null;
+            $peakPct = ($peakPt && $totalN > 0) ? round(($peakPt['count'] / $totalN) * 100, 1) : 0;
         @endphp
         <div data-wave-panel="{{ $tabKey }}" style="{{ $tabKey === 'ips' ? '' : 'display:none;' }}">
             @if ($totalN === 0)
                 <p class="mt-6 text-sm text-ink-2">Belum ada data mahasiswa yang dianalisis.</p>
             @else
-                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:1.5rem;margin-bottom:0.85rem;">
+                <div class="adm-wave-stats">
                     <div>
                         <span class="text-xs text-ink-3">{{ $tabMeta['sub'] }}</span>
                         <div class="mono text-xl font-semibold text-ink" style="margin-top:2px;">{{ $series['avg'] }}</div>
                     </div>
-                    <div style="padding-left:1.5rem;border-left:1px solid var(--line);">
+                    <div class="adm-wave-stat-sep">
                         <span class="text-xs text-ink-3">Ringkasan</span>
                         <div class="text-sm font-medium" style="color:{{ $color }};margin-top:3px;">{{ $series['highlight'] }}</div>
                     </div>
                 </div>
 
                 <div class="adm-wave-wrap" id="adm-wave-box-{{ $tabKey }}">
-                    <svg class="adm-wave-svg" viewBox="0 0 {{ $svg['w'] }} {{ $svg['h'] }}" role="img" aria-label="Grafik sebaran {{ $tabMeta['title'] }} mahasiswa">
-                        <defs>
-                            <linearGradient id="distGrad_{{ $tabKey }}" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stop-color="{{ $color }}" stop-opacity="0.24" />
-                                <stop offset="100%" stop-color="{{ $color }}" stop-opacity="0.01" />
-                            </linearGradient>
-                        </defs>
+                    <div class="adm-wave-scroll">
+                        <svg class="adm-wave-svg" viewBox="0 0 {{ $svg['w'] }} {{ $svg['h'] }}" role="img" aria-label="Grafik sebaran {{ $tabMeta['title'] }} mahasiswa">
+                            <defs>
+                                <linearGradient id="distGrad_{{ $tabKey }}" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="{{ $color }}" stop-opacity="0.24" />
+                                    <stop offset="100%" stop-color="{{ $color }}" stop-opacity="0.01" />
+                                </linearGradient>
+                            </defs>
 
-                        {{-- Grid horizontal sederhana (sumbu Y = jumlah mahasiswa) --}}
-                        @foreach ($svg['ticks'] as $tk)
-                            <line x1="{{ $svg['padL'] }}" y1="{{ $tk['y'] }}" x2="{{ $svg['padL'] + $svg['plotW'] }}" y2="{{ $tk['y'] }}"
-                                  stroke="var(--line)" stroke-width="0.9" stroke-dasharray="3 4" />
-                            <text x="{{ $svg['padL'] - 10 }}" y="{{ $tk['y'] + 3.5 }}" text-anchor="end" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $tk['val'] }}</text>
-                        @endforeach
+                            {{-- Grid horizontal sederhana (sumbu Y = jumlah mahasiswa) --}}
+                            @foreach ($svg['ticks'] as $tk)
+                                <line x1="{{ $svg['padL'] }}" y1="{{ $tk['y'] }}" x2="{{ $svg['padL'] + $svg['plotW'] }}" y2="{{ $tk['y'] }}"
+                                      stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4" />
+                                <text x="{{ $svg['padL'] - 10 }}" y="{{ $tk['y'] + 4 }}" text-anchor="end" font-size="12" fill="var(--ink-3)" class="mono">{{ $tk['val'] }}</text>
+                            @endforeach
 
-                        {{-- Area & kurva gelombang tunggal --}}
-                        <path d="{{ $svg['area'] }}" fill="url(#distGrad_{{ $tabKey }})" />
-                        <path d="{{ $svg['line'] }}" fill="none" stroke="{{ $color }}" stroke-width="2.8" stroke-linecap="round" />
+                            {{-- Area & kurva gelombang tunggal --}}
+                            <path d="{{ $svg['area'] }}" fill="url(#distGrad_{{ $tabKey }})" />
+                            <path d="{{ $svg['line'] }}" fill="none" stroke="{{ $color }}" stroke-width="3" stroke-linecap="round" />
 
-                        {{-- Titik data, angka langsung di atas titik, dan label rentang di bawah --}}
-                        @foreach ($svg['coords'] as $cIdx => $pt)
-                            @php $pct = $totalN > 0 ? round(($pt['count'] / $totalN) * 100, 1) : 0; @endphp
-                            <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 11 }}" text-anchor="middle" font-size="11" font-weight="600"
-                                  fill="{{ $pt['count'] > 0 ? 'var(--ink)' : 'var(--ink-3)' }}" class="mono">{{ $pt['count'] }}</text>
-                            <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="5" fill="{{ $color }}" stroke="var(--surface)" stroke-width="2.2" class="adm-wave-dot"
-                                    onmouseenter="dashShowDistTip(event, '{{ $tabKey }}', @js($pt['label']), {{ $pt['count'] }}, {{ $pct }})"
-                                    onmousemove="dashShowDistTip(event, '{{ $tabKey }}', @js($pt['label']), {{ $pt['count'] }}, {{ $pct }})"
-                                    onmouseleave="dashHideDistTip('{{ $tabKey }}')" />
-                            <text x="{{ $pt['x'] }}" y="{{ $svg['padT'] + $svg['plotH'] + 24 }}" text-anchor="middle" font-size="11" fill="var(--ink-2)">{{ $pt['label'] }}</text>
-                        @endforeach
-                    </svg>
+                            {{-- Titik data, angka langsung di atas titik, dan label rentang di bawah --}}
+                            @foreach ($svg['coords'] as $cIdx => $pt)
+                                @php $pct = $totalN > 0 ? round(($pt['count'] / $totalN) * 100, 1) : 0; @endphp
+                                <text x="{{ $pt['x'] }}" y="{{ $pt['y'] - 12 }}" text-anchor="middle" font-size="13" font-weight="600"
+                                      fill="{{ $pt['count'] > 0 ? 'var(--ink)' : 'var(--ink-3)' }}" class="mono">{{ $pt['count'] }}</text>
+                                <circle cx="{{ $pt['x'] }}" cy="{{ $pt['y'] }}" r="6" fill="{{ $color }}" stroke="var(--surface)" stroke-width="2.4" class="adm-wave-dot"
+                                        onmouseenter="dashShowDistTip(event, '{{ $tabKey }}', @js($pt['label']), {{ $pt['count'] }}, {{ $pct }})"
+                                        onmousemove="dashShowDistTip(event, '{{ $tabKey }}', @js($pt['label']), {{ $pt['count'] }}, {{ $pct }})"
+                                        onclick="dashShowDistTip(event, '{{ $tabKey }}', @js($pt['label']), {{ $pt['count'] }}, {{ $pct }})"
+                                        onmouseleave="dashHideDistTip('{{ $tabKey }}')" />
+                                <text x="{{ $pt['x'] }}" y="{{ $svg['padT'] + $svg['plotH'] + 26 }}" text-anchor="middle" font-size="12.5" fill="var(--ink-2)">{{ $pt['label'] }}</text>
+                            @endforeach
+                        </svg>
+                    </div>
                     <div id="adm-wave-tip-{{ $tabKey }}" class="adm-wave-tip" role="status" aria-live="polite"></div>
+
+                    {{-- Info bar khusus mobile di bawah grafik agar tidak menimpa kurva --}}
+                    @if ($peakPt)
+                        <div id="adm-wave-bar-{{ $tabKey }}" class="adm-wave-mobile-bar">
+                            <span>Rentang <strong class="text-ink">{{ $peakPt['label'] }}</strong></span>
+                            <span class="mono font-semibold text-ink">{{ $peakPt['count'] }} mhs ({{ $peakPct }}%)</span>
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
@@ -1109,6 +1142,13 @@ function dashSwitchWaveTab(tab) {
 function dashShowDistTip(evt, key, label, count, pct) {
     const box = document.getElementById('adm-wave-box-' + key);
     const tip = document.getElementById('adm-wave-tip-' + key);
+    const bar = document.getElementById('adm-wave-bar-' + key);
+
+    if (bar) {
+        bar.innerHTML =
+            '<span>Rentang <strong class="text-ink">' + dashEscHtml(label) + '</strong></span>' +
+            '<span class="mono font-semibold text-ink">' + count + ' mhs (' + pct + '%)</span>';
+    }
     if (!box || !tip) return;
 
     tip.innerHTML =
@@ -1120,9 +1160,10 @@ function dashShowDistTip(evt, key, label, count, pct) {
     const rect = box.getBoundingClientRect();
     let x = evt.clientX - rect.left + 14;
     let y = evt.clientY - rect.top - tip.offsetHeight - 10;
-    if (x + tip.offsetWidth > rect.width - 4) x = evt.clientX - rect.left - tip.offsetWidth - 14;
-    if (x < 4) x = 4;
-    if (y < 4) y = evt.clientY - rect.top + 14;
+    if (x + tip.offsetWidth > rect.width - 6) x = evt.clientX - rect.left - tip.offsetWidth - 14;
+    if (x < 6) x = 6;
+    if (y < 4) y = Math.min(rect.height - tip.offsetHeight - 4, evt.clientY - rect.top + 14);
+    if (y < 4) y = 4;
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
 }
