@@ -129,20 +129,47 @@
             box-shadow: none;
         }
 
-        /* Backdrop Mobile Sidebar */
+        /* Backdrop & Drawer Mobile Sidebar (Anti-gap Android/iOS) */
         .app-nav-backdrop {
             position: fixed;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            height: 100lvh;
+            min-height: 100dvh;
             z-index: 35;
             background: rgba(2, 6, 23, 0.56);
             backdrop-filter: blur(2px);
             opacity: 0;
             pointer-events: none;
             transition: opacity 180ms ease;
+            overscroll-behavior: contain;
         }
         .app-nav-backdrop.is-open {
             opacity: 1;
             pointer-events: auto;
+        }
+        #sidebar.sidebar {
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        }
+        @media (max-width: 1023px) {
+            html.nav-drawer-open,
+            body.nav-drawer-open {
+                overflow: hidden !important;
+                overscroll-behavior: none;
+            }
+            #sidebar.sidebar {
+                height: 100lvh;
+                min-height: 100dvh;
+                max-height: none;
+                padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+            }
         }
         @media (min-width: 1024px) {
             .app-nav-backdrop { display: none !important; }

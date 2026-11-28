@@ -155,6 +155,8 @@
             function syncBackdrop() {
                 var open = toggle.getAttribute('aria-expanded') === 'true' || sidebar.classList.contains('is-open');
                 backdrop.classList.toggle('is-open', open);
+                document.documentElement.classList.toggle('nav-drawer-open', open);
+                document.body.classList.toggle('nav-drawer-open', open);
             }
 
             toggle.addEventListener('click', function () {
