@@ -123,8 +123,8 @@
     .adm-wave-stats { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1.4rem; margin-bottom: 1rem; }
     .adm-wave-stat-sep { padding-left: 1.4rem; border-left: 1px solid var(--line); }
     .adm-wave-wrap { position: relative; width: 100%; }
-    .adm-wave-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
-    .adm-wave-svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .adm-wave-scroll { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
+    .adm-wave-svg { width: 100%; height: auto; display: block; overflow: hidden; }
     .adm-wave-dot { cursor: pointer; transition: stroke-width 0.15s ease; }
     .adm-wave-dot:hover { stroke-width: 3.5; }
     .adm-wave-tip {
@@ -252,7 +252,7 @@
                 <h2 class="text-base font-semibold">Proporsi Risiko Keseluruhan</h2>
                 <p class="mt-0.5 text-xs text-ink-3">Arahkan kursor atau klik segmen untuk menyaring daftar.</p>
             </div>
-            <span class="mono text-xs text-ink-3">n = {{ $totalMhs }}</span>
+            <span class="mono text-xs text-ink-3" style="white-space:nowrap;flex-shrink:0;">n = {{ $totalMhs }}</span>
         </div>
 
         <div class="adm-donut-wrap">

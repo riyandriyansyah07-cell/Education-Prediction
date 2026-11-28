@@ -60,6 +60,8 @@
         html {
             scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
+            max-width: 100%;
+            overflow-x: clip;
         }
 
         body {
@@ -67,7 +69,13 @@
             color: var(--ink);
             line-height: 1.55;
             -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
+            max-width: 100%;
+            overflow-x: clip;
+        }
+
+        main {
+            max-width: 100%;
+            overflow-x: clip;
         }
 
         /* Tipografi & Ritme Editorial */
