@@ -123,6 +123,7 @@ class DashboardController extends Controller
 
         // Ambil hasil risiko semester terbaru untuk setiap mahasiswa
         $latestRisks = collect();
+        $allRisks = collect();
         if ($studentRefs !== []) {
             $allRisks = RiskResult::whereIn('student_ref', $studentRefs)
                 ->orderBy('semester')
@@ -494,6 +495,37 @@ class DashboardController extends Controller
             ];
         }
 
+        // Tren per semester (untuk tab grafik gelombang Per Semester)
+        $semesterTrend = $allRisks
+            ->groupBy('semester')
+            ->sortKeys()
+            ->map(function (Collection $group, $sem) {
+                $ipsVals = [];
+                $attVals = [];
+                $scores = [];
+                foreach ($group as $r) {
+                    $f = is_array($r->features) ? $r->features : [];
+                    if (isset($f['ips'])) {
+                        $ipsVals[] = max(0.0, min(4.0, (float) $f['ips']));
+                    }
+                    if (isset($f['attendance'])) {
+                        $attVals[] = max(0.0, min(100.0, (float) $f['attendance']));
+                    }
+                    $scores[] = (float) $r->score;
+                }
+
+                return [
+                    'label' => 'Sem '.$sem,
+                    'semester' => (int) $sem,
+                    'count' => $group->count(),
+                    'ips' => $ipsVals !== [] ? round(array_sum($ipsVals) / count($ipsVals), 2) : 0.0,
+                    'attendance' => $attVals !== [] ? round(array_sum($attVals) / count($attVals), 1) : 0.0,
+                    'avg_score' => $scores !== [] ? round(array_sum($scores) / count($scores), 2) : 0.0,
+                ];
+            })
+            ->values()
+            ->all();
+
         return [
             'totals' => [
                 'students' => $totalStudents,
@@ -523,6 +555,7 @@ class DashboardController extends Controller
             'graduationReadiness' => $graduationReadiness,
             'pendingSkpiProofs' => $pendingSkpiProofs,
             'followUpStats' => $followUpStats,
+            'semesterTrend' => $semesterTrend,
             'filters' => [
                 'q' => $q,
                 'prodi' => $prodiFilter,

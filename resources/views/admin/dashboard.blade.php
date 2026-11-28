@@ -122,32 +122,31 @@
     .adm-detail-row.is-open { display: table-row; }
     .adm-mobile-hint { display: none; }
 
-    .adm-analytics-grid-2 { display: grid; gap: 1.25rem; grid-template-columns: minmax(320px, 1.2fr) minmax(300px, 1fr); align-items: stretch; }
-    .adm-panel-flex { display: flex; flex-direction: column; justify-content: space-between; }
-    .adm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-    .adm-scatter-box { position: relative; width: 100%; margin-top: 0.85rem; }
-    .adm-scatter-svg { width: 100%; height: auto; display: block; overflow: visible; }
-    .adm-scatter-dot { cursor: pointer; transition: stroke-width 0.15s ease, opacity 0.15s ease; }
-    .adm-scatter-dot:hover { stroke-width: 3; opacity: 1; }
-    .adm-scatter-tip {
-        position: absolute; pointer-events: none; z-index: 20; display: none;
-        min-width: 170px; max-width: 225px; padding: 0.55rem 0.7rem; border-radius: 10px;
+    .adm-wave-wrap { position: relative; width: 100%; margin-top: 0.9rem; }
+    .adm-wave-svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .adm-wave-dot { cursor: pointer; transition: r 0.15s ease, stroke-width 0.15s ease; }
+    .adm-wave-dot:hover { stroke-width: 3.5; }
+    .adm-wave-tip {
+        position: absolute; pointer-events: none; z-index: 25; display: none;
+        min-width: 175px; max-width: 235px; padding: 0.6rem 0.75rem; border-radius: 10px;
         background: var(--surface); border: 1px solid var(--line-strong);
         box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.22);
         font-size: 11px; line-height: 1.45; color: var(--ink);
     }
-    .adm-quad-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; margin-top: 0.85rem; }
-    .adm-quad-pill {
-        display: flex; align-items: center; justify-content: space-between; gap: 0.35rem;
-        padding: 0.42rem 0.6rem; border-radius: 9px; border: 1px solid var(--line);
-        background: var(--bg); font-size: 11px; color: var(--ink-2); white-space: nowrap;
+    .adm-wave-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .adm-wave-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; font-size: 11.5px; color: var(--ink-2); }
+    .adm-ready-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 1rem; }
+    .adm-ready-card {
+        padding: 0.75rem 0.85rem; border-radius: 10px; border: 1px solid var(--line);
+        background: var(--bg); display: flex; flex-direction: column; gap: 0.45rem;
     }
-    .adm-grad-list { display: flex; flex-direction: column; gap: 0.95rem; margin-top: 1.1rem; }
-    .adm-grad-row { display: flex; flex-direction: column; gap: 0.35rem; }
-    .adm-grad-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 12.5px; }
-    .adm-grad-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; margin-top: 1.1rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 11px; color: var(--ink-3); }
-    @media (max-width: 640px) {
-        .adm-quad-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adm-fu-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 1rem; }
+    @media (max-width: 960px) {
+        .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .adm-fu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 480px) {
+        .adm-ready-grid, .adm-fu-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 960px) {
@@ -468,189 +467,272 @@
     </div>
 </section>
 
-{{-- BLOK 2B: PETA KUADRAN AKADEMIK (KEHADIRAN vs IPS) & KESIAPAN KELULUSAN --}}
+{{-- BLOK 2B: GRAFIK GELOMBANG FULL-WIDTH (IPS & KEHADIRAN) + KESIAPAN KELULUSAN --}}
 @php
     $spPoints = $scatterPoints ?? [];
-    $qCounts = $quadrantCounts ?? ['stabil' => 0, 'dorong_nilai' => 0, 'rawan_absen' => 0, 'prioritas' => 0];
+    $semPoints = $semesterTrend ?? [];
     $gradList = $graduationReadiness ?? [];
     $pendingProofs = (int) ($pendingSkpiProofs ?? 0);
     $fuList = $followUpStats ?? [];
 
-    // Koordinat SVG Scatter Plot: viewBox 0 0 460 232
-    $svW = 460; $svH = 232;
-    $padL = 36; $padR = 14; $padT = 18; $padB = 26;
-    $plotW = $svW - $padL - $padR;
-    $plotH = $svH - $padT - $padB;
-    $x75 = round($padL + (0.75 * $plotW), 1);
-    $y30 = round($padT + ((1 - (3.0 / 4.0)) * $plotH), 1);
+    // Helper untuk membuat kurva gelombang halus (smooth cubic Bezier) tanpa overshoot
+    $buildWave = function (array $items, int $w = 920, int $h = 250) {
+        $padL = 42; $padR = 44; $padT = 22; $padB = 34;
+        $plotW = $w - $padL - $padR;
+        $plotH = $h - $padT - $padB;
+        $n = count($items);
+        $ipsCoords = [];
+        $attCoords = [];
+
+        foreach ($items as $i => $it) {
+            $x = $n > 1 ? round($padL + ($i / ($n - 1)) * $plotW, 1) : round($padL + ($plotW / 2), 1);
+            $yIps = round($padT + (1 - (max(0, min(4, (float) $it['ips'])) / 4.0)) * $plotH, 1);
+            $yAtt = round($padT + (1 - (max(0, min(100, (float) $it['attendance'])) / 100.0)) * $plotH, 1);
+            $ipsCoords[] = ['x' => $x, 'y' => $yIps];
+            $attCoords[] = ['x' => $x, 'y' => $yAtt];
+        }
+
+        $makePath = function (array $pts) use ($padT, $plotH) {
+            if ($pts === []) {
+                return ['line' => '', 'area' => ''];
+            }
+            $line = 'M '.$pts[0]['x'].' '.$pts[0]['y'];
+            $cnt = count($pts);
+            for ($i = 0; $i < $cnt - 1; $i++) {
+                $p1 = $pts[$i];
+                $p2 = $pts[$i + 1];
+                $midX = round(($p1['x'] + $p2['x']) / 2, 1);
+                $line .= ' C '.$midX.' '.$p1['y'].', '.$midX.' '.$p2['y'].', '.$p2['x'].' '.$p2['y'];
+            }
+            $bottomY = $padT + $plotH;
+            $area = $line.' L '.$pts[$cnt - 1]['x'].' '.$bottomY.' L '.$pts[0]['x'].' '.$bottomY.' Z';
+
+            return ['line' => $line, 'area' => $area];
+        };
+
+        return [
+            'w' => $w, 'h' => $h, 'padL' => $padL, 'padR' => $padR, 'padT' => $padT, 'padB' => $padB,
+            'plotW' => $plotW, 'plotH' => $plotH,
+            'ipsCoords' => $ipsCoords,
+            'attCoords' => $attCoords,
+            'ipsPath' => $makePath($ipsCoords),
+            'attPath' => $makePath($attCoords),
+        ];
+    };
+
+    $mhsWave = $buildWave($spPoints);
+    $semWave = $buildWave($semPoints);
 @endphp
 
-<section class="adm-analytics-grid-2 mt-6" aria-label="Peta kuadran akademik dan kesiapan kelulusan">
-    {{-- Kiri: Scatter Plot Kehadiran vs IPS --}}
-    <div class="adm-panel adm-panel-flex">
+<section class="adm-panel mt-6" aria-label="Grafik gelombang IPS dan kehadiran">
+    <div class="adm-wave-head">
         <div>
-            <div class="adm-card-head">
-                <h2 class="text-base font-semibold">Kehadiran vs IPS</h2>
-                <span class="mono text-xs text-ink-3" style="white-space:nowrap;">n = {{ count($spPoints) }}</span>
-            </div>
-            <p class="mt-0.5 text-xs text-ink-3">Batas 75% hadir &amp; IPS 3,00 &middot; klik titik untuk filter.</p>
-
-            @if (count($spPoints) === 0)
-                <p class="mt-6 text-sm text-ink-2">Belum ada data IPS dan kehadiran untuk dipetakan.</p>
-            @else
-                <div class="adm-scatter-box" id="adm-scatter-box">
-                    <svg class="adm-scatter-svg" viewBox="0 0 {{ $svW }} {{ $svH }}" role="img" aria-label="Grafik sebaran kehadiran terhadap IPS mahasiswa">
-                        {{-- Zona prioritas (kiri bawah) & zona stabil (kanan atas) --}}
-                        <rect x="{{ $padL }}" y="{{ $y30 }}" width="{{ $x75 - $padL }}" height="{{ ($padT + $plotH) - $y30 }}" fill="var(--bad)" fill-opacity="0.055" rx="3" />
-                        <rect x="{{ $x75 }}" y="{{ $padT }}" width="{{ ($padL + $plotW) - $x75 }}" height="{{ $y30 - $padT }}" fill="var(--ok)" fill-opacity="0.07" rx="3" />
-
-                        {{-- Label sumbu Y ringkas di atas --}}
-                        <text x="{{ $padL - 8 }}" y="10" text-anchor="end" font-size="9.5" fill="var(--ink-3)" font-weight="600">IPS</text>
-
-                        {{-- Grid horizontal (IPS 0, 1, 2, 3, 4) --}}
-                        @foreach ([0, 1, 2, 3, 4] as $ipsTick)
-                            @php $gy = round($padT + ((1 - ($ipsTick / 4.0)) * $plotH), 1); @endphp
-                            <line x1="{{ $padL }}" y1="{{ $gy }}" x2="{{ $padL + $plotW }}" y2="{{ $gy }}"
-                                  stroke="{{ $ipsTick === 3 ? 'var(--accent)' : 'var(--line)' }}"
-                                  stroke-width="{{ $ipsTick === 3 ? '1.15' : '0.9' }}"
-                                  stroke-dasharray="{{ $ipsTick === 3 ? '4 3' : '' }}"
-                                  stroke-opacity="{{ $ipsTick === 3 ? '0.65' : '0.75' }}" />
-                            <text x="{{ $padL - 8 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="{{ $ipsTick === 3 ? 'var(--accent)' : 'var(--ink-3)' }}" class="mono">{{ number_format($ipsTick, 1) }}</text>
-                        @endforeach
-
-                        {{-- Grid vertikal (Kehadiran 0%, 25%, 50%, 75%, 100%) --}}
-                        @foreach ([0, 25, 50, 75, 100] as $attTick)
-                            @php $gx = round($padL + (($attTick / 100.0) * $plotW), 1); @endphp
-                            <line x1="{{ $gx }}" y1="{{ $padT }}" x2="{{ $gx }}" y2="{{ $padT + $plotH }}"
-                                  stroke="{{ $attTick === 75 ? 'var(--bad)' : 'var(--line)' }}"
-                                  stroke-width="{{ $attTick === 75 ? '1.15' : '0.9' }}"
-                                  stroke-dasharray="{{ $attTick === 75 ? '4 3' : '' }}"
-                                  stroke-opacity="{{ $attTick === 75 ? '0.65' : '0.65' }}" />
-                            <text x="{{ $gx }}" y="{{ $padT + $plotH + 16 }}" text-anchor="middle" font-size="10" fill="{{ $attTick === 75 ? 'var(--bad)' : 'var(--ink-3)' }}" class="mono">{{ $attTick }}%</text>
-                        @endforeach
-
-                        {{-- Titik data mahasiswa --}}
-                        @foreach ($spPoints as $sIdx => $pt)
-                            @php
-                                $cx = round($padL + (($pt['attendance'] / 100.0) * $plotW), 1);
-                                $cy = round($padT + ((1 - ($pt['ips'] / 4.0)) * $plotH), 1);
-                                $dotColor = match ($pt['level']) {
-                                    'tinggi' => 'var(--bad)',
-                                    'sedang' => 'var(--warn)',
-                                    default => 'var(--ok)',
-                                };
-                            @endphp
-                            <circle cx="{{ $cx }}" cy="{{ $cy }}" r="5.5"
-                                    fill="{{ $dotColor }}" fill-opacity="0.88"
-                                    stroke="var(--surface)" stroke-width="1.8"
-                                    class="adm-scatter-dot"
-                                    onmouseenter="dashShowScatterTip(event, {{ $sIdx }})"
-                                    onmousemove="dashShowScatterTip(event, {{ $sIdx }})"
-                                    onmouseleave="dashHideScatterTip()"
-                                    onclick="dashFilterBySearch(@js($pt['nim']))" />
-                        @endforeach
-                    </svg>
-
-                    <div id="adm-scatter-tip" class="adm-scatter-tip" role="status" aria-live="polite"></div>
-                </div>
-            @endif
+            <h2 class="text-base font-semibold">Gelombang IPS &amp; Kehadiran</h2>
+            <p class="mt-0.5 text-xs text-ink-3">Arahkan kursor untuk detail &middot; klik titik mahasiswa untuk filter tabel.</p>
         </div>
 
-        @if (count($spPoints) > 0)
-            <div class="adm-quad-grid">
-                <div class="adm-quad-pill" title="Kehadiran minimal 75% dan IPS minimal 3,00">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--ok);margin-right:5px;"></span>Stabil</span>
-                    <strong class="mono text-ink">{{ $qCounts['stabil'] }}</strong>
-                </div>
-                <div class="adm-quad-pill" title="Kehadiran minimal 75%, IPS di bawah 3,00">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--accent);margin-right:5px;"></span>Nilai</span>
-                    <strong class="mono text-ink">{{ $qCounts['dorong_nilai'] }}</strong>
-                </div>
-                <div class="adm-quad-pill" title="Kehadiran di bawah 75%, IPS minimal 3,00">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--warn);margin-right:5px;"></span>Absen</span>
-                    <strong class="mono text-ink">{{ $qCounts['rawan_absen'] }}</strong>
-                </div>
-                <div class="adm-quad-pill" title="Kehadiran di bawah 75% dan IPS di bawah 3,00">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--bad);margin-right:5px;"></span>Prioritas</span>
-                    <strong class="mono text-ink">{{ $qCounts['prioritas'] }}</strong>
-                </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="adm-wave-legend">
+                <span><span style="display:inline-block;width:10px;height:3px;border-radius:99px;background:var(--ok);vertical-align:middle;margin-right:6px;"></span>IPS (0&ndash;4)</span>
+                <span><span style="display:inline-block;width:10px;height:3px;border-radius:99px;background:var(--accent);vertical-align:middle;margin-right:6px;"></span>Kehadiran (%)</span>
+            </div>
+            <div class="adm-tabs" role="tablist" aria-label="Mode grafik gelombang">
+                <button type="button" class="adm-tab is-active" data-wave-tab="mhs" onclick="dashSwitchWaveTab('mhs')">Per Mahasiswa</button>
+                <button type="button" class="adm-tab" data-wave-tab="sem" onclick="dashSwitchWaveTab('sem')">Per Semester</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Tab 1: Gelombang Per Mahasiswa --}}
+    <div data-wave-panel="mhs">
+        @if (count($spPoints) === 0)
+            <p class="mt-6 text-sm text-ink-2">Belum ada data IPS dan kehadiran untuk ditampilkan.</p>
+        @else
+            <div class="adm-wave-wrap" id="adm-wave-box-mhs">
+                <svg class="adm-wave-svg" viewBox="0 0 {{ $mhsWave['w'] }} {{ $mhsWave['h'] }}" role="img" aria-label="Grafik gelombang IPS dan kehadiran per mahasiswa">
+                    <defs>
+                        <linearGradient id="waveGradIpsMhs" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.22" />
+                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.01" />
+                        </linearGradient>
+                        <linearGradient id="waveGradAttMhs" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.16" />
+                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.01" />
+                        </linearGradient>
+                    </defs>
+
+                    {{-- Grid horizontal & label sumbu kiri (IPS) + kanan (Kehadiran %) --}}
+                    @foreach ([0, 1, 2, 3, 4] as $t)
+                        @php
+                            $gy = round($mhsWave['padT'] + (1 - ($t / 4.0)) * $mhsWave['plotH'], 1);
+                            $attLbl = $t * 25;
+                        @endphp
+                        <line x1="{{ $mhsWave['padL'] }}" y1="{{ $gy }}" x2="{{ $mhsWave['padL'] + $mhsWave['plotW'] }}" y2="{{ $gy }}"
+                              stroke="{{ $t === 3 ? 'var(--line-strong)' : 'var(--line)' }}"
+                              stroke-width="{{ $t === 3 ? '1' : '0.85' }}"
+                              stroke-dasharray="{{ $t === 3 ? '4 4' : '' }}" />
+                        <text x="{{ $mhsWave['padL'] - 9 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="var(--ok)" class="mono">{{ number_format($t, 1) }}</text>
+                        <text x="{{ $mhsWave['padL'] + $mhsWave['plotW'] + 9 }}" y="{{ $gy + 3.5 }}" text-anchor="start" font-size="10" fill="var(--accent)" class="mono">{{ $attLbl }}%</text>
+                    @endforeach
+
+                    {{-- Area & garis gelombang Kehadiran --}}
+                    <path d="{{ $mhsWave['attPath']['area'] }}" fill="url(#waveGradAttMhs)" />
+                    <path d="{{ $mhsWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" />
+
+                    {{-- Area & garis gelombang IPS --}}
+                    <path d="{{ $mhsWave['ipsPath']['area'] }}" fill="url(#waveGradIpsMhs)" />
+                    <path d="{{ $mhsWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" />
+
+                    {{-- Garis panduan vertikal saat hover --}}
+                    <line id="wave-guide-mhs" x1="0" y1="{{ $mhsWave['padT'] }}" x2="0" y2="{{ $mhsWave['padT'] + $mhsWave['plotH'] }}"
+                          stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 3" style="display:none;" />
+
+                    {{-- Titik data & label sumbu X --}}
+                    @php $stepMhs = max(1, (int) ceil(count($spPoints) / 10)); @endphp
+                    @foreach ($spPoints as $idx => $pt)
+                        @php
+                            $ic = $mhsWave['ipsCoords'][$idx];
+                            $ac = $mhsWave['attCoords'][$idx];
+                            $shortName = explode(' ', trim($pt['name']))[0];
+                            $shortName = mb_strlen($shortName) > 9 ? mb_substr($shortName, 0, 8).'…' : $shortName;
+                        @endphp
+                        @if ($idx % $stepMhs === 0 || $idx === count($spPoints) - 1)
+                            <text x="{{ $ic['x'] }}" y="{{ $mhsWave['padT'] + $mhsWave['plotH'] + 18 }}" text-anchor="middle" font-size="10" fill="var(--ink-3)">{{ $shortName }}</text>
+                        @endif
+                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                                onmouseenter="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ac['x'] }})"
+                                onmousemove="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ac['x'] }})"
+                                onmouseleave="dashHideWaveTip('mhs')"
+                                onclick="dashFilterBySearch(@js($pt['nim']))" />
+                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="4.5" fill="var(--ok)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                                onmouseenter="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ic['x'] }})"
+                                onmousemove="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ic['x'] }})"
+                                onmouseleave="dashHideWaveTip('mhs')"
+                                onclick="dashFilterBySearch(@js($pt['nim']))" />
+                    @endforeach
+                </svg>
+                <div id="adm-wave-tip-mhs" class="adm-wave-tip" role="status" aria-live="polite"></div>
             </div>
         @endif
     </div>
 
-    {{-- Kanan: Kesiapan Kelulusan & Tindak Lanjut DPA --}}
-    <div class="adm-panel adm-panel-flex">
-        <div>
-            <div class="adm-card-head" style="flex-wrap:wrap;">
-                <div>
-                    <h2 class="text-base font-semibold">Kesiapan Kelulusan</h2>
-                    <p class="mt-0.5 text-xs text-ink-3">Syarat wajib FTII &amp; progres DPA.</p>
-                </div>
-                <div class="adm-tabs" role="tablist" aria-label="Pilih tampilan kesiapan">
-                    <button type="button" class="adm-tab is-active" data-ready-tab="kelulusan" onclick="dashSwitchReadyTab('kelulusan')">SKPI</button>
-                    <button type="button" class="adm-tab" data-ready-tab="tindaklanjut" onclick="dashSwitchReadyTab('tindaklanjut')">Tindak Lanjut</button>
-                </div>
-            </div>
+    {{-- Tab 2: Gelombang Per Semester --}}
+    <div data-wave-panel="sem" style="display:none;">
+        @if (count($semPoints) === 0)
+            <p class="mt-6 text-sm text-ink-2">Belum ada data tren semester.</p>
+        @else
+            <div class="adm-wave-wrap" id="adm-wave-box-sem">
+                <svg class="adm-wave-svg" viewBox="0 0 {{ $semWave['w'] }} {{ $semWave['h'] }}" role="img" aria-label="Grafik gelombang rata-rata IPS dan kehadiran per semester">
+                    <defs>
+                        <linearGradient id="waveGradIpsSem" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.22" />
+                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.01" />
+                        </linearGradient>
+                        <linearGradient id="waveGradAttSem" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.16" />
+                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.01" />
+                        </linearGradient>
+                    </defs>
 
-            {{-- Tab A: SKPI & 20 SKS Pengayaan --}}
-            <div data-ready-panel="kelulusan">
-                <div class="adm-grad-list">
-                    @foreach ($gradList as $g)
-                        <div class="adm-grad-row" title="{{ $g['hint'] }}">
-                            <div class="adm-grad-head">
-                                <span class="font-medium text-ink">{{ $g['label'] }}</span>
-                                <span class="mono text-xs text-ink-2" style="white-space:nowrap;">
-                                    <strong style="color:var(--ok);">{{ $g['done'] }}</strong>/{{ $g['total'] }}
-                                    <span class="text-ink-3">({{ $g['done_pct'] }}%)</span>
-                                </span>
-                            </div>
-                            <div class="adm-bar-track" style="height:9px;">
-                                <div class="adm-bar-fill" style="width:100%;">
-                                    @if ($g['done_pct'] > 0)<div style="width:{{ $g['done_pct'] }}%; background:var(--ok);" title="Selesai: {{ $g['done'] }} mhs"></div>@endif
-                                    @if ($g['progress_pct'] > 0)<div style="width:{{ $g['progress_pct'] }}%; background:var(--warn);" title="Proses: {{ $g['in_progress'] }} mhs"></div>@endif
-                                </div>
-                            </div>
-                        </div>
+                    @foreach ([0, 1, 2, 3, 4] as $t)
+                        @php
+                            $gy = round($semWave['padT'] + (1 - ($t / 4.0)) * $semWave['plotH'], 1);
+                            $attLbl = $t * 25;
+                        @endphp
+                        <line x1="{{ $semWave['padL'] }}" y1="{{ $gy }}" x2="{{ $semWave['padL'] + $semWave['plotW'] }}" y2="{{ $gy }}"
+                              stroke="{{ $t === 3 ? 'var(--line-strong)' : 'var(--line)' }}"
+                              stroke-width="{{ $t === 3 ? '1' : '0.85' }}"
+                              stroke-dasharray="{{ $t === 3 ? '4 4' : '' }}" />
+                        <text x="{{ $semWave['padL'] - 9 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="var(--ok)" class="mono">{{ number_format($t, 1) }}</text>
+                        <text x="{{ $semWave['padL'] + $semWave['plotW'] + 9 }}" y="{{ $gy + 3.5 }}" text-anchor="start" font-size="10" fill="var(--accent)" class="mono">{{ $attLbl }}%</text>
                     @endforeach
-                </div>
-            </div>
 
-            {{-- Tab B: Status Tindak Lanjut DPA --}}
-            <div data-ready-panel="tindaklanjut" style="display:none;">
-                <div class="adm-grad-list">
-                    @foreach ($fuList as $fu)
-                        <div class="adm-grad-row">
-                            <div class="adm-grad-head">
-                                <span class="font-medium text-ink">{{ $fu['label'] }}</span>
-                                <span class="mono text-xs text-ink-2" style="white-space:nowrap;">
-                                    <strong>{{ $fu['count'] }}</strong>
-                                    <span class="text-ink-3">({{ $fu['pct'] }}%)</span>
-                                    @if ($fu['priority_count'] > 0)
-                                        &middot; <span style="color:var(--warn);">{{ $fu['priority_count'] }} prioritas</span>
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="adm-bar-track" style="height:9px;">
-                                <div class="adm-bar-fill" style="width:{{ max($fu['pct'], $fu['count'] > 0 ? 3 : 0) }}%;">
-                                    <div style="width:100%; background:{{ $fu['color'] }};"></div>
-                                </div>
-                            </div>
-                        </div>
+                    <path d="{{ $semWave['attPath']['area'] }}" fill="url(#waveGradAttSem)" />
+                    <path d="{{ $semWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" />
+
+                    <path d="{{ $semWave['ipsPath']['area'] }}" fill="url(#waveGradIpsSem)" />
+                    <path d="{{ $semWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" />
+
+                    <line id="wave-guide-sem" x1="0" y1="{{ $semWave['padT'] }}" x2="0" y2="{{ $semWave['padT'] + $semWave['plotH'] }}"
+                          stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 3" style="display:none;" />
+
+                    @foreach ($semPoints as $idx => $sp)
+                        @php
+                            $ic = $semWave['ipsCoords'][$idx];
+                            $ac = $semWave['attCoords'][$idx];
+                        @endphp
+                        <text x="{{ $ic['x'] }}" y="{{ $semWave['padT'] + $semWave['plotH'] + 18 }}" text-anchor="middle" font-size="10" fill="var(--ink-3)" class="mono">{{ $sp['label'] }}</text>
+                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                                onmouseenter="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ac['x'] }})"
+                                onmousemove="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ac['x'] }})"
+                                onmouseleave="dashHideWaveTip('sem')" />
+                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="5" fill="var(--ok)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                                onmouseenter="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ic['x'] }})"
+                                onmousemove="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ic['x'] }})"
+                                onmouseleave="dashHideWaveTip('sem')" />
                     @endforeach
-                </div>
+                </svg>
+                <div id="adm-wave-tip-sem" class="adm-wave-tip" role="status" aria-live="polite"></div>
             </div>
-        </div>
+        @endif
+    </div>
+</section>
 
-        <div class="adm-grad-legend">
-            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--ok);margin-right:5px;"></span>Selesai</span>
-            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn);margin-right:5px;"></span>Proses</span>
-            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--bg);border:1px solid var(--line-strong);margin-right:5px;"></span>Belum</span>
+{{-- BLOK 2C: RINGKASAN KESIAPAN KELULUSAN & TINDAK LANJUT (RINGKAS FULL-WIDTH) --}}
+<section class="adm-panel mt-6" aria-label="Kesiapan kelulusan dan tindak lanjut">
+    <div class="adm-wave-head">
+        <div class="flex flex-wrap items-baseline gap-3">
+            <h2 class="text-base font-semibold">Kesiapan Kelulusan</h2>
             @if ($pendingProofs > 0)
-                <a href="{{ route('admin.skpi') }}" class="font-medium text-accent hover:underline" style="margin-left:auto;">
-                    {{ $pendingProofs }} menunggu &rarr;
-                </a>
+                <a href="{{ route('admin.skpi') }}" class="text-xs font-medium text-accent hover:underline">{{ $pendingProofs }} bukti menunggu &rarr;</a>
             @endif
         </div>
+        <div class="adm-tabs" role="tablist" aria-label="Pilih tampilan kesiapan">
+            <button type="button" class="adm-tab is-active" data-ready-tab="kelulusan" onclick="dashSwitchReadyTab('kelulusan')">SKPI &amp; Pengayaan</button>
+            <button type="button" class="adm-tab" data-ready-tab="tindaklanjut" onclick="dashSwitchReadyTab('tindaklanjut')">Tindak Lanjut</button>
+        </div>
+    </div>
+
+    <div data-ready-panel="kelulusan" class="adm-ready-grid">
+        @foreach ($gradList as $g)
+            <div class="adm-ready-card" title="{{ $g['hint'] }}">
+                <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-xs font-medium text-ink truncate">{{ $g['label'] }}</span>
+                    <span class="mono text-xs text-ink-3">{{ $g['done_pct'] }}%</span>
+                </div>
+                <div class="mono text-sm font-semibold text-ink">
+                    <span style="color:var(--ok);">{{ $g['done'] }}</span><span class="text-xs font-normal text-ink-3"> / {{ $g['total'] }}</span>
+                </div>
+                <div class="adm-bar-track" style="height:7px;">
+                    <div class="adm-bar-fill" style="width:100%;">
+                        @if ($g['done_pct'] > 0)<div style="width:{{ $g['done_pct'] }}%; background:var(--ok);"></div>@endif
+                        @if ($g['progress_pct'] > 0)<div style="width:{{ $g['progress_pct'] }}%; background:var(--warn);"></div>@endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div data-ready-panel="tindaklanjut" class="adm-fu-grid" style="display:none;">
+        @foreach ($fuList as $fu)
+            <div class="adm-ready-card">
+                <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-xs font-medium text-ink truncate">{{ $fu['label'] }}</span>
+                    <span class="mono text-xs text-ink-3">{{ $fu['pct'] }}%</span>
+                </div>
+                <div class="mono text-sm font-semibold text-ink">
+                    {{ $fu['count'] }} <span class="text-xs font-normal text-ink-3">mhs</span>
+                    @if ($fu['priority_count'] > 0)
+                        <span class="text-xs font-medium" style="color:var(--warn);margin-left:4px;">&middot; {{ $fu['priority_count'] }} prioritas</span>
+                    @endif
+                </div>
+                <div class="adm-bar-track" style="height:7px;">
+                    <div class="adm-bar-fill" style="width:{{ max($fu['pct'], $fu['count'] > 0 ? 4 : 0) }}%;">
+                        <div style="width:100%; background:{{ $fu['color'] }};"></div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
     </div>
 </section>
 
@@ -1079,42 +1161,66 @@ function dashApplyFilters() {
     }
 }
 
-const dashScatterPoints = @json($scatterPoints ?? []);
+const dashWaveData = {
+    mhs: @json($scatterPoints ?? []),
+    sem: @json($semesterTrend ?? []),
+};
 
-function dashShowScatterTip(evt, idx) {
-    const pt = dashScatterPoints[idx];
-    const box = document.getElementById('adm-scatter-box');
-    const tip = document.getElementById('adm-scatter-tip');
+function dashSwitchWaveTab(tab) {
+    document.querySelectorAll('[data-wave-tab]').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.waveTab === tab);
+    });
+    document.querySelectorAll('[data-wave-panel]').forEach(panel => {
+        panel.style.display = panel.dataset.wavePanel === tab ? '' : 'none';
+    });
+}
+
+function dashShowWaveTip(evt, mode, idx, svgX) {
+    const pt = (dashWaveData[mode] || [])[idx];
+    const box = document.getElementById('adm-wave-box-' + mode);
+    const tip = document.getElementById('adm-wave-tip-' + mode);
+    const guide = document.getElementById('wave-guide-' + mode);
     if (!pt || !box || !tip) return;
 
-    const lvlLabel = pt.level === 'tinggi' ? 'Risiko Tinggi' : (pt.level === 'sedang' ? 'Risiko Sedang' : 'Risiko Rendah');
-    const lvlColor = pt.level === 'tinggi' ? 'var(--bad)' : (pt.level === 'sedang' ? 'var(--warn)' : 'var(--ok)');
-    const scoreTxt = pt.score !== null ? Number(pt.score).toFixed(2) + '/10' : '-';
+    if (guide) {
+        guide.setAttribute('x1', svgX);
+        guide.setAttribute('x2', svgX);
+        guide.style.display = '';
+    }
 
-    tip.innerHTML =
-        '<div style="font-weight:600;margin-bottom:2px;">' + dashEscHtml(pt.name) + '</div>' +
-        '<div class="mono" style="color:var(--ink-3);margin-bottom:5px;">' + dashEscHtml(pt.nim) + ' &middot; ' + dashEscHtml(pt.prodi) + '</div>' +
-        '<div style="display:flex;justify-content:space-between;gap:8px;"><span>Kehadiran</span><strong class="mono">' + pt.attendance + '%</strong></div>' +
-        '<div style="display:flex;justify-content:space-between;gap:8px;"><span>IPS</span><strong class="mono">' + Number(pt.ips).toFixed(2) + '</strong></div>' +
-        '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:3px;padding-top:3px;border-top:1px solid var(--line);">' +
-            '<span style="color:' + lvlColor + ';font-weight:600;">' + lvlLabel + '</span>' +
-            '<strong class="mono">' + scoreTxt + '</strong>' +
-        '</div>';
+    if (mode === 'mhs') {
+        const lvlLabel = pt.level === 'tinggi' ? 'Risiko Tinggi' : (pt.level === 'sedang' ? 'Risiko Sedang' : 'Risiko Rendah');
+        const lvlColor = pt.level === 'tinggi' ? 'var(--bad)' : (pt.level === 'sedang' ? 'var(--warn)' : 'var(--ok)');
+        tip.innerHTML =
+            '<div style="font-weight:600;margin-bottom:2px;">' + dashEscHtml(pt.name) + '</div>' +
+            '<div class="mono" style="color:var(--ink-3);margin-bottom:5px;">' + dashEscHtml(pt.nim) + '</div>' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;"><span>IPS</span><strong class="mono" style="color:var(--ok);">' + Number(pt.ips).toFixed(2) + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;"><span>Kehadiran</span><strong class="mono" style="color:var(--accent);">' + pt.attendance + '%</strong></div>' +
+            '<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--line);color:' + lvlColor + ';font-weight:600;">' + lvlLabel + '</div>';
+    } else {
+        tip.innerHTML =
+            '<div style="font-weight:600;margin-bottom:4px;">' + dashEscHtml(pt.label) + ' &middot; ' + pt.count + ' mhs</div>' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;"><span>Rata-rata IPS</span><strong class="mono" style="color:var(--ok);">' + Number(pt.ips).toFixed(2) + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;"><span>Kehadiran</span><strong class="mono" style="color:var(--accent);">' + pt.attendance + '%</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;"><span>Skor Risiko</span><strong class="mono">' + Number(pt.avg_score).toFixed(2) + '/10</strong></div>';
+    }
 
     tip.style.display = 'block';
     const rect = box.getBoundingClientRect();
-    let x = evt.clientX - rect.left + 12;
+    let x = evt.clientX - rect.left + 14;
     let y = evt.clientY - rect.top - tip.offsetHeight - 10;
-    if (x + tip.offsetWidth > rect.width - 4) x = evt.clientX - rect.left - tip.offsetWidth - 12;
+    if (x + tip.offsetWidth > rect.width - 4) x = evt.clientX - rect.left - tip.offsetWidth - 14;
     if (x < 4) x = 4;
     if (y < 4) y = evt.clientY - rect.top + 14;
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
 }
 
-function dashHideScatterTip() {
-    const tip = document.getElementById('adm-scatter-tip');
+function dashHideWaveTip(mode) {
+    const tip = document.getElementById('adm-wave-tip-' + mode);
+    const guide = document.getElementById('wave-guide-' + mode);
     if (tip) tip.style.display = 'none';
+    if (guide) guide.style.display = 'none';
 }
 
 function dashEscHtml(str) {
