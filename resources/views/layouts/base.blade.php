@@ -165,10 +165,13 @@
                 overscroll-behavior: none;
             }
             #sidebar.sidebar {
-                height: 100lvh;
-                min-height: 100dvh;
-                max-height: none;
-                padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+                top: 0;
+                bottom: 0;
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
             }
         }
         @media (min-width: 1024px) {
