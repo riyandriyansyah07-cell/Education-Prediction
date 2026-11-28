@@ -11,10 +11,8 @@
 @section('content')
 <style>
     .val-hero {
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, var(--surface)) 0%, var(--surface) 60%, color-mix(in srgb, var(--ok) 6%, var(--surface)) 100%);
-        padding: 1.45rem 1.7rem;
+        padding: 0.15rem 0 1.25rem;
+        border-bottom: 1px solid var(--line);
     }
     .val-pill {
         display: inline-flex; align-items: center; gap: 0.45rem;
@@ -87,29 +85,6 @@
         border: 1px solid var(--line); background: var(--bg); color: var(--ink-2); text-decoration: none;
     }
     .val-chip.is-active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
-    .val-export-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
-    .val-filter-grid-ext { display: grid; gap: 0.65rem; grid-template-columns: minmax(145px, 1.2fr) minmax(135px, 1fr) minmax(145px, 1fr) minmax(145px, 1fr) minmax(100px, 0.72fr) auto; align-items: end; }
-    .val-filter-grid-ext select.input { width: 100%; min-width: 0; padding-right: 1.75rem; }
-    .val-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; width: 100%; }
-    .val-tbl th, .val-tbl td { padding: 0.65rem 0.7rem; vertical-align: middle; }
-    .val-tbl th.num, .val-tbl td.num { text-align: right; white-space: nowrap; }
-    .val-pager {
-        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-        gap: 0.75rem; margin-top: 1.25rem; padding: 0.9rem 1.2rem;
-        border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 12px;
-    }
-    .val-pager-links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
-    .val-page-btn {
-        display: inline-flex; align-items: center; justify-content: center;
-        min-width: 32px; height: 32px; padding: 0 0.6rem; border-radius: 7px;
-        border: 1px solid var(--line); background: var(--bg); color: var(--ink-2);
-        font-size: 12px; font-weight: 500; text-decoration: none;
-    }
-    .val-page-btn:hover { border-color: var(--accent); color: var(--ink); }
-    .val-page-btn.is-current { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; pointer-events: none; }
-    .val-page-btn.is-disabled { opacity: 0.45; pointer-events: none; }
-    @media (max-width: 960px) { .val-filter-grid-ext { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) { .val-filter-grid-ext { grid-template-columns: 1fr; } }
 
     @media (max-width: 960px) {
         .val-steps { grid-template-columns: 1fr; }
@@ -118,7 +93,7 @@
         .val-action-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
-        .val-hero { padding: 1.1rem; }
+        .val-hero { padding: 0 0 1rem; }
         .val-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
         .val-kpi, .val-card { padding: 0.95rem; }
         .val-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -126,8 +101,6 @@
     }
 </style>
 
-{{-- Isi di dalam #audit-root diperbarui tanpa memuat ulang halaman (posisi scroll tetap). --}}
-<div id="audit-root">
 {{-- HERO BANNER + ALUR VALIDASI 3 LANGKAH --}}
 <section class="val-hero" aria-label="Ringkasan dan alur validasi AI">
     <div class="flex flex-wrap items-start justify-between gap-4">
@@ -138,26 +111,9 @@
                 Verifikasi kebenaran penilaian risiko AI Gemini dengan membandingkannya langsung terhadap rumus matematis standar FTII UHAMKA.
             </p>
         </div>
-        @php
-            $exportQuery = array_filter([
-                'status' => $filters['status'],
-                'sumber' => $filters['sumber'],
-                'q' => $filters['q'],
-                'cakupan' => $filters['cakupan'],
-                'sort' => $filters['sort'],
-            ]);
-        @endphp
-        <div class="val-export-group">
-            <a href="{{ route('validator.audit.ekspor', $exportQuery) }}" class="btn btn-quiet btn-sm" title="Streaming CSV hemat memori untuk ribuan data">
-                <x-icon name="download-simple" /> CSV
-            </a>
-            <a href="{{ route('validator.audit.ekspor', $exportQuery + ['format' => 'xlsx']) }}" class="btn btn-primary btn-sm" title="Excel 2-sheet dengan ringkasan akurasi AI & warna status">
-                <x-icon name="download-simple" /> Excel (.xlsx)
-            </a>
-            <a href="{{ route('validator.audit.ekspor', $exportQuery + ['format' => 'print']) }}" target="_blank" rel="noopener" class="btn btn-quiet btn-sm" title="Pratinjau laporan audit siap cetak atau simpan PDF">
-                Pratinjau / Cetak
-            </a>
-        </div>
+        <a href="{{ route('validator.audit.ekspor', array_filter($filters)) }}" class="btn btn-primary btn-sm">
+            <x-icon name="download-simple" /> Unduh Laporan CSV
+        </a>
     </div>
 
     <div class="val-steps" aria-label="Alur kerja validator">
@@ -206,99 +162,55 @@
     </details>
 </section>
 
-{{-- 4 KARTU KPI AKURASI & VALIDASI --}}
+{{-- 4 KARTU RINGKASAN VALIDASI --}}
 <section class="val-kpi-grid mt-6" aria-label="Ringkasan metrik audit">
-    <div class="val-kpi" style="border-top: 3px solid var(--accent);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Total Hasil Dianalisis</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $stats['total'] }}</p>
-            </div>
-            <span class="val-kpi-icon" style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);">
-                <x-icon name="brain" />
-            </span>
-        </div>
-        <p class="mt-3 text-xs text-ink-2"><strong>{{ $stats['ai_count'] }}</strong> Gemini AI &middot; {{ $stats['total'] - $stats['ai_count'] }} aturan/ML</p>
+    <div class="val-kpi">
+        <p class="text-xs font-medium text-ink-3">Total Dianalisis</p>
+        <p class="mono mt-2 text-3xl font-semibold leading-none text-ink">{{ $stats['total'] }}</p>
+        <p class="mt-2.5 text-xs text-ink-2"><strong>{{ $stats['ai_count'] }}</strong> Gemini AI &middot; {{ $stats['total'] - $stats['ai_count'] }} aturan</p>
     </div>
 
-    <div class="val-kpi" style="border-top: 3px solid var(--ok);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Akurasi AI (Sesuai)</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none" style="color:var(--ok);">
-                    {{ $accPct !== null ? $accPct.'%' : '—' }}
-                </p>
-            </div>
-            <span class="val-kpi-icon" style="background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok);">
-                <x-icon name="check-circle" />
-            </span>
-        </div>
-        <div>
-            <div class="val-mini-bar"><div class="val-mini-fill" style="width:{{ $accPct ?? 0 }}%; background:var(--ok);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">{{ $stats['sesuai'] }} sesuai &middot; {{ $stats['koreksi'] }} perlu koreksi</p>
-        </div>
+    <div class="val-kpi">
+        <p class="text-xs font-medium text-ink-3">Akurasi AI (Sesuai)</p>
+        <p class="mono mt-2 text-3xl font-semibold leading-none text-ink">
+            {{ $accPct !== null ? $accPct.'%' : '—' }}
+        </p>
+        <p class="mt-2.5 text-xs text-ink-2">{{ $stats['sesuai'] }} sesuai &middot; {{ $stats['koreksi'] }} perlu koreksi</p>
     </div>
 
-    <div class="val-kpi" style="border-top: 3px solid var(--bad);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Selisih AI vs Rumus</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none" style="color:var(--bad);">{{ $stats['disagreement'] }}</p>
-            </div>
-            <span class="val-kpi-icon" style="background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad);">
-                <x-icon name="warning" />
-            </span>
-        </div>
-        <p class="mt-3 text-xs text-ink-2">Prioritas audit (beda level atau &Delta; &ge; 1,5)</p>
+    <div class="val-kpi">
+        <p class="text-xs font-medium text-ink-3">Selisih AI vs Rumus</p>
+        <p class="mono mt-2 text-3xl font-semibold leading-none" style="color:{{ $stats['disagreement'] > 0 ? 'var(--bad)' : 'var(--ink)' }};">{{ $stats['disagreement'] }}</p>
+        <p class="mt-2.5 text-xs text-ink-2">Prioritas audit (beda level atau &Delta; &ge; 1,5)</p>
     </div>
 
-    <div class="val-kpi" style="border-top: 3px solid var(--warn);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Progres Verifikasi</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $stats['validated'] }} <span class="text-sm font-normal text-ink-3">/ {{ $stats['total'] }}</span></p>
-            </div>
-            <span class="val-kpi-icon" style="background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn);">
-                <x-icon name="list-checks" />
-            </span>
-        </div>
-        <div>
-            <div class="val-mini-bar"><div class="val-mini-fill" style="width:{{ $validatedPct }}%; background:var(--warn);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">{{ $stats['unvalidated'] }} menunggu ({{ $validatedPct }}% selesai)</p>
-        </div>
+    <div class="val-kpi">
+        <p class="text-xs font-medium text-ink-3">Progres Verifikasi</p>
+        <p class="mono mt-2 text-3xl font-semibold leading-none text-ink">{{ $stats['validated'] }} <span class="text-sm font-normal text-ink-3">/ {{ $stats['total'] }}</span></p>
+        <p class="mt-2.5 text-xs text-ink-2">{{ $stats['unvalidated'] }} menunggu ({{ $validatedPct }}% selesai)</p>
     </div>
 </section>
 
 {{-- FILTER & PENCARIAN --}}
-<section class="val-card mt-6" data-audit-filter style="scroll-margin-top:4.5rem;">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="val-chip-row">
-            @php
-                $statusTabs = [
-                    '' => 'Semua ('.$stats['total'].')',
-                    'selisih' => 'Prioritas Selisih ('.$stats['disagreement'].')',
-                    'belum' => 'Belum Divalidasi ('.$stats['unvalidated'].')',
-                    'sesuai' => 'Sesuai ('.$stats['sesuai'].')',
-                    'perlu_koreksi' => 'Perlu Koreksi ('.$stats['koreksi'].')',
-                ];
-            @endphp
-            @foreach ($statusTabs as $key => $label)
-                <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['status' => $key, 'page' => 1]))) }}"
-                   class="val-chip {{ $filters['status'] === $key ? 'is-active' : '' }}">{{ $label }}</a>
-            @endforeach
-        </div>
-
-        <div class="val-export-group">
-            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'kartu', 'page' => 1]))) }}"
-               class="val-chip {{ $filters['tampilan'] === 'kartu' ? 'is-active' : '' }}">Mode Kartu Audit</a>
-            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'tabel', 'page' => 1]))) }}"
-               class="val-chip {{ $filters['tampilan'] === 'tabel' ? 'is-active' : '' }}">Mode Tabel Laporan</a>
-        </div>
+<section class="val-card mt-6">
+    <div class="val-chip-row">
+        @php
+            $statusTabs = [
+                '' => 'Semua ('.$stats['total'].')',
+                'selisih' => 'Prioritas Selisih ('.$stats['disagreement'].')',
+                'belum' => 'Belum Divalidasi ('.$stats['unvalidated'].')',
+                'sesuai' => 'Sesuai ('.$stats['sesuai'].')',
+                'perlu_koreksi' => 'Perlu Koreksi ('.$stats['koreksi'].')',
+            ];
+        @endphp
+        @foreach ($statusTabs as $key => $label)
+            <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['status' => $key]))) }}"
+               class="val-chip {{ $filters['status'] === $key ? 'is-active' : '' }}">{{ $label }}</a>
+        @endforeach
     </div>
 
-    <form method="GET" action="{{ route('validator.audit') }}" class="val-filter-grid-ext mt-4">
+    <form method="GET" action="{{ route('validator.audit') }}" class="val-filter-grid mt-4">
         <input type="hidden" name="status" value="{{ $filters['status'] }}">
-        <input type="hidden" name="tampilan" value="{{ $filters['tampilan'] }}">
         <div>
             <label for="v-q" class="label text-xs">Cari nama / NIM</label>
             <input id="v-q" name="q" type="text" value="{{ $filters['q'] }}" placeholder="Ketik nama atau NIM..." class="input h-9 text-sm">
@@ -318,25 +230,6 @@
                 <option value="semua" @selected($filters['cakupan'] === 'semua')>Semua semester</option>
             </select>
         </div>
-        <div>
-            <label for="v-sort" class="label text-xs">Urutkan</label>
-            <select id="v-sort" name="sort" class="input h-9 text-xs">
-                <option value="prioritas" @selected($filters['sort'] === 'prioritas')>Prioritas audit</option>
-                <option value="delta" @selected($filters['sort'] === 'delta')>Selisih terbesar</option>
-                <option value="ai_score" @selected($filters['sort'] === 'ai_score')>Skor AI tertinggi</option>
-                <option value="rule_score" @selected($filters['sort'] === 'rule_score')>Skor Rumus tertinggi</option>
-                <option value="nama" @selected($filters['sort'] === 'nama')>Nama (A–Z)</option>
-                <option value="semester" @selected($filters['sort'] === 'semester')>Semester terbaru</option>
-            </select>
-        </div>
-        <div>
-            <label for="v-per-page" class="label text-xs">Per Halaman</label>
-            <select id="v-per-page" name="per_page" class="input h-9 text-xs">
-                @foreach ([10, 25, 50, 100] as $pp)
-                    <option value="{{ $pp }}" @selected($filters['per_page'] === $pp)>{{ $pp }} baris</option>
-                @endforeach
-            </select>
-        </div>
         <button type="submit" class="btn btn-primary btn-sm h-9 w-full">
             <x-icon name="magnifying-glass" /> Saring
         </button>
@@ -344,84 +237,11 @@
 </section>
 
 @if ($errors->any())
-    <div class="mt-4 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm" style="color:var(--bad);" role="alert" data-audit-error>
+    <div class="mt-4 rounded-md border border-bad/40 bg-bad/10 px-4 py-3 text-sm" style="color:var(--bad);" role="alert">
         {{ $errors->first() }}
     </div>
 @endif
 
-{{-- MODE TABEL LAPORAN RINGKAS ATAU KARTU AUDIT --}}
-@if ($filters['tampilan'] === 'tabel')
-    <section class="val-card mt-6" aria-label="Tabel laporan perbandingan AI vs Rumus">
-        @if ($items->isEmpty())
-            <p class="text-center text-sm text-ink-2 py-6">Belum ada hasil analisis risiko yang cocok dengan filter ini.</p>
-        @else
-            <div class="val-scroll">
-                <table class="tbl val-tbl w-full text-xs" style="min-width: 64rem;">
-                    <thead>
-                        <tr>
-                            <th>Mahasiswa</th>
-                            <th class="num">Sem</th>
-                            <th>Sumber</th>
-                            <th>AI / Sistem</th>
-                            <th>Rumus</th>
-                            <th class="num">&Delta; Skor</th>
-                            <th class="num">IPS</th>
-                            <th class="num">Hadir</th>
-                            <th>Status Validasi</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($items as $item)
-                            @php
-                                $res = $item['result'];
-                                $stu = $item['student'];
-                                $val = $item['validation'];
-                            @endphp
-                            <tr>
-                                <td>
-                                    <p class="font-medium text-sm">{{ $stu?->name ?? 'Mahasiswa' }}</p>
-                                    <p class="mono text-ink-3">{{ $stu?->username ?? substr((string) $res->student_ref, 0, 10) }} &middot; {{ $stu?->program_studi ?: '-' }}</p>
-                                </td>
-                                <td class="num mono">{{ $res->semester }}</td>
-                                <td>{{ $item['source_label'] }}</td>
-                                <td style="white-space:nowrap;">
-                                    <x-risk :level="$item['ai_level']" />
-                                    <span class="mono ml-1 font-semibold">{{ number_format($item['ai_score'], 2) }}</span>
-                                </td>
-                                <td style="white-space:nowrap;">
-                                    <x-risk :level="$item['rule_level']" />
-                                    <span class="mono ml-1">{{ number_format($item['rule_score'], 2) }}</span>
-                                </td>
-                                <td class="num mono font-semibold" style="{{ $item['is_disagreement'] ? 'color:var(--bad);' : 'color:var(--ok);' }}">
-                                    {{ number_format($item['score_delta'], 2) }}
-                                </td>
-                                <td class="num mono">{{ $item['ips'] !== null ? number_format($item['ips'], 2) : '-' }}</td>
-                                <td class="num mono" style="{{ $item['attendance'] !== null && $item['attendance'] < 75 ? 'color:var(--bad);font-weight:600;' : '' }}">
-                                    {{ $item['attendance'] !== null ? number_format($item['attendance'], 1).'%' : '-' }}
-                                </td>
-                                <td>
-                                    @if ($val)
-                                        <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" style="background: color-mix(in srgb, {{ $val->verdict === 'sesuai' ? 'var(--ok)' : 'var(--warn)' }} 16%, transparent); color: {{ $val->verdict === 'sesuai' ? 'var(--ok)' : 'var(--warn)' }};">
-                                            {{ $val->verdictLabel() }}
-                                        </span>
-                                    @else
-                                        <span class="text-ink-3">Belum</span>
-                                    @endif
-                                </td>
-                                <td style="white-space:nowrap;">
-                                    <a href="{{ route('validator.audit', array_filter(array_merge($filters, ['tampilan' => 'kartu', 'q' => $stu?->username ?? '', 'page' => 1]))) }}" class="btn btn-quiet btn-sm">
-                                        Audit &rarr;
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </section>
-@else
 {{-- DAFTAR KARTU PERBANDINGAN AI VS RUMUS MATEMATIS --}}
 <div class="mt-6 space-y-5">
     @forelse ($items as $item)
@@ -595,45 +415,6 @@
     @endforelse
 </div>
 
-@endif
-
-{{-- PAGINASI SERVER-SIDE UNTUK RIBUAN DATA --}}
-@if ($pagination['total'] > 0)
-    @php
-        $cur = $pagination['page'];
-        $last = $pagination['last_page'];
-        $startPage = max(1, $cur - 2);
-        $endPage = min($last, $cur + 2);
-        $pageUrl = fn (int $p) => route('validator.audit', array_filter(array_merge($filters, ['page' => $p])));
-    @endphp
-    <nav class="val-pager" aria-label="Navigasi halaman audit">
-        <span class="text-ink-2">
-            Halaman <strong>{{ $cur }}</strong> dari <strong>{{ $last }}</strong>
-            &middot; {{ number_format($pagination['total']) }} hasil
-        </span>
-        <div class="val-pager-links">
-            <a href="{{ $pageUrl(max(1, $cur - 1)) }}" class="val-page-btn {{ $cur <= 1 ? 'is-disabled' : '' }}">&larr; Sebelumnya</a>
-            @if ($startPage > 1)
-                <a href="{{ $pageUrl(1) }}" class="val-page-btn">1</a>
-                @if ($startPage > 2)<span class="px-1 text-ink-3">&hellip;</span>@endif
-            @endif
-            @for ($p = $startPage; $p <= $endPage; $p++)
-                <a href="{{ $pageUrl($p) }}" class="val-page-btn {{ $p === $cur ? 'is-current' : '' }}">{{ $p }}</a>
-            @endfor
-            @if ($endPage < $last)
-                @if ($endPage < $last - 1)<span class="px-1 text-ink-3">&hellip;</span>@endif
-                <a href="{{ $pageUrl($last) }}" class="val-page-btn">{{ $last }}</a>
-            @endif
-            <a href="{{ $pageUrl(min($last, $cur + 1)) }}" class="val-page-btn {{ $cur >= $last ? 'is-disabled' : '' }}">Berikutnya &rarr;</a>
-        </div>
-    </nav>
-@endif
-
-</div>{{-- /#audit-root --}}
-
-<div id="audit-toast" class="no-print" role="status" aria-live="polite" hidden
-     style="position:fixed;right:1rem;bottom:1rem;z-index:60;max-width:min(26rem,calc(100vw - 2rem));padding:0.8rem 1.05rem;border-radius:12px;border:1px solid var(--line-strong);border-left:4px solid var(--ok);background:var(--surface);color:var(--ink);font-size:13px;line-height:1.5;box-shadow:0 12px 32px -12px rgba(0,0,0,0.35);"></div>
-
 <script>
 function toggleExpectedLevel(val, id) {
     const isKoreksi = val === 'perlu_koreksi';
@@ -642,119 +423,5 @@ function toggleExpectedLevel(val, id) {
     if (w1) w1.style.display = isKoreksi ? '' : 'none';
     if (w2) w2.style.display = isKoreksi ? '' : 'none';
 }
-
-// Filter, mode tampilan, paginasi, dan simpan validasi tanpa reload.
-// Tanpa JavaScript, semua tautan dan form tetap berjalan seperti biasa.
-(function () {
-    const root = document.getElementById('audit-root');
-    const toast = document.getElementById('audit-toast');
-    if (!root || !window.fetch || !window.DOMParser) return;
-
-    const auditPath = new URL(@json(route('validator.audit')), location.href).pathname;
-    let controller = null;
-    let saving = false;
-    let toastTimer = null;
-
-    function notify(message, isError) {
-        toast.textContent = message;
-        toast.style.borderLeftColor = isError ? 'var(--bad)' : 'var(--ok)';
-        toast.hidden = false;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { toast.hidden = true; }, 5000);
-    }
-
-    function setBusy(busy) {
-        root.setAttribute('aria-busy', String(busy));
-        root.style.opacity = busy ? '0.6' : '';
-        root.style.cursor = busy ? 'progress' : '';
-    }
-
-    // Ganti isi #audit-root dengan versi dari server. Mengembalikan false jika respons bukan halaman audit.
-    function swap(doc) {
-        const next = doc.getElementById('audit-root');
-        if (!next) return false;
-        const guideOpen = root.querySelector('details')?.open;
-        root.replaceChildren(...next.childNodes);
-        const guide = root.querySelector('details');
-        if (guide && guideOpen) guide.open = true;
-        root.querySelectorAll('form').forEach(function (f) { f.setAttribute('novalidate', 'novalidate'); });
-        return true;
-    }
-
-    async function fetchPage(url, options) {
-        const res = await fetch(url, Object.assign({ credentials: 'same-origin', headers: { 'Accept': 'text/html' } }, options));
-        const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-        return { res: res, doc: doc };
-    }
-
-    async function load(url, push, toList) {
-        if (controller) controller.abort();
-        const current = controller = new AbortController();
-        setBusy(true);
-        try {
-            const { res, doc } = await fetchPage(url, { signal: current.signal });
-            if (!res.ok || !swap(doc)) { location.assign(url); return; }
-            if (push) {
-                history.scrollRestoration = 'manual';
-                history.pushState({}, '', url);
-            }
-            // Pindah halaman: arahkan ke awal daftar, bukan ke atas halaman.
-            if (toList) root.querySelector('[data-audit-filter]')?.scrollIntoView({ block: 'start' });
-        } catch (err) {
-            if (err.name !== 'AbortError') location.assign(url);
-        } finally {
-            if (controller === current) setBusy(false);
-        }
-    }
-
-    async function save(form) {
-        saving = true;
-        setBusy(true);
-        const button = form.querySelector('[type=submit]');
-        if (button) button.disabled = true;
-        // Jaga kartu berikutnya tetap di posisi layar yang sama setelah daftar diperbarui.
-        const y = window.scrollY;
-        try {
-            const { res, doc } = await fetchPage(form.action, { method: 'POST', body: new FormData(form) });
-            if (!res.ok || !swap(doc)) throw new Error('gagal');
-            window.scrollTo({ top: y, behavior: 'instant' });
-            const error = doc.querySelector('#audit-root [data-audit-error]');
-            const status = doc.querySelector('main [role=status]:not(#audit-toast) p');
-            if (error) notify(error.textContent.trim(), true);
-            else notify(status ? status.textContent.trim() : 'Validasi tersimpan.', false);
-        } catch (err) {
-            notify('Validasi belum tentu tersimpan. Muat ulang halaman lalu periksa kembali.', true);
-        } finally {
-            saving = false;
-            setBusy(false);
-            if (button) button.disabled = false;
-        }
-    }
-
-    root.addEventListener('click', function (e) {
-        const link = e.target.closest('a[href]');
-        if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || link.target) return;
-        const url = new URL(link.href, location.href);
-        if (url.origin !== location.origin || url.pathname !== auditPath) return;
-        e.preventDefault();
-        if (!saving) load(url.href, true, Boolean(link.closest('.val-pager')));
-    });
-
-    root.addEventListener('submit', function (e) {
-        if (e.defaultPrevented) return;
-        const form = e.target;
-        e.preventDefault();
-        if (saving) return;
-        if (form.method.toLowerCase() === 'get') {
-            const url = new URL(form.action, location.href);
-            url.search = new URLSearchParams(new FormData(form)).toString();
-            load(url.href, true, false);
-        } else {
-            save(form);
-        }
-    });
-
-    window.addEventListener('popstate', function () { load(location.href, false, false); });
-})();
 </script>
 @endsection

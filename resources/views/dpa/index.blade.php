@@ -44,12 +44,8 @@
 @section('content')
 <style>
     .dpa-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 14px;
-        border: 1px solid var(--line);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)) 0%, var(--surface) 60%, color-mix(in srgb, var(--ok) 6%, var(--surface)) 100%);
-        padding: 1.4rem 1.65rem;
+        padding: 0.15rem 0 1.25rem;
+        border-bottom: 1px solid var(--line);
     }
     .dpa-pill {
         display: inline-flex;
@@ -253,30 +249,27 @@
         .dpa-analytics-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
-        .dpa-hero { padding: 1.15rem; }
+        .dpa-hero { padding: 0 0 1rem; }
         .dpa-donut-wrap { flex-direction: column; align-items: stretch; }
         .dpa-search { min-width: 100%; }
     }
 </style>
 
-{{-- Hero Ringkas DPA --}}
+{{-- Header Ringkas DPA --}}
 <section class="dpa-hero">
     <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;">
         <div>
-            <span class="dpa-pill">
-                <span class="dpa-dot"></span>
-                Panel Perwalian DPA &middot; {{ $visibleTotal }} mahasiswa bimbingan
-            </span>
-            <h1 class="rise text-2xl sm:text-3xl" style="margin-top:0.65rem;">Mahasiswa bimbingan</h1>
+            <p class="text-xs text-ink-3">Panel Perwalian DPA &middot; {{ $visibleTotal }} mahasiswa bimbingan</p>
+            <h1 class="rise mt-1 text-2xl sm:text-3xl font-semibold tracking-tight">Mahasiswa bimbingan</h1>
             <p class="rise mt-1 text-sm text-ink-2" style="--i: 1">
-                Pantau sebaran risiko, progres tindak lanjut, dan prioritas mahasiswa yang perlu segera dibimbing.
+                Pantau kondisi risiko, tindak lanjut, dan prioritas mahasiswa yang perlu dibimbing.
             </p>
         </div>
 
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.6rem;">
             @if ($priorityCount > 0)
-                <button type="button" id="dpa-priority-cta" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:0.4rem;">
-                    <span>Prioritas Segera Dihubungi</span>
+                <button type="button" id="dpa-priority-cta" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:0.45rem;">
+                    <span>Prioritas Dihubungi</span>
                     <span class="mono" style="background:rgba(255,255,255,0.2);padding:0.05rem 0.45rem;border-radius:9999px;font-size:11px;">{{ $priorityCount }}</span>
                 </button>
             @endif
@@ -310,43 +303,24 @@
         <p class="mt-2 text-sm text-ink-2">Daftar otomatis terisi setelah Sekretariat FTII menetapkan mahasiswa bimbingan untuk Anda.</p>
     </section>
 @else
-    {{-- 4 KPI Cards Khusus DPA --}}
+    {{-- 4 Kartu Ringkasan DPA --}}
     <section class="dpa-kpi-grid mt-6" aria-label="Ringkasan utama DPA">
         <div class="dpa-kpi">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
-                <div>
-                    <p class="text-xs text-ink-3">Anak Bimbingan Aktif</p>
-                    <p class="num mono mt-1 text-2xl font-semibold">
-                        {{ $visibleTotal }} <span class="text-sm font-normal text-ink-3">/ {{ $totalAll }}</span>
-                    </p>
-                </div>
-                <span class="dpa-kpi-icon" style="background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent);">
-                    <x-icon name="users" />
-                </span>
-            </div>
-            <div>
-                <div class="dpa-mini-bar">
-                    <div class="dpa-mini-fill" style="width:{{ $consentPct }}%;background:var(--accent);"></div>
-                </div>
-                <p class="mt-2 text-xs text-ink-3">Seluruh mahasiswa bimbingan Anda</p>
-            </div>
+            <p class="text-xs font-medium text-ink-3">Anak Bimbingan Aktif</p>
+            <p class="num mono mt-2 text-3xl font-semibold leading-none text-ink">
+                {{ $visibleTotal }} <span class="text-sm font-normal text-ink-3">/ {{ $totalAll }}</span>
+            </p>
+            <p class="mt-2.5 text-xs text-ink-2">Seluruh mahasiswa bimbingan Anda</p>
         </div>
 
         <div class="dpa-kpi">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
-                <div>
-                    <p class="text-xs text-ink-3">Perlu Perhatian</p>
-                    <p class="num mono mt-1 text-2xl font-semibold" style="color:{{ $attentionCount > 0 ? 'var(--bad)' : 'var(--ok)' }};">
-                        {{ $attentionCount }}
-                    </p>
-                </div>
-                <span class="dpa-kpi-icon" style="background:color-mix(in srgb, var(--bad) 14%, transparent);color:var(--bad);">
-                    <x-icon name="warning-circle" />
-                </span>
-            </div>
-            <p class="mt-3 text-xs text-ink-3">
-                <strong class="text-ink">{{ $counts['tinggi'] }}</strong> tinggi &middot;
-                <strong class="text-ink">{{ $counts['sedang'] }}</strong> sedang
+            <p class="text-xs font-medium text-ink-3">Perlu Perhatian</p>
+            <p class="num mono mt-2 text-3xl font-semibold leading-none" style="color:{{ $counts['tinggi'] > 0 ? 'var(--bad)' : ($attentionCount > 0 ? 'var(--warn)' : 'var(--ink)') }};">
+                {{ $attentionCount }}
+            </p>
+            <p class="mt-2.5 text-xs text-ink-2">
+                <strong>{{ $counts['tinggi'] }}</strong> tinggi &middot;
+                <strong>{{ $counts['sedang'] }}</strong> sedang
                 @if ($escalatedCount > 0)
                     &middot; <span style="color:var(--bad);font-weight:600;">&uarr; {{ $escalatedCount }} naik</span>
                 @endif
@@ -354,44 +328,23 @@
         </div>
 
         <button type="button" class="dpa-kpi dpa-kpi-clickable" data-quick-priority>
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;width:100%;">
-                <div>
-                    <p class="text-xs text-ink-3">Tugas Prioritas DPA</p>
-                    <p class="num mono mt-1 text-2xl font-semibold" style="color:{{ $priorityCount > 0 ? 'var(--warn)' : 'var(--ok)' }};">
-                        {{ $priorityCount }}
-                    </p>
-                </div>
-                <span class="dpa-kpi-icon" style="background:color-mix(in srgb, var(--warn) 16%, transparent);color:var(--warn);">
-                    <x-icon name="list-checks" />
-                </span>
-            </div>
-            <p class="mt-3 text-xs text-ink-3">
+            <p class="text-xs font-medium text-ink-3">Belum Dihubungi</p>
+            <p class="num mono mt-2 text-3xl font-semibold leading-none" style="color:{{ $priorityCount > 0 ? 'var(--warn)' : 'var(--ink)' }};">
+                {{ $priorityCount }}
+            </p>
+            <p class="mt-2.5 text-xs text-ink-2">
                 @if ($priorityCount > 0)
-                    Risiko tinggi/sedang &amp; belum dihubungi &rarr; <span style="color:var(--accent);">Saring</span>
+                    Risiko tinggi/sedang &rarr; <span class="text-accent font-medium">Saring</span>
                 @else
-                    Semua mahasiswa berisiko sudah ditindaklanjuti
+                    Semua yang berisiko sudah ditindaklanjuti
                 @endif
             </p>
         </button>
 
         <div class="dpa-kpi">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
-                <div>
-                    <p class="text-xs text-ink-3">Progres Perwalian</p>
-                    <p class="num mono mt-1 text-2xl font-semibold" style="color:var(--ok);">
-                        {{ $handledPct }}%
-                    </p>
-                </div>
-                <span class="dpa-kpi-icon" style="background:color-mix(in srgb, var(--ok) 14%, transparent);color:var(--ok);">
-                    <x-icon name="check-circle" />
-                </span>
-            </div>
-            <div>
-                <div class="dpa-mini-bar">
-                    <div class="dpa-mini-fill" style="width:{{ $handledPct }}%;background:var(--ok);"></div>
-                </div>
-                <p class="mt-2 text-xs text-ink-3">{{ $handledCount }} dari {{ $visibleTotal }} sudah bimbingan / selesai</p>
-            </div>
+            <p class="text-xs font-medium text-ink-3">Progres Perwalian</p>
+            <p class="num mono mt-2 text-3xl font-semibold leading-none text-ink">{{ $handledPct }}%</p>
+            <p class="mt-2.5 text-xs text-ink-2">{{ $handledCount }} dari {{ $visibleTotal }} sudah bimbingan / selesai</p>
         </div>
     </section>
 

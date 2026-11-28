@@ -25,47 +25,34 @@
 @section('content')
 <style>
     .adm-hero {
-        position: relative;
-        overflow: hidden;
+        padding: 0.15rem 0 1.25rem;
+        border-bottom: 1px solid var(--line);
+    }
+    .adm-meta-line {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 12px;
+        color: var(--ink-3);
+    }
+    .adm-dot { width: 6px; height: 6px; border-radius: 9999px; background: var(--ok); display: inline-block; }
+    .adm-kpi-grid { display: grid; gap: 1rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .adm-kpi {
         border-radius: 14px;
         border: 1px solid var(--line);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, var(--surface)) 0%, var(--surface) 58%, color-mix(in srgb, var(--ok) 6%, var(--surface)) 100%);
-        padding: 1.5rem 1.75rem;
-    }
-    .adm-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.25rem 0.65rem;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 600;
-        border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
         background: var(--surface);
-        color: var(--ink-2);
-    }
-    .adm-dot { width: 7px; height: 7px; border-radius: 9999px; background: var(--ok); display: inline-block; }
-    .adm-kpi-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-    .adm-kpi {
-        position: relative;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        background: var(--surface);
-        padding: 1.2rem 1.3rem;
+        padding: 1.2rem 1.35rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        gap: 0.65rem;
         min-width: 0;
-        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        transition: border-color 0.15s ease, background 0.15s ease;
     }
-    .adm-kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -12px rgba(0,0,0,0.16); border-color: var(--line-strong); }
-    .adm-kpi-icon {
-        width: 36px; height: 36px; border-radius: 10px;
-        display: inline-flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-    }
-    .adm-mini-bar { height: 5px; width: 100%; border-radius: 9999px; background: var(--bg); overflow: hidden; margin-top: 0.65rem; }
-    .adm-mini-fill { height: 100%; border-radius: 9999px; transition: width 0.4s ease; }
+    .adm-kpi:hover { border-color: var(--line-strong); }
+    .adm-kpi-clickable { cursor: pointer; text-align: left; }
+    .adm-kpi-clickable:hover { background: color-mix(in srgb, var(--ink) 2%, var(--surface)); }
 
     .adm-analytics-grid { display: grid; gap: 1.25rem; grid-template-columns: minmax(290px, 1fr) minmax(340px, 1.45fr); }
     .adm-panel {
@@ -161,6 +148,7 @@
     .adm-ready-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
     @media (max-width: 960px) {
         .adm-analytics-grid { grid-template-columns: 1fr; }
+        .adm-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .adm-panel-airy { padding: 1.2rem; }
         .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
         .adm-fu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
@@ -178,7 +166,7 @@
         .adm-ready-grid, .adm-fu-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
-        .adm-hero { padding: 1.15rem; }
+        .adm-hero { padding: 0 0 1rem; }
         .adm-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
         .adm-kpi { padding: 0.95rem; }
         .adm-panel { padding: 1rem; }
@@ -192,43 +180,40 @@
     }
 </style>
 
-{{-- HERO EXECUTIVE BANNER --}}
-<section class="adm-hero" aria-label="Ringkasan eksekutif">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-        <div style="max-width: 44rem;">
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="adm-pill"><span class="adm-dot"></span> Monitoring Aktif &middot; FTII UHAMKA</span>
-                <span class="adm-pill">Model: {{ $activeModel ? $activeModel->version : 'Aturan bawaan' }}</span>
-                @php $aiH = $aiHealth ?? ['status' => 'ready', 'model' => 'gemini-3.1-flash-lite', 'consecutive_failures' => 0, 'last_error' => null]; @endphp
+{{-- HEADER RINGKAS ANTI-SLOP --}}
+<section class="adm-hero" aria-label="Ringkasan akademik">
+    @php $aiH = $aiHealth ?? ['status' => 'ready', 'model' => 'gemini-3.1-flash-lite', 'consecutive_failures' => 0, 'last_error' => null]; @endphp
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;">
+        <div>
+            <div class="adm-meta-line">
+                <span>FTII UHAMKA</span>
+                <span>&middot;</span>
+                <span>Model {{ $activeModel ? $activeModel->version : 'bawaan' }}</span>
+                <span>&middot;</span>
                 @if (($aiH['status'] ?? 'ready') === 'degraded')
-                    <span class="adm-pill" title="{{ $aiH['last_error'] ?? 'Panggilan AI terakhir gagal' }}" style="border-color:color-mix(in srgb, var(--bad) 45%, var(--line));color:var(--bad);">
-                        <span class="adm-dot" style="background:var(--bad);"></span>
-                        AI: Gagal {{ $aiH['consecutive_failures'] }}x (cadangan RiskModel)
-                    </span>
-                @elseif (($aiH['status'] ?? 'ready') === 'healthy')
-                    <span class="adm-pill" style="border-color:color-mix(in srgb, var(--ok) 40%, var(--line));">
-                        <span class="adm-dot" style="background:var(--ok);"></span>
-                        AI: {{ $aiH['model'] }} &middot; Sehat
+                    <span title="{{ $aiH['last_error'] ?? 'Panggilan AI terakhir gagal' }}" style="color:var(--bad);">
+                        <span class="adm-dot" style="background:var(--bad);margin-right:4px;"></span>AI cadangan aktif
                     </span>
                 @else
-                    <span class="adm-pill">
-                        <span class="adm-dot" style="background:var(--accent);"></span>
-                        AI: {{ $aiH['model'] }} &middot; Siap
+                    <span>
+                        <span class="adm-dot" style="margin-right:4px;"></span>AI siap
                     </span>
                 @endif
             </div>
-            <h1 class="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">Dasbor Ringkasan Akademik</h1>
-            <p class="mt-2 text-sm text-ink-2" style="line-height: 1.6;">
-                Dari <strong>{{ $totals['students'] }} mahasiswa</strong> terdaftar bersama <strong>{{ $totals['dpas'] }} DPA</strong>,
-                terdapat <strong style="color:var(--bad);">{{ $riskCounts['tinggi'] }} risiko Tinggi</strong> dan
-                <strong style="color:var(--warn);">{{ $riskCounts['sedang'] }} risiko Sedang</strong>
-                ({{ $attentionPct }}% total perlu perhatian). Klik grafik atau ringkasan angkatan di bawah untuk langsung menyaring data.
+            <h1 class="mt-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Dasbor Ringkasan Akademik</h1>
+            <p class="mt-1 text-sm text-ink-2">
+                {{ $totals['students'] }} mahasiswa dan {{ $totals['dpas'] }} DPA terdaftar &middot;
+                @if ($attentionCount > 0)
+                    <strong style="color:{{ $riskCounts['tinggi'] > 0 ? 'var(--bad)' : 'var(--warn)' }};">{{ $attentionCount }} perlu perhatian</strong> ({{ $attentionPct }}%).
+                @else
+                    semua mahasiswa teranalisis dalam kondisi stabil.
+                @endif
             </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.6rem;">
             <a id="btn-export-csv" href="{{ route('admin.dasbor.ekspor', array_filter($filters)) }}" class="btn btn-quiet btn-sm">
-                <x-icon name="download-simple" /> Unduh Rekap CSV
+                <x-icon name="download-simple" /> Unduh CSV
             </a>
             <a href="{{ route('admin.akun.baru') }}" class="btn btn-primary btn-sm">
                 <x-icon name="plus" /> Tambah Akun
@@ -237,80 +222,40 @@
     </div>
 </section>
 
-{{-- BLOK 1: 4 KARTU KPI INTERAKTIF --}}
-<section class="adm-kpi-grid mt-6" aria-label="Indikator utama">
-    <div class="adm-kpi" style="border-top: 3px solid var(--accent);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Total Mahasiswa</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $totals['students'] }}</p>
-            </div>
-            <span class="adm-kpi-icon" style="background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);">
-                <x-icon name="graduation-cap" />
-            </span>
-        </div>
-        <div>
-            <div class="adm-mini-bar"><div class="adm-mini-fill" style="width:{{ $analyzedPct }}%; background:var(--accent);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">{{ $totals['students_active'] }} aktif &middot; <strong>{{ $analyzedPct }}%</strong> sudah dianalisis</p>
-        </div>
+{{-- BLOK 1: 4 KARTU RINGKASAN TENANG & PROPORSIONAL --}}
+<section class="adm-kpi-grid adm-section-gap" aria-label="Indikator utama">
+    <div class="adm-kpi">
+        <p class="text-xs font-medium text-ink-3">Total Mahasiswa</p>
+        <p class="mono text-3xl font-semibold leading-none text-ink">{{ $totals['students'] }}</p>
+        <p class="text-xs text-ink-2">{{ $totals['students_active'] }} aktif &middot; <strong>{{ $analyzedPct }}%</strong> sudah dianalisis</p>
     </div>
 
-    <div class="adm-kpi" style="border-top: 3px solid var(--ok);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Total DPA &amp; Admin</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $totals['dpas'] }} <span class="text-sm font-normal text-ink-3">DPA</span></p>
-            </div>
-            <span class="adm-kpi-icon" style="background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok);">
-                <x-icon name="users" />
-            </span>
-        </div>
-        <div>
-            <div class="adm-mini-bar"><div class="adm-mini-fill" style="width:{{ $totals['students'] > 0 ? round((($totals['students'] - $totals['students_without_dpa']) / $totals['students']) * 100) : 0 }}%; background:var(--ok);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">
-                {{ $totals['dpas_active'] }} DPA aktif &middot; {{ $totals['admins'] }} admin
-                @if ($totals['students_without_dpa'] > 0)
-                    &middot; <span style="color:var(--warn);">{{ $totals['students_without_dpa'] }} tanpa DPA</span>
-                @endif
-            </p>
-        </div>
+    <div class="adm-kpi">
+        <p class="text-xs font-medium text-ink-3">Dosen Pembimbing</p>
+        <p class="mono text-3xl font-semibold leading-none text-ink">{{ $totals['dpas'] }} <span class="text-sm font-normal text-ink-3">DPA</span></p>
+        <p class="text-xs text-ink-2">
+            {{ $totals['dpas_active'] }} aktif &middot; {{ $totals['admins'] }} admin
+            @if ($totals['students_without_dpa'] > 0)
+                &middot; <span style="color:var(--warn);">{{ $totals['students_without_dpa'] }} tanpa DPA</span>
+            @endif
+        </p>
     </div>
 
-    <div class="adm-kpi" style="border-top: 3px solid var(--bad); cursor:pointer;" onclick="dashFilterByLevel('tinggi')">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">Perlu Perhatian</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none" style="color:var(--bad);">
-                    {{ $attentionCount }} <span class="text-sm font-normal text-ink-3">({{ $riskCounts['tinggi'] }} tinggi)</span>
-                </p>
-            </div>
-            <span class="adm-kpi-icon" style="background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad);">
-                <x-icon name="warning" />
-            </span>
-        </div>
-        <div>
-            <div class="adm-mini-bar"><div class="adm-mini-fill" style="width:{{ $attentionPct }}%; background:var(--bad);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">{{ $riskPcts['tinggi'] }}% tinggi &middot; {{ $riskPcts['sedang'] }}% sedang</p>
-        </div>
+    <div class="adm-kpi adm-kpi-clickable" onclick="dashFilterByLevel('{{ $riskCounts['tinggi'] > 0 ? 'tinggi' : 'sedang' }}')" title="Klik untuk menyaring mahasiswa yang perlu perhatian">
+        <p class="text-xs font-medium text-ink-3">Perlu Perhatian</p>
+        <p class="mono text-3xl font-semibold leading-none" style="color:{{ $riskCounts['tinggi'] > 0 ? 'var(--bad)' : ($attentionCount > 0 ? 'var(--warn)' : 'var(--ink)') }};">
+            {{ $attentionCount }}
+        </p>
+        <p class="text-xs text-ink-2">{{ $riskCounts['tinggi'] }} tinggi &middot; {{ $riskCounts['sedang'] }} sedang</p>
     </div>
 
-    <div class="adm-kpi" style="border-top: 3px solid var(--warn);">
-        <div class="flex items-start justify-between gap-2">
-            <div>
-                <p class="text-xs font-medium text-ink-3">DPA &amp; Tiket Akun</p>
-                <p class="mono mt-2 text-3xl font-semibold leading-none">{{ $totals['students_consented'] }} <span class="text-sm font-normal text-ink-3">terhubung</span></p>
-            </div>
-            <span class="adm-kpi-icon" style="background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn);">
-                <x-icon name="shield-check" />
-            </span>
-        </div>
-        <div>
-            <div class="adm-mini-bar"><div class="adm-mini-fill" style="width:{{ $consentPct }}%; background:var(--warn);"></div></div>
-            <p class="mt-2 text-xs text-ink-2">
-                {{ $consentPct }}% punya DPA &middot;
-                <a href="{{ route('admin.tiket') }}" class="text-accent font-medium hover:underline">{{ $totals['pending_tickets'] }} tiket baru</a>
-            </p>
-        </div>
+    <div class="adm-kpi">
+        <p class="text-xs font-medium text-ink-3">Terhubung ke DPA</p>
+        <p class="mono text-3xl font-semibold leading-none text-ink">{{ $totals['students_consented'] }} <span class="text-sm font-normal text-ink-3">/ {{ $totals['students'] }}</span></p>
+        <p class="text-xs text-ink-2">
+            {{ $consentPct }}% punya DPA &middot;
+            <a href="{{ route('admin.tiket') }}" class="text-accent font-medium hover:underline">{{ $totals['pending_tickets'] }} tiket baru</a>
+        </p>
     </div>
 </section>
 
