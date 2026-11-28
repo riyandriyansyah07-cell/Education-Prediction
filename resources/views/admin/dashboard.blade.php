@@ -182,25 +182,9 @@
 
 {{-- HEADER RINGKAS ANTI-SLOP --}}
 <section class="adm-hero" aria-label="Ringkasan akademik">
-    @php $aiH = $aiHealth ?? ['status' => 'ready', 'model' => 'gemini-3.1-flash-lite', 'consecutive_failures' => 0, 'last_error' => null]; @endphp
     <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;">
         <div>
-            <div class="adm-meta-line">
-                <span>FTII UHAMKA</span>
-                <span>&middot;</span>
-                <span>Model {{ $activeModel ? $activeModel->version : 'bawaan' }}</span>
-                <span>&middot;</span>
-                @if (($aiH['status'] ?? 'ready') === 'degraded')
-                    <span title="{{ $aiH['last_error'] ?? 'Panggilan AI terakhir gagal' }}" style="color:var(--bad);">
-                        <span class="adm-dot" style="background:var(--bad);margin-right:4px;"></span>AI cadangan aktif
-                    </span>
-                @else
-                    <span>
-                        <span class="adm-dot" style="margin-right:4px;"></span>AI siap
-                    </span>
-                @endif
-            </div>
-            <h1 class="mt-1.5 text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Dasbor Ringkasan Akademik</h1>
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Dasboard Akademik</h1>
             <p class="mt-1 text-sm text-ink-2">
                 {{ $totals['students'] }} mahasiswa dan {{ $totals['dpas'] }} DPA terdaftar &middot;
                 @if ($attentionCount > 0)
