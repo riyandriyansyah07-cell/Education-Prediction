@@ -122,29 +122,33 @@
     .adm-detail-row.is-open { display: table-row; }
     .adm-mobile-hint { display: none; }
 
-    .adm-analytics-grid-2 { display: grid; gap: 1.25rem; grid-template-columns: minmax(320px, 1.25fr) minmax(300px, 1fr); }
-    .adm-scatter-box { position: relative; width: 100%; margin-top: 1rem; }
+    .adm-analytics-grid-2 { display: grid; gap: 1.25rem; grid-template-columns: minmax(320px, 1.2fr) minmax(300px, 1fr); align-items: stretch; }
+    .adm-panel-flex { display: flex; flex-direction: column; justify-content: space-between; }
+    .adm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .adm-scatter-box { position: relative; width: 100%; margin-top: 0.85rem; }
     .adm-scatter-svg { width: 100%; height: auto; display: block; overflow: visible; }
-    .adm-scatter-dot { cursor: pointer; transition: r 0.15s ease, stroke-width 0.15s ease, opacity 0.15s ease; }
+    .adm-scatter-dot { cursor: pointer; transition: stroke-width 0.15s ease, opacity 0.15s ease; }
     .adm-scatter-dot:hover { stroke-width: 3; opacity: 1; }
     .adm-scatter-tip {
         position: absolute; pointer-events: none; z-index: 20; display: none;
-        min-width: 175px; max-width: 230px; padding: 0.6rem 0.75rem; border-radius: 10px;
+        min-width: 170px; max-width: 225px; padding: 0.55rem 0.7rem; border-radius: 10px;
         background: var(--surface); border: 1px solid var(--line-strong);
         box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.22);
         font-size: 11px; line-height: 1.45; color: var(--ink);
     }
-    .adm-quad-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.9rem; }
+    .adm-quad-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.45rem; margin-top: 0.85rem; }
     .adm-quad-pill {
-        display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
-        padding: 0.45rem 0.65rem; border-radius: 9px; border: 1px solid var(--line);
-        background: var(--bg); font-size: 11px; color: var(--ink-2);
+        display: flex; align-items: center; justify-content: space-between; gap: 0.35rem;
+        padding: 0.42rem 0.6rem; border-radius: 9px; border: 1px solid var(--line);
+        background: var(--bg); font-size: 11px; color: var(--ink-2); white-space: nowrap;
     }
-    .adm-grad-list { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem; }
+    .adm-grad-list { display: flex; flex-direction: column; gap: 0.95rem; margin-top: 1.1rem; }
     .adm-grad-row { display: flex; flex-direction: column; gap: 0.35rem; }
-    .adm-grad-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; font-size: 12px; }
-    .adm-grad-sub { font-size: 11px; color: var(--ink-3); }
-    .adm-grad-legend { display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 11px; color: var(--ink-3); }
+    .adm-grad-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 12.5px; }
+    .adm-grad-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; margin-top: 1.1rem; padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 11px; color: var(--ink-3); }
+    @media (max-width: 640px) {
+        .adm-quad-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
 
     @media (max-width: 960px) {
         .adm-analytics-grid-2 { grid-template-columns: 1fr; }
@@ -472,9 +476,9 @@
     $pendingProofs = (int) ($pendingSkpiProofs ?? 0);
     $fuList = $followUpStats ?? [];
 
-    // Koordinat SVG Scatter Plot: viewBox 0 0 460 250
-    $svW = 460; $svH = 250;
-    $padL = 42; $padR = 16; $padT = 16; $padB = 34;
+    // Koordinat SVG Scatter Plot: viewBox 0 0 460 232
+    $svW = 460; $svH = 232;
+    $padL = 36; $padR = 14; $padT = 18; $padB = 26;
     $plotW = $svW - $padL - $padR;
     $plotH = $svH - $padT - $padB;
     $x75 = round($padL + (0.75 * $plotW), 1);
@@ -482,177 +486,170 @@
 @endphp
 
 <section class="adm-analytics-grid-2 mt-6" aria-label="Peta kuadran akademik dan kesiapan kelulusan">
-    {{-- Kiri: Scatter Plot Kuadran Kehadiran vs IPS --}}
-    <div class="adm-panel">
-        <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <div>
-                <h2 class="text-base font-semibold">Peta Kuadran: Kehadiran vs IPS</h2>
-                <p class="mt-0.5 text-xs text-ink-3">Batas minimal hadir 75% (syarat UAS) &amp; IPS 3,00. Klik titik untuk menyaring mahasiswa.</p>
+    {{-- Kiri: Scatter Plot Kehadiran vs IPS --}}
+    <div class="adm-panel adm-panel-flex">
+        <div>
+            <div class="adm-card-head">
+                <h2 class="text-base font-semibold">Kehadiran vs IPS</h2>
+                <span class="mono text-xs text-ink-3" style="white-space:nowrap;">n = {{ count($spPoints) }}</span>
             </div>
-            <span class="mono text-xs text-ink-3">n = {{ count($spPoints) }}</span>
+            <p class="mt-0.5 text-xs text-ink-3">Batas 75% hadir &amp; IPS 3,00 &middot; klik titik untuk filter.</p>
+
+            @if (count($spPoints) === 0)
+                <p class="mt-6 text-sm text-ink-2">Belum ada data IPS dan kehadiran untuk dipetakan.</p>
+            @else
+                <div class="adm-scatter-box" id="adm-scatter-box">
+                    <svg class="adm-scatter-svg" viewBox="0 0 {{ $svW }} {{ $svH }}" role="img" aria-label="Grafik sebaran kehadiran terhadap IPS mahasiswa">
+                        {{-- Zona prioritas (kiri bawah) & zona stabil (kanan atas) --}}
+                        <rect x="{{ $padL }}" y="{{ $y30 }}" width="{{ $x75 - $padL }}" height="{{ ($padT + $plotH) - $y30 }}" fill="var(--bad)" fill-opacity="0.055" rx="3" />
+                        <rect x="{{ $x75 }}" y="{{ $padT }}" width="{{ ($padL + $plotW) - $x75 }}" height="{{ $y30 - $padT }}" fill="var(--ok)" fill-opacity="0.07" rx="3" />
+
+                        {{-- Label sumbu Y ringkas di atas --}}
+                        <text x="{{ $padL - 8 }}" y="10" text-anchor="end" font-size="9.5" fill="var(--ink-3)" font-weight="600">IPS</text>
+
+                        {{-- Grid horizontal (IPS 0, 1, 2, 3, 4) --}}
+                        @foreach ([0, 1, 2, 3, 4] as $ipsTick)
+                            @php $gy = round($padT + ((1 - ($ipsTick / 4.0)) * $plotH), 1); @endphp
+                            <line x1="{{ $padL }}" y1="{{ $gy }}" x2="{{ $padL + $plotW }}" y2="{{ $gy }}"
+                                  stroke="{{ $ipsTick === 3 ? 'var(--accent)' : 'var(--line)' }}"
+                                  stroke-width="{{ $ipsTick === 3 ? '1.15' : '0.9' }}"
+                                  stroke-dasharray="{{ $ipsTick === 3 ? '4 3' : '' }}"
+                                  stroke-opacity="{{ $ipsTick === 3 ? '0.65' : '0.75' }}" />
+                            <text x="{{ $padL - 8 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="{{ $ipsTick === 3 ? 'var(--accent)' : 'var(--ink-3)' }}" class="mono">{{ number_format($ipsTick, 1) }}</text>
+                        @endforeach
+
+                        {{-- Grid vertikal (Kehadiran 0%, 25%, 50%, 75%, 100%) --}}
+                        @foreach ([0, 25, 50, 75, 100] as $attTick)
+                            @php $gx = round($padL + (($attTick / 100.0) * $plotW), 1); @endphp
+                            <line x1="{{ $gx }}" y1="{{ $padT }}" x2="{{ $gx }}" y2="{{ $padT + $plotH }}"
+                                  stroke="{{ $attTick === 75 ? 'var(--bad)' : 'var(--line)' }}"
+                                  stroke-width="{{ $attTick === 75 ? '1.15' : '0.9' }}"
+                                  stroke-dasharray="{{ $attTick === 75 ? '4 3' : '' }}"
+                                  stroke-opacity="{{ $attTick === 75 ? '0.65' : '0.65' }}" />
+                            <text x="{{ $gx }}" y="{{ $padT + $plotH + 16 }}" text-anchor="middle" font-size="10" fill="{{ $attTick === 75 ? 'var(--bad)' : 'var(--ink-3)' }}" class="mono">{{ $attTick }}%</text>
+                        @endforeach
+
+                        {{-- Titik data mahasiswa --}}
+                        @foreach ($spPoints as $sIdx => $pt)
+                            @php
+                                $cx = round($padL + (($pt['attendance'] / 100.0) * $plotW), 1);
+                                $cy = round($padT + ((1 - ($pt['ips'] / 4.0)) * $plotH), 1);
+                                $dotColor = match ($pt['level']) {
+                                    'tinggi' => 'var(--bad)',
+                                    'sedang' => 'var(--warn)',
+                                    default => 'var(--ok)',
+                                };
+                            @endphp
+                            <circle cx="{{ $cx }}" cy="{{ $cy }}" r="5.5"
+                                    fill="{{ $dotColor }}" fill-opacity="0.88"
+                                    stroke="var(--surface)" stroke-width="1.8"
+                                    class="adm-scatter-dot"
+                                    onmouseenter="dashShowScatterTip(event, {{ $sIdx }})"
+                                    onmousemove="dashShowScatterTip(event, {{ $sIdx }})"
+                                    onmouseleave="dashHideScatterTip()"
+                                    onclick="dashFilterBySearch(@js($pt['nim']))" />
+                        @endforeach
+                    </svg>
+
+                    <div id="adm-scatter-tip" class="adm-scatter-tip" role="status" aria-live="polite"></div>
+                </div>
+            @endif
         </div>
 
-        @if (count($spPoints) === 0)
-            <p class="mt-6 text-sm text-ink-2">Belum ada mahasiswa dengan data IPS dan kehadiran untuk dipetakan.</p>
-        @else
-            <div class="adm-scatter-box" id="adm-scatter-box">
-                <svg class="adm-scatter-svg" viewBox="0 0 {{ $svW }} {{ $svH }}" role="img" aria-label="Grafik sebaran kehadiran terhadap IPS mahasiswa">
-                    {{-- Latar belakang zona prioritas (kiri bawah) dan zona stabil (kanan atas) --}}
-                    <rect x="{{ $padL }}" y="{{ $y30 }}" width="{{ $x75 - $padL }}" height="{{ ($padT + $plotH) - $y30 }}" fill="var(--bad)" fill-opacity="0.06" rx="3" />
-                    <rect x="{{ $x75 }}" y="{{ $padT }}" width="{{ ($padL + $plotW) - $x75 }}" height="{{ $y30 - $padT }}" fill="var(--ok)" fill-opacity="0.06" rx="3" />
-
-                    {{-- Grid horizontal (IPS 0, 1, 2, 3, 4) --}}
-                    @foreach ([0, 1, 2, 3, 4] as $ipsTick)
-                        @php $gy = round($padT + ((1 - ($ipsTick / 4.0)) * $plotH), 1); @endphp
-                        <line x1="{{ $padL }}" y1="{{ $gy }}" x2="{{ $padL + $plotW }}" y2="{{ $gy }}"
-                              stroke="{{ $ipsTick === 3 ? 'var(--accent)' : 'var(--line)' }}"
-                              stroke-width="{{ $ipsTick === 3 ? '1.2' : '1' }}"
-                              stroke-dasharray="{{ $ipsTick === 3 ? '4 3' : '' }}"
-                              stroke-opacity="{{ $ipsTick === 3 ? '0.65' : '0.8' }}" />
-                        <text x="{{ $padL - 8 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="var(--ink-3)" class="mono">{{ number_format($ipsTick, 1) }}</text>
-                    @endforeach
-
-                    {{-- Grid vertikal (Kehadiran 0%, 25%, 50%, 75%, 100%) --}}
-                    @foreach ([0, 25, 50, 75, 100] as $attTick)
-                        @php $gx = round($padL + (($attTick / 100.0) * $plotW), 1); @endphp
-                        <line x1="{{ $gx }}" y1="{{ $padT }}" x2="{{ $gx }}" y2="{{ $padT + $plotH }}"
-                              stroke="{{ $attTick === 75 ? 'var(--bad)' : 'var(--line)' }}"
-                              stroke-width="{{ $attTick === 75 ? '1.2' : '1' }}"
-                              stroke-dasharray="{{ $attTick === 75 ? '4 3' : '' }}"
-                              stroke-opacity="{{ $attTick === 75 ? '0.65' : '0.7' }}" />
-                        <text x="{{ $gx }}" y="{{ $padT + $plotH + 15 }}" text-anchor="middle" font-size="10" fill="{{ $attTick === 75 ? 'var(--bad)' : 'var(--ink-3)' }}" class="mono">{{ $attTick }}%</text>
-                    @endforeach
-
-                    {{-- Label sumbu --}}
-                    <text x="{{ $padL + ($plotW / 2) }}" y="{{ $svH - 2 }}" text-anchor="middle" font-size="10" fill="var(--ink-3)">Rata-rata Kehadiran (%)</text>
-                    <text x="12" y="{{ $padT + ($plotH / 2) }}" text-anchor="middle" font-size="10" fill="var(--ink-3)" transform="rotate(-90 12 {{ $padT + ($plotH / 2) }})">IPS</text>
-
-                    {{-- Label kuadran halus --}}
-                    <text x="{{ $padL + 6 }}" y="{{ $padT + $plotH - 6 }}" font-size="9.5" fill="var(--bad)" fill-opacity="0.85" font-weight="600">Prioritas</text>
-                    <text x="{{ $padL + $plotW - 6 }}" y="{{ $padT + 13 }}" text-anchor="end" font-size="9.5" fill="var(--ok)" fill-opacity="0.9" font-weight="600">Stabil &amp; Baik</text>
-
-                    {{-- Titik data mahasiswa --}}
-                    @foreach ($spPoints as $sIdx => $pt)
-                        @php
-                            $cx = round($padL + (($pt['attendance'] / 100.0) * $plotW), 1);
-                            $cy = round($padT + ((1 - ($pt['ips'] / 4.0)) * $plotH), 1);
-                            $dotColor = match ($pt['level']) {
-                                'tinggi' => 'var(--bad)',
-                                'sedang' => 'var(--warn)',
-                                default => 'var(--ok)',
-                            };
-                        @endphp
-                        <circle cx="{{ $cx }}" cy="{{ $cy }}" r="5.5"
-                                fill="{{ $dotColor }}" fill-opacity="0.85"
-                                stroke="var(--surface)" stroke-width="1.8"
-                                class="adm-scatter-dot"
-                                onmouseenter="dashShowScatterTip(event, {{ $sIdx }})"
-                                onmousemove="dashShowScatterTip(event, {{ $sIdx }})"
-                                onmouseleave="dashHideScatterTip()"
-                                onclick="dashFilterBySearch(@js($pt['nim']))" />
-                    @endforeach
-                </svg>
-
-                <div id="adm-scatter-tip" class="adm-scatter-tip" role="status" aria-live="polite"></div>
-            </div>
-
+        @if (count($spPoints) > 0)
             <div class="adm-quad-grid">
-                <div class="adm-quad-pill">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--ok);margin-right:6px;"></span>Stabil (&ge;75% &amp; &ge;3,0)</span>
+                <div class="adm-quad-pill" title="Kehadiran minimal 75% dan IPS minimal 3,00">
+                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--ok);margin-right:5px;"></span>Stabil</span>
                     <strong class="mono text-ink">{{ $qCounts['stabil'] }}</strong>
                 </div>
-                <div class="adm-quad-pill">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--accent);margin-right:6px;"></span>Dorong Nilai (&ge;75% &amp; &lt;3,0)</span>
+                <div class="adm-quad-pill" title="Kehadiran minimal 75%, IPS di bawah 3,00">
+                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--accent);margin-right:5px;"></span>Nilai</span>
                     <strong class="mono text-ink">{{ $qCounts['dorong_nilai'] }}</strong>
                 </div>
-                <div class="adm-quad-pill">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--warn);margin-right:6px;"></span>Rawan Absen (&lt;75% &amp; &ge;3,0)</span>
+                <div class="adm-quad-pill" title="Kehadiran di bawah 75%, IPS minimal 3,00">
+                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--warn);margin-right:5px;"></span>Absen</span>
                     <strong class="mono text-ink">{{ $qCounts['rawan_absen'] }}</strong>
                 </div>
-                <div class="adm-quad-pill">
-                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--bad);margin-right:6px;"></span>Prioritas (&lt;75% &amp; &lt;3,0)</span>
+                <div class="adm-quad-pill" title="Kehadiran di bawah 75% dan IPS di bawah 3,00">
+                    <span><span style="display:inline-block;width:7px;height:7px;border-radius:9999px;background:var(--bad);margin-right:5px;"></span>Prioritas</span>
                     <strong class="mono text-ink">{{ $qCounts['prioritas'] }}</strong>
                 </div>
             </div>
         @endif
     </div>
 
-    {{-- Kanan: Kesiapan Kelulusan (SKPI & 20 SKS Pengayaan) + Tindak Lanjut DPA --}}
-    <div class="adm-panel">
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-                <h2 class="text-base font-semibold">Kesiapan Kelulusan &amp; Bimbingan</h2>
-                <p class="mt-0.5 text-xs text-ink-3">Progres syarat wajib FTII UHAMKA dan status tindak lanjut DPA.</p>
+    {{-- Kanan: Kesiapan Kelulusan & Tindak Lanjut DPA --}}
+    <div class="adm-panel adm-panel-flex">
+        <div>
+            <div class="adm-card-head" style="flex-wrap:wrap;">
+                <div>
+                    <h2 class="text-base font-semibold">Kesiapan Kelulusan</h2>
+                    <p class="mt-0.5 text-xs text-ink-3">Syarat wajib FTII &amp; progres DPA.</p>
+                </div>
+                <div class="adm-tabs" role="tablist" aria-label="Pilih tampilan kesiapan">
+                    <button type="button" class="adm-tab is-active" data-ready-tab="kelulusan" onclick="dashSwitchReadyTab('kelulusan')">SKPI</button>
+                    <button type="button" class="adm-tab" data-ready-tab="tindaklanjut" onclick="dashSwitchReadyTab('tindaklanjut')">Tindak Lanjut</button>
+                </div>
             </div>
-            <div class="adm-tabs" role="tablist" aria-label="Pilih dimensi kesiapan">
-                <button type="button" class="adm-tab is-active" data-ready-tab="kelulusan" onclick="dashSwitchReadyTab('kelulusan')">SKPI &amp; Pengayaan</button>
-                <button type="button" class="adm-tab" data-ready-tab="tindaklanjut" onclick="dashSwitchReadyTab('tindaklanjut')">Tindak Lanjut</button>
-            </div>
-        </div>
 
-        {{-- Tab A: SKPI & 20 SKS Pengayaan --}}
-        <div data-ready-panel="kelulusan">
-            <div class="adm-grad-list">
-                @foreach ($gradList as $g)
-                    <div class="adm-grad-row">
-                        <div class="adm-grad-head">
-                            <div>
+            {{-- Tab A: SKPI & 20 SKS Pengayaan --}}
+            <div data-ready-panel="kelulusan">
+                <div class="adm-grad-list">
+                    @foreach ($gradList as $g)
+                        <div class="adm-grad-row" title="{{ $g['hint'] }}">
+                            <div class="adm-grad-head">
                                 <span class="font-medium text-ink">{{ $g['label'] }}</span>
-                                <span class="adm-grad-sub" style="margin-left:6px;">{{ $g['hint'] }}</span>
+                                <span class="mono text-xs text-ink-2" style="white-space:nowrap;">
+                                    <strong style="color:var(--ok);">{{ $g['done'] }}</strong>/{{ $g['total'] }}
+                                    <span class="text-ink-3">({{ $g['done_pct'] }}%)</span>
+                                </span>
                             </div>
-                            <span class="mono text-ink-2" style="white-space:nowrap;">
-                                <strong style="color:var(--ok);">{{ $g['done'] }}</strong>/{{ $g['total'] }}
-                                <span class="text-ink-3">({{ $g['done_pct'] }}%)</span>
-                            </span>
-                        </div>
-                        <div class="adm-bar-track" style="height:10px;">
-                            <div class="adm-bar-fill" style="width:100%;">
-                                @if ($g['done_pct'] > 0)<div style="width:{{ $g['done_pct'] }}%; background:var(--ok);" title="Selesai / Terverifikasi: {{ $g['done'] }} mhs"></div>@endif
-                                @if ($g['progress_pct'] > 0)<div style="width:{{ $g['progress_pct'] }}%; background:var(--warn);" title="Proses / Menunggu: {{ $g['in_progress'] }} mhs"></div>@endif
+                            <div class="adm-bar-track" style="height:9px;">
+                                <div class="adm-bar-fill" style="width:100%;">
+                                    @if ($g['done_pct'] > 0)<div style="width:{{ $g['done_pct'] }}%; background:var(--ok);" title="Selesai: {{ $g['done'] }} mhs"></div>@endif
+                                    @if ($g['progress_pct'] > 0)<div style="width:{{ $g['progress_pct'] }}%; background:var(--warn);" title="Proses: {{ $g['in_progress'] }} mhs"></div>@endif
+                                </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
 
-            <div class="adm-grad-legend">
-                <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--ok);margin-right:5px;"></span>Selesai / Terverifikasi</span>
-                <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn);margin-right:5px;"></span>Proses / Menunggu</span>
-                <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--bg);border:1px solid var(--line-strong);margin-right:5px;"></span>Belum</span>
-                @if ($pendingProofs > 0)
-                    <a href="{{ route('admin.skpi') }}" class="font-medium text-accent hover:underline" style="margin-left:auto;">
-                        {{ $pendingProofs }} bukti menunggu verifikasi &rarr;
-                    </a>
-                @endif
+            {{-- Tab B: Status Tindak Lanjut DPA --}}
+            <div data-ready-panel="tindaklanjut" style="display:none;">
+                <div class="adm-grad-list">
+                    @foreach ($fuList as $fu)
+                        <div class="adm-grad-row">
+                            <div class="adm-grad-head">
+                                <span class="font-medium text-ink">{{ $fu['label'] }}</span>
+                                <span class="mono text-xs text-ink-2" style="white-space:nowrap;">
+                                    <strong>{{ $fu['count'] }}</strong>
+                                    <span class="text-ink-3">({{ $fu['pct'] }}%)</span>
+                                    @if ($fu['priority_count'] > 0)
+                                        &middot; <span style="color:var(--warn);">{{ $fu['priority_count'] }} prioritas</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="adm-bar-track" style="height:9px;">
+                                <div class="adm-bar-fill" style="width:{{ max($fu['pct'], $fu['count'] > 0 ? 3 : 0) }}%;">
+                                    <div style="width:100%; background:{{ $fu['color'] }};"></div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
 
-        {{-- Tab B: Status Tindak Lanjut DPA --}}
-        <div data-ready-panel="tindaklanjut" style="display:none;">
-            <div class="adm-grad-list">
-                @foreach ($fuList as $fu)
-                    <div class="adm-grad-row">
-                        <div class="adm-grad-head">
-                            <span class="font-medium text-ink">{{ $fu['label'] }}</span>
-                            <span class="mono text-ink-2" style="white-space:nowrap;">
-                                <strong>{{ $fu['count'] }} mhs</strong>
-                                <span class="text-ink-3">({{ $fu['pct'] }}%)</span>
-                                @if ($fu['priority_count'] > 0)
-                                    &middot; <span style="color:var(--warn);">{{ $fu['priority_count'] }} prioritas</span>
-                                @endif
-                            </span>
-                        </div>
-                        <div class="adm-bar-track" style="height:10px;">
-                            <div class="adm-bar-fill" style="width:{{ max($fu['pct'], $fu['count'] > 0 ? 3 : 0) }}%;">
-                                <div style="width:100%; background:{{ $fu['color'] }};"></div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            <p class="mt-4 text-xs text-ink-3" style="line-height:1.5;">
-                Angka <strong>prioritas</strong> menunjukkan mahasiswa berisiko Tinggi atau Sedang pada masing-masing tahap tindak lanjut bimbingan DPA.
-            </p>
+        <div class="adm-grad-legend">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--ok);margin-right:5px;"></span>Selesai</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--warn);margin-right:5px;"></span>Proses</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--bg);border:1px solid var(--line-strong);margin-right:5px;"></span>Belum</span>
+            @if ($pendingProofs > 0)
+                <a href="{{ route('admin.skpi') }}" class="font-medium text-accent hover:underline" style="margin-left:auto;">
+                    {{ $pendingProofs }} menunggu &rarr;
+                </a>
+            @endif
         </div>
     </div>
 </section>

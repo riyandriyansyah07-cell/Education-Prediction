@@ -388,11 +388,11 @@ class DashboardController extends Controller
 
         // Grafik 4A: Kesiapan Kelulusan (20 SKS Pengayaan & 4 Syarat Wajib SKPI)
         $gradBuckets = [
-            'pengayaan' => ['label' => 'Pengayaan 20 SKS', 'hint' => 'Target minimal 20 SKS terkonversi', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
-            'it' => ['label' => 'Sertifikat Kompetensi IT', 'hint' => 'Selesai / terverifikasi admin', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
-            'baps' => ['label' => 'Baitul Arqam (BAPS)', 'hint' => 'Selesai / terverifikasi admin', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
-            'pkm' => ['label' => 'PKM (Min. Universitas)', 'hint' => 'Minimal lolos tingkat universitas', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
-            'toefl' => ['label' => 'TOEFL UHAMKA', 'hint' => 'Selesai / terverifikasi admin', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
+            'pengayaan' => ['label' => 'Pengayaan 20 SKS', 'hint' => 'Minimal 20 SKS terkonversi', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
+            'it' => ['label' => 'Sertifikat IT', 'hint' => 'Sertifikat kompetensi IT', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
+            'baps' => ['label' => 'BAPS', 'hint' => 'Baitul Arqam Purna Studi', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
+            'pkm' => ['label' => 'PKM (Univ+)', 'hint' => 'Minimal lolos tingkat universitas', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
+            'toefl' => ['label' => 'TOEFL UHAMKA', 'hint' => 'Sertifikat TOEFL UHAMKA', 'done' => 0, 'in_progress' => 0, 'pending' => 0],
         ];
 
         foreach ($allStudentRows as $r) {
