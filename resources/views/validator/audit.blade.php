@@ -105,10 +105,9 @@
 <section class="val-hero" aria-label="Ringkasan dan alur validasi AI">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div style="max-width: 44rem;">
-            <span class="val-pill"><x-icon name="shield-check" size="size-3.5" /> Human-in-the-Loop &middot; Validator AI</span>
-            <h1 class="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight">Audit &amp; Validasi Hasil AI Gemini</h1>
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">Validasi Penilaian AI</h1>
             <p class="mt-1.5 text-sm text-ink-2" style="line-height: 1.6;">
-                Verifikasi kebenaran penilaian risiko AI Gemini dengan membandingkannya langsung terhadap rumus matematis standar FTII UHAMKA.
+                Periksa ketepatan hasil analisis AI dengan membandingkannya terhadap perhitungan standar FTII UHAMKA.
             </p>
         </div>
         <a href="{{ route('validator.audit.ekspor', array_filter($filters)) }}" class="btn btn-primary btn-sm">
@@ -121,7 +120,7 @@
             <span class="val-step-num">1</span>
             <div>
                 <p class="text-xs font-semibold text-ink">Bandingkan Hasil</p>
-                <p class="mt-0.5 text-xs text-ink-3">Cek skor AI Gemini vs Rumus Matematis &amp; 5 indikator akademik.</p>
+                <p class="mt-0.5 text-xs text-ink-3">Cek skor AI vs Rumus Matematis &amp; 5 indikator akademik.</p>
             </div>
         </div>
         <div class="val-step">
@@ -167,7 +166,7 @@
     <div class="val-kpi">
         <p class="text-xs font-medium text-ink-3">Total Dianalisis</p>
         <p class="mono mt-2 text-3xl font-semibold leading-none text-ink">{{ $stats['total'] }}</p>
-        <p class="mt-2.5 text-xs text-ink-2"><strong>{{ $stats['ai_count'] }}</strong> Gemini AI &middot; {{ $stats['total'] - $stats['ai_count'] }} aturan</p>
+        <p class="mt-2.5 text-xs text-ink-2"><strong>{{ $stats['ai_count'] }}</strong> Analisis AI &middot; {{ $stats['total'] - $stats['ai_count'] }} aturan</p>
     </div>
 
     <div class="val-kpi">
@@ -219,7 +218,7 @@
             <label for="v-sumber" class="label text-xs">Sumber Evaluasi</label>
             <select id="v-sumber" name="sumber" class="input h-9 text-xs">
                 <option value="">Semua sumber</option>
-                <option value="ai" @selected($filters['sumber'] === 'ai')>Khusus Gemini AI</option>
+                <option value="ai" @selected($filters['sumber'] === 'ai')>Khusus Analisis AI</option>
                 <option value="aturan" @selected($filters['sumber'] === 'aturan')>Model Aturan / ML</option>
             </select>
         </div>
