@@ -57,11 +57,15 @@
         /* Matikan keyframe .rise bawaan app.css agar tidak bentrok dengan GSAP */
         .rise { animation: none !important; }
 
+        html, body {
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden !important;
+        }
+
         html {
             scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
-            max-width: 100%;
-            overflow-x: clip;
         }
 
         body {
@@ -69,13 +73,26 @@
             color: var(--ink);
             line-height: 1.55;
             -webkit-font-smoothing: antialiased;
-            max-width: 100%;
-            overflow-x: clip;
+            position: relative;
         }
 
         main {
-            max-width: 100%;
-            overflow-x: clip;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 1023px) {
+            header.app-mobile-header {
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+            }
+            main.app-main {
+                padding-top: 3.5rem;
+            }
         }
 
         /* Tipografi & Ritme Editorial */

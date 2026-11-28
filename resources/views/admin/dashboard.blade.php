@@ -147,7 +147,7 @@
     }
     .adm-ready-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
     @media (max-width: 960px) {
-        .adm-analytics-grid { grid-template-columns: 1fr; }
+        .adm-analytics-grid { grid-template-columns: minmax(0, 1fr); }
         .adm-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .adm-panel-airy { padding: 1.2rem; }
         .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }

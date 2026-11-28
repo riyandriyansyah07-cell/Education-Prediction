@@ -40,7 +40,7 @@
 
 @section('body')
     {{-- Header Mobile Sticky dengan Logo, Toggle Tema & Menu --}}
-    <header class="no-print sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-4 lg:hidden" style="backdrop-filter:blur(10px);">
+    <header class="app-mobile-header no-print sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-4 lg:hidden" style="backdrop-filter:blur(10px);">
         <a href="{{ route('beranda') }}" class="inline-flex items-center gap-2.5 font-semibold tracking-tight" style="min-width:0;">
             <x-brand-logo :size="28" />
             <span class="truncate text-sm">Cegah Sebelum Terlambat</span>
@@ -109,8 +109,8 @@
         </div>
     </aside>
 
-    <main class="lg:pl-64">
-        <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
+    <main class="app-main lg:pl-64">
+        <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 lg:py-10" style="max-width:100%;overflow-x:hidden;">
             @include('partials.flash')
 
             @if ($user->onboarding_seen_at === null)
