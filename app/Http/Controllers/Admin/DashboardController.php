@@ -526,6 +526,94 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        // Distribusi gelombang (skalabel untuk puluhan hingga ribuan mahasiswa, 1 sumbu Y = jumlah mahasiswa)
+        $analyzedRows = $allStudentRows->filter(fn (array $r) => $r['level'] !== 'belum');
+        $analyzedCount = $analyzedRows->count();
+
+        $ipsBuckets = [
+            ['label' => '< 2,0', 'count' => 0],
+            ['label' => '2,0–2,5', 'count' => 0],
+            ['label' => '2,5–3,0', 'count' => 0],
+            ['label' => '3,0–3,5', 'count' => 0],
+            ['label' => '3,5–3,8', 'count' => 0],
+            ['label' => '3,8–4,0', 'count' => 0],
+        ];
+        $attBuckets = [
+            ['label' => '< 60%', 'count' => 0],
+            ['label' => '60–74%', 'count' => 0],
+            ['label' => '75–84%', 'count' => 0],
+            ['label' => '85–94%', 'count' => 0],
+            ['label' => '95–100%', 'count' => 0],
+        ];
+        $riskBuckets = [
+            ['label' => '0–2 Aman', 'count' => 0],
+            ['label' => '2–4 Rendah', 'count' => 0],
+            ['label' => '4–6 Sedang', 'count' => 0],
+            ['label' => '6–8 Tinggi', 'count' => 0],
+            ['label' => '8–10 Kritis', 'count' => 0],
+        ];
+
+        $ipsSum = 0.0; $ipsN = 0; $ipsGood = 0;
+        $attSum = 0.0; $attN = 0; $attSafe = 0;
+        $riskSum = 0.0; $riskN = 0;
+
+        foreach ($analyzedRows as $r) {
+            if ($r['ips'] !== null) {
+                $v = (float) $r['ips'];
+                $ipsSum += $v; $ipsN++;
+                if ($v >= 3.0) { $ipsGood++; }
+                if ($v < 2.0) { $ipsBuckets[0]['count']++; }
+                elseif ($v < 2.5) { $ipsBuckets[1]['count']++; }
+                elseif ($v < 3.0) { $ipsBuckets[2]['count']++; }
+                elseif ($v < 3.5) { $ipsBuckets[3]['count']++; }
+                elseif ($v < 3.8) { $ipsBuckets[4]['count']++; }
+                else { $ipsBuckets[5]['count']++; }
+            }
+            if ($r['attendance'] !== null) {
+                $a = (float) $r['attendance'];
+                $attSum += $a; $attN++;
+                if ($a >= 75.0) { $attSafe++; }
+                if ($a < 60.0) { $attBuckets[0]['count']++; }
+                elseif ($a < 75.0) { $attBuckets[1]['count']++; }
+                elseif ($a < 85.0) { $attBuckets[2]['count']++; }
+                elseif ($a < 95.0) { $attBuckets[3]['count']++; }
+                else { $attBuckets[4]['count']++; }
+            }
+            if ($r['score'] !== null) {
+                $s = (float) $r['score'];
+                $riskSum += $s; $riskN++;
+                if ($s < 2.0) { $riskBuckets[0]['count']++; }
+                elseif ($s < 4.0) { $riskBuckets[1]['count']++; }
+                elseif ($s < 6.0) { $riskBuckets[2]['count']++; }
+                elseif ($s < 8.0) { $riskBuckets[3]['count']++; }
+                else { $riskBuckets[4]['count']++; }
+            }
+        }
+
+        $distributionWaves = [
+            'ips' => [
+                'buckets' => $ipsBuckets,
+                'total' => $ipsN,
+                'avg' => $ipsN > 0 ? number_format($ipsSum / $ipsN, 2, ',', '.') : '-',
+                'highlight' => $ipsN > 0 ? round(($ipsGood / $ipsN) * 100).'% di atas 3,00' : '-',
+                'color' => 'var(--ok)',
+            ],
+            'attendance' => [
+                'buckets' => $attBuckets,
+                'total' => $attN,
+                'avg' => $attN > 0 ? number_format($attSum / $attN, 1, ',', '.').'%' : '-',
+                'highlight' => $attN > 0 ? round(($attSafe / $attN) * 100).'% memenuhi syarat 75%' : '-',
+                'color' => 'var(--accent)',
+            ],
+            'risk' => [
+                'buckets' => $riskBuckets,
+                'total' => $riskN,
+                'avg' => $riskN > 0 ? number_format($riskSum / $riskN, 2, ',', '.').'/10' : '-',
+                'highlight' => $analyzedCount.' mahasiswa teranalisis',
+                'color' => 'var(--warn)',
+            ],
+        ];
+
         return [
             'totals' => [
                 'students' => $totalStudents,
@@ -556,6 +644,7 @@ class DashboardController extends Controller
             'pendingSkpiProofs' => $pendingSkpiProofs,
             'followUpStats' => $followUpStats,
             'semesterTrend' => $semesterTrend,
+            'distributionWaves' => $distributionWaves,
             'filters' => [
                 'q' => $q,
                 'prodi' => $prodiFilter,
