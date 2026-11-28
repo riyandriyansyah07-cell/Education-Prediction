@@ -122,36 +122,37 @@
     .adm-detail-row.is-open { display: table-row; }
     .adm-mobile-hint { display: none; }
 
-    .adm-wave-wrap { position: relative; width: 100%; margin-top: 0.9rem; }
+    .adm-section-gap { margin-top: 1.5rem; }
+    .adm-panel-airy { padding: 1.55rem 1.75rem; }
+    .adm-wave-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+    .adm-wave-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; }
+    .adm-wave-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; font-size: 12px; color: var(--ink-2); }
+    .adm-wave-wrap { position: relative; width: 100%; margin-top: 0.25rem; }
     .adm-wave-svg { width: 100%; height: auto; display: block; overflow: visible; }
-    .adm-wave-dot { cursor: pointer; transition: r 0.15s ease, stroke-width 0.15s ease; }
+    .adm-wave-dot { cursor: pointer; transition: stroke-width 0.15s ease; }
     .adm-wave-dot:hover { stroke-width: 3.5; }
     .adm-wave-tip {
         position: absolute; pointer-events: none; z-index: 25; display: none;
-        min-width: 175px; max-width: 235px; padding: 0.6rem 0.75rem; border-radius: 10px;
+        min-width: 185px; max-width: 240px; padding: 0.65rem 0.8rem; border-radius: 10px;
         background: var(--surface); border: 1px solid var(--line-strong);
         box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.22);
-        font-size: 11px; line-height: 1.45; color: var(--ink);
+        font-size: 11.5px; line-height: 1.5; color: var(--ink);
     }
-    .adm-wave-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
-    .adm-wave-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; font-size: 11.5px; color: var(--ink-2); }
-    .adm-ready-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 1rem; }
+    .adm-ready-grid { display: grid; gap: 1rem; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 1.15rem; }
+    .adm-fu-grid { display: grid; gap: 1rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 1.15rem; }
     .adm-ready-card {
-        padding: 0.75rem 0.85rem; border-radius: 10px; border: 1px solid var(--line);
-        background: var(--bg); display: flex; flex-direction: column; gap: 0.45rem;
+        padding: 0.95rem 1.05rem; border-radius: 12px; border: 1px solid var(--line);
+        background: var(--bg); display: flex; flex-direction: column; gap: 0.55rem;
     }
-    .adm-fu-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 1rem; }
+    .adm-ready-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
     @media (max-width: 960px) {
+        .adm-analytics-grid { grid-template-columns: 1fr; }
+        .adm-panel-airy { padding: 1.25rem; }
         .adm-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .adm-fu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 480px) {
         .adm-ready-grid, .adm-fu-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 960px) {
-        .adm-analytics-grid-2 { grid-template-columns: 1fr; }
-        .adm-analytics-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
         .adm-hero { padding: 1.15rem; }
@@ -475,19 +476,49 @@
     $pendingProofs = (int) ($pendingSkpiProofs ?? 0);
     $fuList = $followUpStats ?? [];
 
-    // Helper untuk membuat kurva gelombang halus (smooth cubic Bezier) tanpa overshoot
-    $buildWave = function (array $items, int $w = 920, int $h = 250) {
-        $padL = 42; $padR = 44; $padT = 22; $padB = 34;
+    // Helper kurva gelombang proporsional dengan skala Y adaptif agar tidak dempet di atas
+    $buildWave = function (array $items, int $w = 960, int $h = 285) {
+        $padL = 52; $padR = 54; $padT = 26; $padB = 42;
+        $innerPadX = 24;
         $plotW = $w - $padL - $padR;
         $plotH = $h - $padT - $padB;
         $n = count($items);
+
+        $ipsVals = array_map(fn ($it) => max(0.0, min(4.0, (float) $it['ips'])), $items);
+        $attVals = array_map(fn ($it) => max(0.0, min(100.0, (float) $it['attendance'])), $items);
+
+        $rawMinIps = $ipsVals !== [] ? min($ipsVals) : 0.0;
+        $ipsMin = $rawMinIps >= 2.8 ? 2.4 : ($rawMinIps >= 1.8 ? 1.2 : 0.0);
+        $ipsMax = 4.15;
+
+        $rawMinAtt = $attVals !== [] ? min($attVals) : 0.0;
+        $attMin = $rawMinAtt >= 75.0 ? 60.0 : ($rawMinAtt >= 50.0 ? 40.0 : 0.0);
+        $attMax = 106.0;
+
+        $ipsSpan = max(0.5, $ipsMax - $ipsMin);
+        $attSpan = max(10.0, $attMax - $attMin);
+
+        $ticks = [];
+        for ($k = 0; $k <= 4; $k++) {
+            $ratio = $k / 4.0;
+            $gy = round($padT + (1.0 - $ratio) * $plotH, 1);
+            $ipsVal = round($ipsMin + $ratio * (4.0 - $ipsMin), 1);
+            $attVal = (int) round($attMin + $ratio * (100.0 - $attMin));
+            $ticks[] = ['y' => $gy, 'val' => number_format($ipsVal, 1), 'att' => $attVal.'%'];
+        }
+
         $ipsCoords = [];
         $attCoords = [];
+        $usableW = max(1, $plotW - ($innerPadX * 2));
 
         foreach ($items as $i => $it) {
-            $x = $n > 1 ? round($padL + ($i / ($n - 1)) * $plotW, 1) : round($padL + ($plotW / 2), 1);
-            $yIps = round($padT + (1 - (max(0, min(4, (float) $it['ips'])) / 4.0)) * $plotH, 1);
-            $yAtt = round($padT + (1 - (max(0, min(100, (float) $it['attendance'])) / 100.0)) * $plotH, 1);
+            $x = $n > 1
+                ? round($padL + $innerPadX + ($i / ($n - 1)) * $usableW, 1)
+                : round($padL + ($plotW / 2), 1);
+            $ipsNorm = (max($ipsMin, min($ipsMax, (float) $it['ips'])) - $ipsMin) / $ipsSpan;
+            $attNorm = (max($attMin, min($attMax, (float) $it['attendance'])) - $attMin) / $attSpan;
+            $yIps = round($padT + (1.0 - $ipsNorm) * $plotH, 1);
+            $yAtt = round($padT + (1.0 - $attNorm) * $plotH, 1);
             $ipsCoords[] = ['x' => $x, 'y' => $yIps];
             $attCoords[] = ['x' => $x, 'y' => $yAtt];
         }
@@ -513,6 +544,7 @@
         return [
             'w' => $w, 'h' => $h, 'padL' => $padL, 'padR' => $padR, 'padT' => $padT, 'padB' => $padB,
             'plotW' => $plotW, 'plotH' => $plotH,
+            'ticks' => $ticks,
             'ipsCoords' => $ipsCoords,
             'attCoords' => $attCoords,
             'ipsPath' => $makePath($ipsCoords),
@@ -524,17 +556,17 @@
     $semWave = $buildWave($semPoints);
 @endphp
 
-<section class="adm-panel mt-6" aria-label="Grafik gelombang IPS dan kehadiran">
+<section class="adm-panel adm-panel-airy adm-section-gap" aria-label="Grafik gelombang IPS dan kehadiran">
     <div class="adm-wave-head">
         <div>
             <h2 class="text-base font-semibold">Gelombang IPS &amp; Kehadiran</h2>
-            <p class="mt-0.5 text-xs text-ink-3">Arahkan kursor untuk detail &middot; klik titik mahasiswa untuk filter tabel.</p>
+            <p class="mt-0.5 text-xs text-ink-3">Arahkan kursor untuk detail &middot; klik titik untuk menyaring mahasiswa.</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="adm-wave-controls">
             <div class="adm-wave-legend">
-                <span><span style="display:inline-block;width:10px;height:3px;border-radius:99px;background:var(--ok);vertical-align:middle;margin-right:6px;"></span>IPS (0&ndash;4)</span>
-                <span><span style="display:inline-block;width:10px;height:3px;border-radius:99px;background:var(--accent);vertical-align:middle;margin-right:6px;"></span>Kehadiran (%)</span>
+                <span><span style="display:inline-block;width:12px;height:3px;border-radius:99px;background:var(--ok);vertical-align:middle;margin-right:7px;"></span>IPS</span>
+                <span><span style="display:inline-block;width:12px;height:3px;border-radius:99px;background:var(--accent);vertical-align:middle;margin-right:7px;"></span>Kehadiran</span>
             </div>
             <div class="adm-tabs" role="tablist" aria-label="Mode grafik gelombang">
                 <button type="button" class="adm-tab is-active" data-wave-tab="mhs" onclick="dashSwitchWaveTab('mhs')">Per Mahasiswa</button>
@@ -552,43 +584,35 @@
                 <svg class="adm-wave-svg" viewBox="0 0 {{ $mhsWave['w'] }} {{ $mhsWave['h'] }}" role="img" aria-label="Grafik gelombang IPS dan kehadiran per mahasiswa">
                     <defs>
                         <linearGradient id="waveGradIpsMhs" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.22" />
-                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.01" />
+                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.20" />
+                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.0" />
                         </linearGradient>
                         <linearGradient id="waveGradAttMhs" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.16" />
-                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.01" />
+                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.14" />
+                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0" />
                         </linearGradient>
                     </defs>
 
-                    {{-- Grid horizontal & label sumbu kiri (IPS) + kanan (Kehadiran %) --}}
-                    @foreach ([0, 1, 2, 3, 4] as $t)
-                        @php
-                            $gy = round($mhsWave['padT'] + (1 - ($t / 4.0)) * $mhsWave['plotH'], 1);
-                            $attLbl = $t * 25;
-                        @endphp
-                        <line x1="{{ $mhsWave['padL'] }}" y1="{{ $gy }}" x2="{{ $mhsWave['padL'] + $mhsWave['plotW'] }}" y2="{{ $gy }}"
-                              stroke="{{ $t === 3 ? 'var(--line-strong)' : 'var(--line)' }}"
-                              stroke-width="{{ $t === 3 ? '1' : '0.85' }}"
-                              stroke-dasharray="{{ $t === 3 ? '4 4' : '' }}" />
-                        <text x="{{ $mhsWave['padL'] - 9 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="var(--ok)" class="mono">{{ number_format($t, 1) }}</text>
-                        <text x="{{ $mhsWave['padL'] + $mhsWave['plotW'] + 9 }}" y="{{ $gy + 3.5 }}" text-anchor="start" font-size="10" fill="var(--accent)" class="mono">{{ $attLbl }}%</text>
+                    <text x="{{ $mhsWave['padL'] - 12 }}" y="12" text-anchor="end" font-size="9.5" fill="var(--ok)" font-weight="600">IPS</text>
+                    <text x="{{ $mhsWave['padL'] + $mhsWave['plotW'] + 12 }}" y="12" text-anchor="start" font-size="9.5" fill="var(--accent)" font-weight="600">Hadir</text>
+
+                    @foreach ($mhsWave['ticks'] as $tk)
+                        <line x1="{{ $mhsWave['padL'] }}" y1="{{ $tk['y'] }}" x2="{{ $mhsWave['padL'] + $mhsWave['plotW'] }}" y2="{{ $tk['y'] }}"
+                              stroke="var(--line)" stroke-width="0.9" stroke-dasharray="3 4" />
+                        <text x="{{ $mhsWave['padL'] - 12 }}" y="{{ $tk['y'] + 3.5 }}" text-anchor="end" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $tk['val'] }}</text>
+                        <text x="{{ $mhsWave['padL'] + $mhsWave['plotW'] + 12 }}" y="{{ $tk['y'] + 3.5 }}" text-anchor="start" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $tk['att'] }}</text>
                     @endforeach
 
-                    {{-- Area & garis gelombang Kehadiran --}}
                     <path d="{{ $mhsWave['attPath']['area'] }}" fill="url(#waveGradAttMhs)" />
-                    <path d="{{ $mhsWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" />
+                    <path d="{{ $mhsWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.3" stroke-linecap="round" />
 
-                    {{-- Area & garis gelombang IPS --}}
                     <path d="{{ $mhsWave['ipsPath']['area'] }}" fill="url(#waveGradIpsMhs)" />
-                    <path d="{{ $mhsWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="{{ $mhsWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" />
 
-                    {{-- Garis panduan vertikal saat hover --}}
                     <line id="wave-guide-mhs" x1="0" y1="{{ $mhsWave['padT'] }}" x2="0" y2="{{ $mhsWave['padT'] + $mhsWave['plotH'] }}"
                           stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 3" style="display:none;" />
 
-                    {{-- Titik data & label sumbu X --}}
-                    @php $stepMhs = max(1, (int) ceil(count($spPoints) / 10)); @endphp
+                    @php $stepMhs = max(1, (int) ceil(count($spPoints) / 9)); @endphp
                     @foreach ($spPoints as $idx => $pt)
                         @php
                             $ic = $mhsWave['ipsCoords'][$idx];
@@ -597,14 +621,14 @@
                             $shortName = mb_strlen($shortName) > 9 ? mb_substr($shortName, 0, 8).'…' : $shortName;
                         @endphp
                         @if ($idx % $stepMhs === 0 || $idx === count($spPoints) - 1)
-                            <text x="{{ $ic['x'] }}" y="{{ $mhsWave['padT'] + $mhsWave['plotH'] + 18 }}" text-anchor="middle" font-size="10" fill="var(--ink-3)">{{ $shortName }}</text>
+                            <text x="{{ $ic['x'] }}" y="{{ $mhsWave['padT'] + $mhsWave['plotH'] + 24 }}" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">{{ $shortName }}</text>
                         @endif
-                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4.2" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" class="adm-wave-dot"
                                 onmouseenter="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ac['x'] }})"
                                 onmousemove="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ac['x'] }})"
                                 onmouseleave="dashHideWaveTip('mhs')"
                                 onclick="dashFilterBySearch(@js($pt['nim']))" />
-                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="4.5" fill="var(--ok)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="4.8" fill="var(--ok)" stroke="var(--surface)" stroke-width="2" class="adm-wave-dot"
                                 onmouseenter="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ic['x'] }})"
                                 onmousemove="dashShowWaveTip(event, 'mhs', {{ $idx }}, {{ $ic['x'] }})"
                                 onmouseleave="dashHideWaveTip('mhs')"
@@ -625,33 +649,30 @@
                 <svg class="adm-wave-svg" viewBox="0 0 {{ $semWave['w'] }} {{ $semWave['h'] }}" role="img" aria-label="Grafik gelombang rata-rata IPS dan kehadiran per semester">
                     <defs>
                         <linearGradient id="waveGradIpsSem" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.22" />
-                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.01" />
+                            <stop offset="0%" stop-color="var(--ok)" stop-opacity="0.20" />
+                            <stop offset="100%" stop-color="var(--ok)" stop-opacity="0.0" />
                         </linearGradient>
                         <linearGradient id="waveGradAttSem" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.16" />
-                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.01" />
+                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.14" />
+                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0" />
                         </linearGradient>
                     </defs>
 
-                    @foreach ([0, 1, 2, 3, 4] as $t)
-                        @php
-                            $gy = round($semWave['padT'] + (1 - ($t / 4.0)) * $semWave['plotH'], 1);
-                            $attLbl = $t * 25;
-                        @endphp
-                        <line x1="{{ $semWave['padL'] }}" y1="{{ $gy }}" x2="{{ $semWave['padL'] + $semWave['plotW'] }}" y2="{{ $gy }}"
-                              stroke="{{ $t === 3 ? 'var(--line-strong)' : 'var(--line)' }}"
-                              stroke-width="{{ $t === 3 ? '1' : '0.85' }}"
-                              stroke-dasharray="{{ $t === 3 ? '4 4' : '' }}" />
-                        <text x="{{ $semWave['padL'] - 9 }}" y="{{ $gy + 3.5 }}" text-anchor="end" font-size="10" fill="var(--ok)" class="mono">{{ number_format($t, 1) }}</text>
-                        <text x="{{ $semWave['padL'] + $semWave['plotW'] + 9 }}" y="{{ $gy + 3.5 }}" text-anchor="start" font-size="10" fill="var(--accent)" class="mono">{{ $attLbl }}%</text>
+                    <text x="{{ $semWave['padL'] - 12 }}" y="12" text-anchor="end" font-size="9.5" fill="var(--ok)" font-weight="600">IPS</text>
+                    <text x="{{ $semWave['padL'] + $semWave['plotW'] + 12 }}" y="12" text-anchor="start" font-size="9.5" fill="var(--accent)" font-weight="600">Hadir</text>
+
+                    @foreach ($semWave['ticks'] as $tk)
+                        <line x1="{{ $semWave['padL'] }}" y1="{{ $tk['y'] }}" x2="{{ $semWave['padL'] + $semWave['plotW'] }}" y2="{{ $tk['y'] }}"
+                              stroke="var(--line)" stroke-width="0.9" stroke-dasharray="3 4" />
+                        <text x="{{ $semWave['padL'] - 12 }}" y="{{ $tk['y'] + 3.5 }}" text-anchor="end" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $tk['val'] }}</text>
+                        <text x="{{ $semWave['padL'] + $semWave['plotW'] + 12 }}" y="{{ $tk['y'] + 3.5 }}" text-anchor="start" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $tk['att'] }}</text>
                     @endforeach
 
                     <path d="{{ $semWave['attPath']['area'] }}" fill="url(#waveGradAttSem)" />
-                    <path d="{{ $semWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" />
+                    <path d="{{ $semWave['attPath']['line'] }}" fill="none" stroke="var(--accent)" stroke-width="2.3" stroke-linecap="round" />
 
                     <path d="{{ $semWave['ipsPath']['area'] }}" fill="url(#waveGradIpsSem)" />
-                    <path d="{{ $semWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" />
+                    <path d="{{ $semWave['ipsPath']['line'] }}" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" />
 
                     <line id="wave-guide-sem" x1="0" y1="{{ $semWave['padT'] }}" x2="0" y2="{{ $semWave['padT'] + $semWave['plotH'] }}"
                           stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 3" style="display:none;" />
@@ -661,12 +682,12 @@
                             $ic = $semWave['ipsCoords'][$idx];
                             $ac = $semWave['attCoords'][$idx];
                         @endphp
-                        <text x="{{ $ic['x'] }}" y="{{ $semWave['padT'] + $semWave['plotH'] + 18 }}" text-anchor="middle" font-size="10" fill="var(--ink-3)" class="mono">{{ $sp['label'] }}</text>
-                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                        <text x="{{ $ic['x'] }}" y="{{ $semWave['padT'] + $semWave['plotH'] + 24 }}" text-anchor="middle" font-size="10.5" fill="var(--ink-3)" class="mono">{{ $sp['label'] }}</text>
+                        <circle cx="{{ $ac['x'] }}" cy="{{ $ac['y'] }}" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" class="adm-wave-dot"
                                 onmouseenter="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ac['x'] }})"
                                 onmousemove="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ac['x'] }})"
                                 onmouseleave="dashHideWaveTip('sem')" />
-                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="5" fill="var(--ok)" stroke="var(--surface)" stroke-width="1.8" class="adm-wave-dot"
+                        <circle cx="{{ $ic['x'] }}" cy="{{ $ic['y'] }}" r="5" fill="var(--ok)" stroke="var(--surface)" stroke-width="2" class="adm-wave-dot"
                                 onmouseenter="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ic['x'] }})"
                                 onmousemove="dashShowWaveTip(event, 'sem', {{ $idx }}, {{ $ic['x'] }})"
                                 onmouseleave="dashHideWaveTip('sem')" />
@@ -678,10 +699,10 @@
     </div>
 </section>
 
-{{-- BLOK 2C: RINGKASAN KESIAPAN KELULUSAN & TINDAK LANJUT (RINGKAS FULL-WIDTH) --}}
-<section class="adm-panel mt-6" aria-label="Kesiapan kelulusan dan tindak lanjut">
-    <div class="adm-wave-head">
-        <div class="flex flex-wrap items-baseline gap-3">
+{{-- BLOK 2C: RINGKASAN KESIAPAN KELULUSAN & TINDAK LANJUT (PROPORSIONAL FULL-WIDTH) --}}
+<section class="adm-panel adm-panel-airy adm-section-gap" aria-label="Kesiapan kelulusan dan tindak lanjut">
+    <div class="adm-wave-head" style="margin-bottom:0;">
+        <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.75rem;">
             <h2 class="text-base font-semibold">Kesiapan Kelulusan</h2>
             @if ($pendingProofs > 0)
                 <a href="{{ route('admin.skpi') }}" class="text-xs font-medium text-accent hover:underline">{{ $pendingProofs }} bukti menunggu &rarr;</a>
@@ -696,14 +717,14 @@
     <div data-ready-panel="kelulusan" class="adm-ready-grid">
         @foreach ($gradList as $g)
             <div class="adm-ready-card" title="{{ $g['hint'] }}">
-                <div class="flex items-baseline justify-between gap-2">
+                <div class="adm-ready-top">
                     <span class="text-xs font-medium text-ink truncate">{{ $g['label'] }}</span>
                     <span class="mono text-xs text-ink-3">{{ $g['done_pct'] }}%</span>
                 </div>
-                <div class="mono text-sm font-semibold text-ink">
+                <div class="mono text-base font-semibold text-ink">
                     <span style="color:var(--ok);">{{ $g['done'] }}</span><span class="text-xs font-normal text-ink-3"> / {{ $g['total'] }}</span>
                 </div>
-                <div class="adm-bar-track" style="height:7px;">
+                <div class="adm-bar-track" style="height:8px;">
                     <div class="adm-bar-fill" style="width:100%;">
                         @if ($g['done_pct'] > 0)<div style="width:{{ $g['done_pct'] }}%; background:var(--ok);"></div>@endif
                         @if ($g['progress_pct'] > 0)<div style="width:{{ $g['progress_pct'] }}%; background:var(--warn);"></div>@endif
@@ -716,17 +737,17 @@
     <div data-ready-panel="tindaklanjut" class="adm-fu-grid" style="display:none;">
         @foreach ($fuList as $fu)
             <div class="adm-ready-card">
-                <div class="flex items-baseline justify-between gap-2">
+                <div class="adm-ready-top">
                     <span class="text-xs font-medium text-ink truncate">{{ $fu['label'] }}</span>
                     <span class="mono text-xs text-ink-3">{{ $fu['pct'] }}%</span>
                 </div>
-                <div class="mono text-sm font-semibold text-ink">
+                <div class="mono text-base font-semibold text-ink">
                     {{ $fu['count'] }} <span class="text-xs font-normal text-ink-3">mhs</span>
                     @if ($fu['priority_count'] > 0)
                         <span class="text-xs font-medium" style="color:var(--warn);margin-left:4px;">&middot; {{ $fu['priority_count'] }} prioritas</span>
                     @endif
                 </div>
-                <div class="adm-bar-track" style="height:7px;">
+                <div class="adm-bar-track" style="height:8px;">
                     <div class="adm-bar-fill" style="width:{{ max($fu['pct'], $fu['count'] > 0 ? 4 : 0) }}%;">
                         <div style="width:100%; background:{{ $fu['color'] }};"></div>
                     </div>
