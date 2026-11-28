@@ -116,6 +116,14 @@
 
     .adm-filter-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; }
     .adm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; width: 100%; }
+    .adm-group-badge {
+        display: inline-flex; align-items: center; padding: 0.16rem 0.5rem; border-radius: 6px;
+        font-size: 11px; font-weight: 600; background: var(--bg); border: 1px solid var(--line);
+        color: var(--ink-2); white-space: nowrap;
+    }
+    .adm-risk-summary { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.35rem; font-size: 11px; color: var(--ink-3); }
+    .adm-cohort-row { cursor: pointer; transition: background 0.15s ease; }
+    .adm-cohort-row:hover { background: color-mix(in srgb, var(--accent) 4%, var(--bg)); }
     .adm-table th, .adm-table td { padding: 0.72rem 0.75rem; vertical-align: middle; }
     .adm-table th.num, .adm-table td.num { white-space: nowrap; text-align: right; }
     .adm-detail-row { display: none; background: color-mix(in srgb, var(--accent) 4%, var(--bg)); }
@@ -214,7 +222,7 @@
                 Dari <strong>{{ $totals['students'] }} mahasiswa</strong> terdaftar bersama <strong>{{ $totals['dpas'] }} DPA</strong>,
                 terdapat <strong style="color:var(--bad);">{{ $riskCounts['tinggi'] }} risiko Tinggi</strong> dan
                 <strong style="color:var(--warn);">{{ $riskCounts['sedang'] }} risiko Sedang</strong>
-                ({{ $attentionPct }}% total perlu perhatian). Klik grafik atau baris kohort di bawah untuk langsung menyaring data.
+                ({{ $attentionPct }}% total perlu perhatian). Klik grafik atau ringkasan angkatan di bawah untuk langsung menyaring data.
             </p>
         </div>
 
@@ -705,35 +713,29 @@
     </div>
 </section>
 
-{{-- BLOK 3: MATRIKS KOHORT GABUNGAN (ANGKATAN x PROGRAM STUDI) --}}
-<section class="adm-panel mt-6" aria-labelledby="rekap-kohort">
-    <div class="flex flex-wrap items-baseline justify-between gap-2">
+{{-- BLOK 3: RINGKASAN PER ANGKATAN & PROGRAM STUDI --}}
+<section class="adm-panel adm-panel-airy adm-section-gap" aria-labelledby="rekap-angkatan-prodi">
+    <div class="adm-wave-head" style="margin-bottom:1rem;">
         <div>
-            <h2 id="rekap-kohort" class="text-base font-semibold">Pemetaan Kohort: Angkatan &times; Program Studi</h2>
-            <p class="mt-0.5 text-xs text-ink-3">Ringkasan risiko gabungan per angkatan dan prodi. Klik <strong>Lihat</strong> untuk langsung menyaring tabel mahasiswa di bawah.</p>
-            <p class="adm-mobile-hint">Geser tabel ke samping untuk melihat seluruh kolom &rarr;</p>
+            <h2 id="rekap-angkatan-prodi" class="text-base font-semibold">Ringkasan per Angkatan &amp; Prodi</h2>
+            <p class="mt-0.5 text-xs text-ink-3">Klik baris atau tombol <strong>Lihat</strong> untuk menyaring daftar mahasiswa di bawah.</p>
         </div>
-        <span class="mono text-xs text-ink-2">{{ $cohortStats->count() }} kohort aktif</span>
+        <span class="mono text-xs text-ink-3">{{ $cohortStats->count() }} kelompok</span>
     </div>
 
     @if ($cohortStats->isEmpty())
         <p class="mt-4 text-sm text-ink-2">Belum ada data mahasiswa.</p>
     @else
-        <div class="adm-scroll mt-4">
-            <table class="tbl adm-table w-full text-xs">
+        <div class="adm-scroll">
+            <table class="tbl adm-table w-full text-xs" style="table-layout:auto;">
                 <thead>
                     <tr>
-                        <th>Angkatan</th>
-                        <th>Program Studi</th>
-                        <th style="min-width:110px;">Komposisi Risiko</th>
-                        <th class="num">Total</th>
-                        <th class="num">Tinggi</th>
-                        <th class="num">Sedang</th>
-                        <th class="num">Rendah</th>
-                        <th class="num">Belum</th>
-                        <th class="num">IPS</th>
-                        <th class="num">Hadir</th>
-                        <th><span class="sr-only">Aksi</span></th>
+                        <th style="min-width:210px;">Angkatan &amp; Prodi</th>
+                        <th class="num" style="width:76px;">Mhs</th>
+                        <th style="min-width:190px;">Kondisi Risiko</th>
+                        <th class="num" style="width:78px;">IPS</th>
+                        <th class="num" style="width:82px;">Hadir</th>
+                        <th class="text-right" style="width:88px;"><span class="sr-only">Aksi</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -743,12 +745,16 @@
                             $cS = $c['total'] > 0 ? round(($c['sedang'] / $c['total']) * 100, 1) : 0;
                             $cR = $c['total'] > 0 ? round(($c['rendah'] / $c['total']) * 100, 1) : 0;
                             $cB = max(0, 100 - $cT - $cS - $cR);
+                            $yrLabel = $c['angkatan'] === 'Tidak diketahui' ? 'Tanpa tahun' : $c['angkatan'];
                         @endphp
-                        <tr>
-                            <td class="mono font-semibold" style="white-space:nowrap;">
-                                {{ $c['angkatan'] === 'Tidak diketahui' ? $c['angkatan'] : 'Angkatan '.$c['angkatan'] }}
+                        <tr class="adm-cohort-row" onclick="dashFilterByCohort(@js($c['angkatan']), @js($c['program_studi']))">
+                            <td>
+                                <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                                    <span class="adm-group-badge mono">{{ $yrLabel }}</span>
+                                    <span class="font-medium text-ink">{{ $c['program_studi'] }}</span>
+                                </div>
                             </td>
-                            <td class="font-medium">{{ $c['program_studi'] }}</td>
+                            <td class="num mono font-semibold text-ink">{{ $c['total'] }}</td>
                             <td>
                                 <div class="adm-bar-track" style="height:8px;">
                                     <div class="adm-bar-fill" style="width:100%;">
@@ -758,17 +764,18 @@
                                         @if ($cB > 0)<div style="width:{{ $cB }}%; background:var(--line-strong);"></div>@endif
                                     </div>
                                 </div>
+                                <div class="adm-risk-summary">
+                                    @if ($c['tinggi'] > 0)<span style="color:var(--bad);font-weight:600;">{{ $c['tinggi'] }} Tinggi</span>@endif
+                                    @if ($c['sedang'] > 0)<span style="color:var(--warn);font-weight:600;">{{ $c['sedang'] }} Sedang</span>@endif
+                                    @if ($c['rendah'] > 0)<span style="color:var(--ok);font-weight:500;">{{ $c['rendah'] }} Aman</span>@endif
+                                    @if ($c['belum'] > 0)<span>{{ $c['belum'] }} Belum dihitung</span>@endif
+                                </div>
                             </td>
-                            <td class="num mono font-semibold">{{ $c['total'] }}</td>
-                            <td class="num mono font-semibold" style="color:var(--bad);">{{ $c['tinggi'] }}</td>
-                            <td class="num mono font-semibold" style="color:var(--warn);">{{ $c['sedang'] }}</td>
-                            <td class="num mono font-semibold" style="color:var(--ok);">{{ $c['rendah'] }}</td>
-                            <td class="num mono text-ink-3">{{ $c['belum'] }}</td>
-                            <td class="num mono">{{ $c['avg_ips'] !== null ? number_format($c['avg_ips'], 2) : '-' }}</td>
-                            <td class="num mono">{{ $c['avg_attendance'] !== null ? number_format($c['avg_attendance'], 1).'%' : '-' }}</td>
+                            <td class="num mono">{{ $c['avg_ips'] !== null ? number_format($c['avg_ips'], 2, ',', '.') : '-' }}</td>
+                            <td class="num mono">{{ $c['avg_attendance'] !== null ? number_format($c['avg_attendance'], 1, ',', '.').'%' : '-' }}</td>
                             <td class="text-right" style="white-space:nowrap;">
                                 <button type="button" class="btn btn-quiet btn-sm"
-                                    onclick="dashFilterByCohort(@js($c['angkatan']), @js($c['program_studi']))">
+                                    onclick="event.stopPropagation(); dashFilterByCohort(@js($c['angkatan']), @js($c['program_studi']))">
                                     Lihat &rarr;
                                 </button>
                             </td>
