@@ -115,47 +115,20 @@
         </a>
     </div>
 
-    <div class="val-steps" aria-label="Alur kerja validator">
-        <div class="val-step">
-            <span class="val-step-num">1</span>
-            <div>
-                <p class="text-xs font-semibold text-ink">Bandingkan Hasil</p>
-                <p class="mt-0.5 text-xs text-ink-3">Cek skor AI vs Rumus Matematis &amp; 5 indikator akademik.</p>
-            </div>
-        </div>
-        <div class="val-step">
-            <span class="val-step-num">2</span>
-            <div>
-                <p class="text-xs font-semibold text-ink">Beri Keputusan</p>
-                <p class="mt-0.5 text-xs text-ink-3">Pilih <strong>Sesuai</strong> atau <strong>Perlu Koreksi</strong> beserta catatan evaluasi.</p>
-            </div>
-        </div>
-        <div class="val-step">
-            <span class="val-step-num">3</span>
-            <div>
-                <p class="text-xs font-semibold text-ink">Pantau Akurasi</p>
-                <p class="mt-0.5 text-xs text-ink-3">Persentase akurasi AI terhitung otomatis &amp; siap diekspor ke CSV.</p>
-            </div>
-        </div>
-    </div>
-
-    <details style="margin-top:0.9rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0.7rem 0.95rem;">
-        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;font-size:12.5px;font-weight:600;color:var(--ink);user-select:none;">
-            <span>Panduan Koreksi Validasi AI</span>
-            <span class="mono text-xs text-ink-3">Lihat panduan &#9662;</span>
+    <details style="margin-top:1rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0.75rem 1rem;">
+        <summary style="cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;font-size:12.5px;font-weight:500;color:var(--ink-2);user-select:none;">
+            <span>Panduan singkat validasi</span>
+            <span class="text-xs text-ink-3">Buka &#9662;</span>
         </summary>
-        <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line);display:grid;gap:0.7rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));font-size:12px;line-height:1.5;color:var(--ink-2);">
-            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--ok) 35%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
-                <p style="font-weight:600;color:var(--ok);margin:0;">1. Pilih &ldquo;Sesuai&rdquo;</p>
-                <p style="margin:0.3rem 0 0;">Hasil AI sama dengan perhitungan rumus (beda skor di bawah 1,5), dan alasannya cocok dengan nilai serta absensi mahasiswa.</p>
+        <div style="margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:0.65rem;font-size:12.5px;line-height:1.55;color:var(--ink-2);">
+            <div style="padding-bottom:0.65rem;border-bottom:1px solid var(--line);">
+                <strong class="text-ink">Sesuai</strong> &mdash; Selisih skor di bawah 1,5 dari perhitungan standar dan alasannya cocok dengan nilai serta kehadiran mahasiswa.
             </div>
-            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--warn) 40%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
-                <p style="font-weight:600;color:var(--warn);margin:0;">2. Pilih &ldquo;Perlu Koreksi&rdquo;</p>
-                <p style="margin:0.3rem 0 0;">Hasil AI berbeda jauh dari rumus (beda skor 1,5 ke atas), keliru soal aturan absen di bawah 75%, atau menyebut masalah yang tidak ada di data.</p>
+            <div style="padding-bottom:0.65rem;border-bottom:1px solid var(--line);">
+                <strong class="text-ink">Perlu Koreksi</strong> &mdash; Selisih skor 1,5 ke atas, keliru soal batas kehadiran 75%, atau menyebut masalah yang tidak ada di data.
             </div>
-            <div style="border-radius:8px;border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));background:var(--bg);padding:0.75rem 0.85rem;">
-                <p style="font-weight:600;color:var(--accent);margin:0;">3. Centang &ldquo;Terapkan Langsung&rdquo;</p>
-                <p style="margin:0.3rem 0 0;">Centang hanya jika label risiko di halaman mahasiswa &amp; DPA perlu langsung diganti ke level yang benar, lalu tulis alasan singkatnya.</p>
+            <div>
+                <strong class="text-ink">Terapkan Langsung</strong> &mdash; Centang hanya bila label risiko di halaman mahasiswa &amp; DPA perlu segera diperbarui, lalu tulis alasan singkat.
             </div>
         </div>
     </details>
