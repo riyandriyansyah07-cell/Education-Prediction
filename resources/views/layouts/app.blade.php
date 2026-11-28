@@ -39,20 +39,20 @@
 @endphp
 
 @section('body')
-    {{-- Header Mobile Sticky dengan Logo, Toggle Tema & Menu --}}
-    <header class="no-print sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-4 lg:hidden" style="backdrop-filter:blur(10px);">
-        <a href="{{ route('beranda') }}" class="inline-flex items-center gap-2.5 font-semibold tracking-tight" style="min-width:0;">
-            <x-brand-logo :size="28" />
-            <span class="truncate text-sm">Cegah Sebelum Terlambat</span>
-        </a>
-        <div style="display:flex;align-items:center;gap:0.45rem;flex-shrink:0;">
-            <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap" style="min-height:36px;padding:0.35rem 0.55rem;">
-                <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
+    {{-- Header Mobile Sticky dengan Menu di Kiri, Logo, & Toggle Tema di Kanan --}}
+    <header class="no-print sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-surface px-4 lg:hidden" style="backdrop-filter:blur(10px);">
+        <div style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
+            <button type="button" class="btn btn-quiet btn-sm" data-nav-toggle aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="sidebar" style="min-height:36px;padding:0.35rem 0.55rem;flex-shrink:0;">
+                <x-icon name="list" />
             </button>
-            <button type="button" class="btn btn-quiet btn-sm" data-nav-toggle aria-expanded="false" aria-controls="sidebar" style="min-height:36px;padding:0.35rem 0.7rem;">
-                <x-icon name="list" /> Menu
-            </button>
+            <a href="{{ route('beranda') }}" class="inline-flex items-center gap-2 font-semibold tracking-tight" style="min-width:0;">
+                <x-brand-logo :size="28" />
+                <span class="truncate text-sm">Cegah Sebelum Terlambat</span>
+            </a>
         </div>
+        <button type="button" class="btn btn-quiet btn-sm" data-theme-toggle aria-label="Ganti tema terang atau gelap" style="min-height:36px;padding:0.35rem 0.55rem;flex-shrink:0;">
+            <x-icon name="sun" class="hidden dark:block" /><x-icon name="moon" class="dark:hidden" />
+        </button>
     </header>
 
     <div id="nav-backdrop" class="app-nav-backdrop no-print" aria-hidden="true"></div>
