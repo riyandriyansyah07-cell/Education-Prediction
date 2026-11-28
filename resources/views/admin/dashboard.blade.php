@@ -610,6 +610,11 @@
 </section>
 
 {{-- BLOK 2C: RINGKASAN KESIAPAN KELULUSAN & TINDAK LANJUT (PROPORSIONAL FULL-WIDTH) --}}
+@php
+    $gradList = $graduationReadiness ?? [];
+    $pendingProofs = (int) ($pendingSkpiProofs ?? 0);
+    $fuList = $followUpStats ?? [];
+@endphp
 <section class="adm-panel adm-panel-airy adm-section-gap" aria-label="Kesiapan kelulusan dan tindak lanjut">
     <div class="adm-wave-head" style="margin-bottom:0;">
         <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.75rem;">
